@@ -34,6 +34,8 @@ jobs:
       # Enables Pages (source = GitHub Actions) on first run if not already set.
       - name: Configure Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       # The whole repo root is the site (index.html lives at the top level).
       - name: Upload site artifact
