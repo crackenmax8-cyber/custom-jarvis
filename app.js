@@ -57,7 +57,13 @@
     const wrap = $('#projects');
     wrap.innerHTML = '';
     data.projects.forEach(p => {
-      const fillClass = p.status === 'warning' ? 'warning' : p.status === 'complete' ? 'complete' : p.status === 'paused' ? 'paused' : '';
+      // Whitelist status against known keys and coerce numerics — every field is
+      // treated as untrusted since data.js documents storage as the editable source.
+      const status = STATUS_TEXT[p.status] ? p.status : 'active';
+      const fillClass = status === 'warning' ? 'warning' : status === 'complete' ? 'complete' : status === 'paused' ? 'paused' : '';
+      const done = Number(p.tasksDone) || 0;
+      const total = Number(p.tasksTotal) || 0;
+      const progress = Math.max(0, Math.min(100, Number(p.progress) || 0));
       const el = document.createElement('div');
       el.className = 'project';
       el.innerHTML = `
@@ -66,16 +72,16 @@
             <div class="project-name">${esc(p.name)}</div>
             <div class="project-domain">${esc(p.domain)}</div>
           </div>
-          <span class="pill ${p.status}"><span class="pdot"></span>${STATUS_TEXT[p.status] || p.status}</span>
+          <span class="pill ${status}"><span class="pdot"></span>${STATUS_TEXT[status]}</span>
         </div>
         <div class="pbar"><div class="pbar-fill ${fillClass}" style="width:0%"></div></div>
         <div class="project-foot">
-          <span><b>${p.tasksDone}</b>/${p.tasksTotal} tasks</span>
-          <span>${p.progress}% · ${esc(p.updated)}</span>
+          <span><b>${done}</b>/${total} tasks</span>
+          <span>${progress}% · ${esc(p.updated)}</span>
         </div>`;
       wrap.appendChild(el);
       // animate the bar in
-      requestAnimationFrame(() => { el.querySelector('.pbar-fill').style.width = p.progress + '%'; });
+      requestAnimationFrame(() => { el.querySelector('.pbar-fill').style.width = progress + '%'; });
     });
     $('#projActive').textContent = data.projects.filter(p => p.status === 'active').length + ' ACTIVE';
   }
@@ -155,17 +161,23 @@
     speechSynthesis.onvoiceschanged = pickVoice;
   }
 
+  // Returns true if speech was dispatched (so callers know whether the utterance
+  // callbacks will drive the status back to idle, or they must do it themselves).
   function speak(text) {
-    if (!config.voiceOut || !window.speechSynthesis) return;
+    if (!config.voiceOut || !window.speechSynthesis) return false;
     try {
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
       if (preferredVoice) u.voice = preferredVoice;
       u.rate = 1.02; u.pitch = 0.9; u.volume = 1;
       u.onstart = () => setStatus('speaking');
-      u.onend = () => setStatus(recognizing ? 'listening' : 'idle');
+      // onend AND onerror both recover status (error/interrupt fire instead of end).
+      const done = () => { setStatus(recognizing ? 'listening' : 'idle'); maybeAutoListen(); };
+      u.onend = done;
+      u.onerror = done;
       speechSynthesis.speak(u);
-    } catch (e) { /* ignore */ }
+      return true;
+    } catch (e) { return false; }
   }
 
   // ======================= CONVERSATION FLOW =======================
@@ -183,8 +195,10 @@
     }
     addMessage('jarvis', reply.text);
     handling = false;
-    speak(reply.text);
-    if (!config.voiceOut) setStatus(recognizing ? 'listening' : 'idle');
+    const spoke = speak(reply.text);
+    // If nothing will be spoken (voice off / no synthesis), we must reset the
+    // status ourselves — otherwise the chip stays stuck on "Processing".
+    if (!spoke) { setStatus(recognizing ? 'listening' : 'idle'); maybeAutoListen(); }
   }
 
   // ======================= SPEECH RECOGNITION =======================
@@ -192,6 +206,21 @@
   let recognition = null;
   let recognizing = false;
   let manualStop = false;
+  let sttFatal = false; // set on a permission-wall error so we don't auto-restart into it
+
+  // Re-arm the mic for hands-free mode — but only once JARVIS is fully idle
+  // (not thinking, not speaking), so the open mic never transcribes its own reply.
+  function maybeAutoListen() {
+    if (!recognition || !config.autoListen || manualStop || sttFatal) return;
+    if (handling || recognizing) return;
+    if (window.speechSynthesis && speechSynthesis.speaking) return;
+    setTimeout(() => {
+      if (config.autoListen && !manualStop && !sttFatal && !handling && !recognizing &&
+          !(window.speechSynthesis && speechSynthesis.speaking)) {
+        startListening();
+      }
+    }, 500);
+  }
 
   if (SR) {
     recognition = new SR();
@@ -203,20 +232,23 @@
     recognition.onstart = () => { recognizing = true; setStatus('listening'); };
     recognition.onerror = (e) => {
       recognizing = false;
+      stopViz(); // release the mic/AudioContext on any recognition failure
       if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        sttFatal = true; // a permission wall — never auto-restart into it
         toast('Microphone blocked. Allow mic access, or type below.', true);
       } else if (e.error === 'no-speech') {
         toast('No speech detected.');
       }
-      setStatus('idle');
+      if (!handling) setStatus('idle');
     };
     recognition.onend = () => {
       recognizing = false;
-      if (!handling) setStatus('idle');
-      // auto-restart for hands-free mode unless the user turned it off
-      if (config.autoListen && !manualStop) {
-        setTimeout(() => { try { recognition.start(); } catch (e) {} }, 400);
-      }
+      stopViz(); // a listening turn ended — free the mic instead of leaving it lit
+      if (!handling && !(window.speechSynthesis && speechSynthesis.speaking)) setStatus('idle');
+      // Hands-free re-arm is deferred to maybeAutoListen(): it waits until JARVIS
+      // is done thinking/speaking, and it routes through startListening() (which
+      // cancels TTS and restarts the visualizer) rather than a raw restart.
+      maybeAutoListen();
     };
     recognition.onresult = (event) => {
       let finalText = '';
@@ -231,6 +263,7 @@
     if (!recognition) { toast('Voice input not supported in this browser — type below.', true); $('#textInput').focus(); return; }
     if (recognizing) return;
     manualStop = false;
+    sttFatal = false; // explicit user action clears any prior permission-wall latch
     if (window.speechSynthesis) speechSynthesis.cancel();
     startViz(); // begin mic-driven visualizer
     try { recognition.start(); } catch (e) { /* already started */ }
@@ -246,7 +279,8 @@
   const canvas = $('#viz');
   const ctx = canvas.getContext('2d');
   let audioCtx = null, analyser = null, micStream = null, freqData = null;
-  let vizRAF = null, vizPhase = 0;
+  let vizRAF = null, vizPhase = 0, vizToken = 0;
+  const reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
   function sizeCanvas() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -259,8 +293,13 @@
   async function startViz() {
     if (analyser) return;
     if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && (window.AudioContext || window.webkitAudioContext))) return;
+    const token = ++vizToken;
     try {
-      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // If the session was cancelled while getUserMedia was resolving, don't turn
+      // the mic on after the fact — tear the stream straight back down.
+      if (token !== vizToken) { stream.getTracks().forEach(t => t.stop()); return; }
+      micStream = stream;
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       const src = audioCtx.createMediaStreamSource(micStream);
       analyser = audioCtx.createAnalyser();
@@ -273,6 +312,7 @@
     }
   }
   function stopViz() {
+    vizToken++; // invalidate any in-flight startViz() so its stream is discarded
     if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
     if (audioCtx) { audioCtx.close().catch(() => {}); audioCtx = null; }
     analyser = null; freqData = null;
@@ -285,7 +325,9 @@
     ctx.clearRect(0, 0, w, h);
     const cx = w / 2, cy = h / 2;
     const inner = Math.min(w, h) * 0.30;
-    vizPhase += 0.02;
+    // Under prefers-reduced-motion, freeze the idle "breathing" (no perpetual
+    // motion). Live mic amplitude during active listening is user-initiated.
+    if (!reduceMotion) vizPhase += 0.02;
 
     const speaking = $('#reactor').classList.contains('speaking');
     const accent = speaking ? '52,230,176' : '69,224,255';
@@ -318,14 +360,33 @@
   }
 
   // ======================= SETTINGS MODAL =======================
+  let lastFocused = null;
   function openSettings() {
+    lastFocused = document.activeElement;
     $('#apiKeyInput').value = config.apiKey || '';
     $('#modelInput').value = config.model || 'claude-opus-4-8';
     $('#voiceOutToggle').checked = !!config.voiceOut;
     $('#autoListenToggle').checked = !!config.autoListen;
     $('#settingsModal').classList.add('open');
+    // move focus into the dialog for keyboard/screen-reader users
+    setTimeout(() => { try { $('#apiKeyInput').focus(); } catch (e) {} }, 30);
   }
-  function closeSettings() { $('#settingsModal').classList.remove('open'); }
+  function closeSettings() {
+    $('#settingsModal').classList.remove('open');
+    if (lastFocused && lastFocused.focus) { try { lastFocused.focus(); } catch (e) {} }
+  }
+  // Trap Tab within the open modal so focus can't wander to the HUD behind it.
+  $('#settingsModal').addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    const modal = document.querySelector('#settingsModal .modal');
+    const focusables = Array.from(modal.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )).filter(el => !el.disabled && el.offsetParent !== null);
+    if (!focusables.length) return;
+    const first = focusables[0], last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
   function saveSettings() {
     config.apiKey = $('#apiKeyInput').value.trim();
     config.model = $('#modelInput').value.trim() || 'claude-opus-4-8';
@@ -362,6 +423,9 @@
     const el = $('#textInput');
     const v = el.value.trim();
     if (!v) return;
+    // Don't wipe the box if we can't accept the message yet — keep it so the
+    // user isn't left wondering where their text went.
+    if (handling) { toast('One moment — still processing your last request…'); return; }
     el.value = '';
     handleInput(v);
   }
@@ -372,11 +436,17 @@
   $('#saveSettings').addEventListener('click', saveSettings);
   $('#settingsModal').addEventListener('click', (e) => { if (e.target.id === 'settingsModal') closeSettings(); });
 
-  // space bar = push-to-talk (when not typing)
+  // Space bar = push-to-talk — but never when a control (button/link/input) is
+  // focused, so Space keeps activating buttons and typing spaces as usual.
   document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space' && document.activeElement.tagName !== 'INPUT' && !$('#settingsModal').classList.contains('open')) {
-      e.preventDefault();
-      if (!recognizing) startListening();
+    if (e.code === 'Space') {
+      const ae = document.activeElement;
+      const onControl = ae && ae.closest && ae.closest('button, a, input, textarea, select, [role="button"], [contenteditable="true"]');
+      const modalOpen = $('#settingsModal').classList.contains('open');
+      if (!onControl && !modalOpen) {
+        e.preventDefault();
+        recognizing ? stopListening() : startListening();
+      }
     }
     if (e.key === 'Escape') closeSettings();
   });

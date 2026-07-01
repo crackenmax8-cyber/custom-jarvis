@@ -15,7 +15,7 @@
   /* ink */
   --ink:      #dcf3ff;
   --ink-2:    #9fbdd6;
-  --ink-dim:  #5f7c96;
+  --ink-dim:  #7e99b2; /* lightened from #5f7c96 to meet WCAG AA on small text */
 
   /* accent (Jarvis cyan) */
   --accent:      #45e0ff;
@@ -287,7 +287,7 @@ html, body {
 }
 .reactor {
   position: relative;
-  width: 340px; height: 340px;
+  width: min(340px, 44vh); height: min(340px, 44vh); /* shrink on short windows to avoid clipping */
   display: grid; place-items: center;
   cursor: pointer;
   user-select: none;
@@ -423,19 +423,24 @@ html, body {
   background: rgba(2, 6, 14, 0.72);
   backdrop-filter: blur(4px);
   display: none; place-items: center;
+  padding: 20px;
+  overflow-y: auto;
 }
 .modal-scrim.open { display: grid; animation: fadeUp .2s ease; }
 .modal {
   width: min(520px, 92vw);
+  max-height: calc(100vh - 40px); /* never taller than the viewport */
+  display: flex;
+  flex-direction: column;
   background: linear-gradient(180deg, rgba(14,26,44,0.96), rgba(8,16,28,0.96));
   border: 1px solid var(--panel-edge-hi);
   border-radius: 16px;
   box-shadow: 0 0 60px rgba(69,224,255,0.15);
   overflow: hidden;
 }
-.modal-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid var(--panel-edge); }
+.modal-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid var(--panel-edge); flex: none; }
 .modal-head h2 { margin: 0; font-family: var(--font-display); font-size: 16px; letter-spacing: 3px; }
-.modal-body { padding: 18px 20px 22px; }
+.modal-body { padding: 18px 20px 22px; overflow-y: auto; } /* scrolls on short screens so Save/Cancel stay reachable */
 .field { margin-bottom: 18px; }
 .field label { display: block; font-family: var(--font-mono); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-2); margin-bottom: 7px; }
 .field input {

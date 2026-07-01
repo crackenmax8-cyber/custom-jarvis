@@ -137,6 +137,12 @@ class JarvisBrain {
       return { confident: true, text: `${flagged.length} ${flagged.length === 1 ? 'project needs' : 'projects need'} attention: ${desc}.` };
     }
 
+    // "how many projects" — checked before the status report so the 'projects'
+    // keyword there doesn't swallow the count query.
+    if (t.includes('how many project')) {
+      return { confident: true, text: `You're tracking ${data.projects.length} projects.` };
+    }
+
     // status report / overview
     if (has('status', 'report', 'overview', 'projects', 'working on', 'summary', 'brief me', "what's going on", 'whats going on', 'update me', 'rundown')) {
       const active = data.projects.filter(p => p.status === 'active');
@@ -146,11 +152,6 @@ class JarvisBrain {
       let text = `Status report: ${data.projects.length} projects tracked, ${avg} percent average completion. ${active.length} active, ${complete.length} complete.`;
       if (flagged.length) text += ` ${flagged.length} need attention: ${flagged.map(p => p.name).join(', ')}.`;
       return { confident: true, text };
-    }
-
-    // "how many projects"
-    if (has('how many project')) {
-      return { confident: true, text: `You're tracking ${data.projects.length} projects.` };
     }
 
     return null; // no confident local match
