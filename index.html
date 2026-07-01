@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>J.A.R.V.I.S — Command Interface</title>
+  <meta name="description" content="A futuristic voice-driven dashboard for your projects and usage limits." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='30' fill='none' stroke='%2345e0ff' stroke-width='6'/><circle cx='50' cy='50' r='12' fill='%2345e0ff'/></svg>" />
+</head>
+<body>
+  <div class="backdrop"></div>
+
+  <div class="hud">
+    <!-- ================= TOP BAR ================= -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        <div>
+          <div class="brand-name">J<b>.</b>A<b>.</b>R<b>.</b>V<b>.</b>I<b>.</b>S</div>
+          <div class="brand-sub">Just A Rather Very Intelligent System</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="status-chip" id="statusChip" data-state="idle">
+          <span class="dot"></span><span id="statusLabel">Standby</span>
+        </div>
+        <div class="clock">
+          <div class="time" id="clockTime">--:--:--</div>
+          <div class="date" id="clockDate">—</div>
+        </div>
+        <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ================= MAIN ================= -->
+    <main class="main">
+      <!-- LEFT: projects -->
+      <section class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Active <span>Projects</span></div>
+          <div class="panel-tag" id="projActive">— ACTIVE</div>
+        </div>
+        <div class="panel-body" id="projects"></div>
+      </section>
+
+      <!-- CENTER: reactor + conversation -->
+      <section class="center">
+        <div class="panel reactor-panel">
+          <div class="reactor" id="reactor" role="button" tabindex="0" aria-label="Talk to JARVIS">
+            <canvas class="reactor-viz" id="viz"></canvas>
+            <div class="ring r1"></div>
+            <div class="ring r2"></div>
+            <div class="ring r3"></div>
+            <div class="reactor-core">
+              <div class="reactor-core-inner">
+                <button class="reactor-mic" id="micBtn" aria-label="Toggle microphone" style="background:none;border:none;cursor:pointer;padding:0">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="reactor-hint" id="reactorHint">CLICK OR PRESS SPACE TO SPEAK</div>
+          </div>
+        </div>
+
+        <div class="panel convo-panel">
+          <div class="panel-body"><div class="convo" id="convo"></div></div>
+          <div class="composer">
+            <input type="text" id="textInput" placeholder="Type a command, or speak…" autocomplete="off" />
+            <button id="sendBtn">SEND</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: usage limits -->
+      <section class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Usage <span>Limits</span></div>
+          <div class="panel-tag">CURRENT CYCLE</div>
+        </div>
+        <div class="panel-body">
+          <div class="gauge-grid" id="gauges"></div>
+        </div>
+        <div class="sysload">
+          <div class="sysload-row">
+            <span class="sysload-label">Core</span>
+            <span class="sysload-bar"><i id="loadCore" style="width:0%"></i></span>
+            <span class="sysload-val" id="loadCoreVal">0%</span>
+          </div>
+          <div class="sysload-row">
+            <span class="sysload-label">Mem</span>
+            <span class="sysload-bar"><i id="loadMem" style="width:0%"></i></span>
+            <span class="sysload-val" id="loadMemVal">0%</span>
+          </div>
+          <div class="sysload-row">
+            <span class="sysload-label">Net</span>
+            <span class="sysload-bar"><i id="loadNet" style="width:0%"></i></span>
+            <span class="sysload-val" id="loadNetVal">0%</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ================= FOOTER ================= -->
+    <footer class="footer">
+      <span class="fdot"></span>
+      <span>ALL SYSTEMS NOMINAL</span>
+      <span class="spacer"></span>
+      <span>SPEAK: <span class="kbd">SPACE</span></span>
+      <span>SEND: <span class="kbd">ENTER</span></span>
+      <span>SETTINGS: <span class="kbd">GEAR</span></span>
+    </footer>
+  </div>
+
+  <!-- ================= SETTINGS MODAL ================= -->
+  <div class="modal-scrim" id="settingsModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="modal-head">
+        <h2 id="settingsTitle">SETTINGS</h2>
+        <button class="icon-btn" id="closeSettings" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label for="apiKeyInput">Anthropic API Key <span style="opacity:.6">(optional)</span></label>
+          <input type="password" id="apiKeyInput" placeholder="sk-ant-…" autocomplete="off" spellcheck="false" />
+          <div class="hint">
+            Stored only in this browser (localStorage) and sent directly to Anthropic. Add a key to unlock
+            full conversational responses; without one, JARVIS still answers project &amp; usage queries locally.
+            Get a key at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>.
+          </div>
+        </div>
+        <div class="field">
+          <label for="modelInput">Model</label>
+          <input type="text" id="modelInput" value="claude-opus-4-8" spellcheck="false" />
+        </div>
+        <div class="toggle-row">
+          <div class="lbl">Voice responses <small>JARVIS speaks replies aloud</small></div>
+          <label class="switch"><input type="checkbox" id="voiceOutToggle" checked /><span class="track"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="lbl">Hands-free mode <small>Keep the mic listening between commands</small></div>
+          <label class="switch"><input type="checkbox" id="autoListenToggle" /><span class="track"></span></label>
+        </div>
+        <div class="modal-actions">
+          <button class="btn ghost" id="cancelSettings">CANCEL</button>
+          <button class="btn primary" id="saveSettings">SAVE</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="data.js"></script>
+  <script src="jarvis.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
