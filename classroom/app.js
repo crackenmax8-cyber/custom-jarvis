@@ -11,9 +11,12 @@
   const CONFIG_KEY = 'classmate.config.v1';
   const THEME_KEY = 'classmate.theme.v1';
 
+  // falls back to in-memory storage where localStorage is blocked (sandboxed
+  // embeds) so settings like the role switch still work for the session
+  const memStore = {};
   const storage = {
-    get(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } },
-    set(k, v) { try { window.localStorage.setItem(k, v); } catch (e) { /* storage unavailable */ } },
+    get(k) { try { return window.localStorage.getItem(k); } catch (e) { return k in memStore ? memStore[k] : null; } },
+    set(k, v) { try { window.localStorage.setItem(k, v); } catch (e) { memStore[k] = String(v); } },
   };
 
   function loadConfig() {
