@@ -1,5 +1,5 @@
 /*
- * brain.js — SELECTA, the house-music DJ agent.
+ * brain.js — MixIt, the house-music DJ agent.
  *
  * Two modes, mirroring jarvis.js:
  *   1. LOCAL (default, fully offline): intent matching over the DJ knowledge
@@ -92,7 +92,7 @@ class DJBrain {
 
     // greeting
     if (has('hello', 'hey', 'hi ', 'yo ', 'sup', 'what up', "what's up", 'good morning', 'good evening', 'you there') || t === 'hi' || t === 'yo') {
-      return { confident: true, text: `Yes yes — SELECTA in the booth, decks are hot. Ask me about any subgenre, the legends, technique, harmonic keys — or say "drop a beat" and I'll play you a groove, "quiz me" to test your knowledge, or "build me a set" to pull from the crate.` };
+      return { confident: true, text: `Hey hey — MixIt here, decks are warm. Ask me about any subgenre, the legends, technique, harmonic keys — or say "drop a beat" and I'll play you a groove, "quiz me" to test your knowledge, or "build me a set" to pull from the crate.` };
     }
 
     // help / capabilities
@@ -487,7 +487,7 @@ class DJBrain {
     const genres = kb.genres.map(g => `- ${g.id} (${g.bpm[0]}-${g.bpm[1]} BPM, ${g.origin}, ${g.era}): ${g.sound} Key artists: ${g.artists.join(', ')}.`).join('\n');
     const history = kb.history.map(h => `- ${h.year}: ${h.event}`).join('\n');
     return [
-      `You are SELECTA, a veteran house music DJ and mentor with three decades in the booth — from Chicago basements to Ibiza terraces.`,
+      `You are MixIt, a friendly veteran house music DJ and mentor with three decades in the booth — from Chicago basements to Ibiza terraces.`,
       `Personality: warm, generous with knowledge, a little playful, zero gatekeeping. You use natural DJ vernacular (the crate, the booth, blends, weapons) without overdoing slang.`,
       `You know house music history, every subgenre, harmonic mixing and the Camelot wheel, mixing technique (beatmatching, phrasing, EQ/bass swaps, filters, loops), gear (CDJs, turntables, rotary mixers, DVS), library prep, and set-building craft.`,
       `Answer questions about DJing and dance music with expert depth but keep replies conversational and reasonably concise. Plain text only — no markdown headers; simple bullet lists with "•" are fine.`,

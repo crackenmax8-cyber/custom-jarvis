@@ -1,5 +1,5 @@
 /*
- * app.js — UI wiring for SELECTA: chat rendering (rich formatting for lists,
+ * app.js — UI wiring for MixIt: chat rendering (rich formatting for lists,
  * track cards with BPM/key pills and energy meters, headers), the live deck
  * (Web Audio beat engine + transport controls), the interactive Camelot wheel,
  * optional spoken replies, quick-prompt chips, theme toggle, and settings.
@@ -10,9 +10,9 @@
  */
 
 (() => {
-  const CONFIG_KEY = 'selecta.config.v1';
-  const THEME_KEY = 'selecta.theme.v1';
-  const VOICE_KEY = 'selecta.voice.v1';
+  const CONFIG_KEY = 'mixit.config.v1';
+  const THEME_KEY = 'mixit.theme.v1';
+  const VOICE_KEY = 'mixit.voice.v1';
 
   // ---- safe storage (sandbox-proof) -------------------------------------------
   const storage = {
@@ -53,16 +53,16 @@
   const wheelMount = document.getElementById('wheelMount');
   const wheelInfo = document.getElementById('wheelInfo');
 
-  // ---- theme -------------------------------------------------------------------
+  // ---- theme (light by default) --------------------------------------------------
   function applyTheme(theme) {
-    document.body.classList.toggle('light', theme === 'light');
-    themeBtn.textContent = theme === 'light' ? '🌙' : '☀️';
-    themeBtn.title = theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme';
+    document.body.classList.toggle('dark', theme === 'dark');
+    themeBtn.textContent = theme === 'dark' ? '☀️' : '🌙';
+    themeBtn.title = theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme';
   }
-  let theme = storage.get(THEME_KEY) || 'dark';
+  let theme = storage.get(THEME_KEY) || 'light';
   applyTheme(theme);
   themeBtn.addEventListener('click', () => {
-    theme = theme === 'light' ? 'dark' : 'light';
+    theme = theme === 'dark' ? 'light' : 'dark';
     storage.set(THEME_KEY, theme);
     document.body.classList.add('theme-locked'); // in-app choice wins over any host theme
     applyTheme(theme);
@@ -75,7 +75,7 @@
     document.body.classList.toggle('playing', deck.playing);
     playBtn.textContent = deck.playing ? '⏹' : '▶';
     playBtn.setAttribute('aria-label', deck.playing ? 'Stop the beat' : 'Play the beat');
-    statusLabel.textContent = deck.playing ? 'ON AIR' : 'DECKS READY';
+    statusLabel.textContent = deck.playing ? 'On air' : 'Ready to spin';
     bpmReadout.textContent = `${deck.bpm} BPM`;
     for (const btn of presets.querySelectorAll('.preset')) {
       btn.classList.toggle('active', btn.dataset.preset === deck.preset);
@@ -249,7 +249,7 @@
       col.className = 'msg-col';
       const tag = document.createElement('div');
       tag.className = 'msg-tag';
-      tag.textContent = 'SELECTA';
+      tag.textContent = 'MixIt';
       col.appendChild(tag);
       col.appendChild(bubble);
       row.appendChild(makeAvatar());
@@ -270,7 +270,7 @@
     col.className = 'msg-col';
     const tag = document.createElement('div');
     tag.className = 'msg-tag';
-    tag.textContent = 'SELECTA';
+    tag.textContent = 'MixIt';
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
     for (let i = 0; i < 3; i++) {
@@ -441,11 +441,11 @@
 
   // ---- opening message -------------------------------------------------------------
   addMessage('agent',
-    'Hey! I\'m SELECTA, your house music DJ — decades of crate knowledge, from the Warehouse to the White Isle. And now I have a live deck: hit the record (or say "drop a beat") and I\'ll synthesize a house groove right here.\n\n' +
-    'I can help you with:\n' +
-    '• The live deck — "drop a beat", "play some acid at 128"\n' +
-    '• Genres, legends, labels and the history of house\n' +
-    '• DJ technique — beatmatching, EQ mixing, harmonic keys, set building\n' +
-    '• "Build me a set" for a harmonically-mixed journey, "quiz me" for trivia\n\n' +
-    'Tap a suggestion below, or just type a question to get started.');
+    'Hey, I\'m MixIt — your house music DJ! I\'ve got decades of crate knowledge and a real working deck: press the record up top (or say "drop a beat") and I\'ll play you a groove right here.\n\n' +
+    'Here\'s what we can do together:\n' +
+    '• Play music — "drop a beat", "play some acid at 128"\n' +
+    '• Explore — genres, legendary DJs, labels and the history of house\n' +
+    '• Learn to mix — beatmatching, EQ, keys, building a set\n' +
+    '• Have fun — "build me a set", "quiz me", "give me a DJ tip"\n\n' +
+    'Tap a suggestion below, or just ask me anything.');
 })();
