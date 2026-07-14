@@ -14,10 +14,18 @@ Everything runs in your browser. No server, no build step, read-only access.
 - **Stat tiles** — missing / due today / due this week / open / turned in at a glance.
 - **Chat agent** — ask *"what's due tomorrow?"*, *"am I missing anything?"*,
   *"how does my week look?"*, *"what's left in Chemistry?"*, or say *"refresh"*.
-- **✨ Break it down** — every open assignment has a button that turns it into a
-  step-by-step starter plan (tailored to essays, labs, problem sets, quiz prep,
-  projects or readings) paced against the due date. It coaches — it never does
-  the work for you or produces anything to hand in; that's deliberate.
+- **✨ Break it down** (student mode) — every open assignment has a button that
+  turns it into a step-by-step starter plan (tailored to essays, labs, problem
+  sets, quiz prep, projects or readings) paced against the due date. It coaches —
+  it never does the work for a student or produces anything to hand in; that's
+  deliberate.
+- **🍎 Teacher mode** — switch roles in Settings and ClassMate becomes an
+  assignment-calibration tool for the coursework *you* authored, across all the
+  courses you teach: the board groups by course, and every assignment gets a
+  **🧪 Test drive & rate** button — an instant difficulty rating (1–5 stars) and
+  student-time estimate, and with a Claude key a full worked exemplar solution /
+  answer key, ambiguity and prerequisite flags, and a suggested rubric. Chat
+  commands: *"rate everything"*, *"which is hardest?"*, *"test drive the essay"*.
 - **Demo mode** — sample data so you can explore everything before connecting.
 - **Optional Claude hookup** — add an Anthropic API key in Settings and the chat
   can also help you plan and prioritize, with your live assignment list as context.

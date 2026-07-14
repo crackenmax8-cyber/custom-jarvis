@@ -139,12 +139,22 @@ body {
 .board-empty p { color: var(--text-soft); max-width: 40ch; margin: 0 auto 6px; font-size: 14px; }
 .board-empty-actions { display: flex; gap: 10px; justify-content: center; margin: 16px 0 10px; }
 .board-empty-note { font-size: 12.5px; color: var(--text-dim); }
+.link-btn {
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: var(--accent-strong); font: inherit; font-size: inherit; font-weight: 700;
+  text-decoration: underline;
+}
+.link-btn:hover, .link-btn:focus-visible { color: var(--accent); outline: none; }
+body.dark .link-btn { color: var(--accent); }
 
 .group { margin-bottom: 18px; }
 .group-title { font-size: 13.5px; font-weight: 800; color: var(--text-soft); margin-bottom: 8px; letter-spacing: 0.2px; }
 .g-missing .group-title { color: var(--danger); }
 .g-today .group-title { color: var(--warn); }
 .g-done .group-title { color: var(--ok); }
+.g-course .group-title { color: var(--accent-strong); font-size: 15px; }
+.g-course .card { border-left-color: var(--accent); }
+body.dark .g-course .group-title { color: var(--accent); }
 .group-note { font-size: 12.5px; color: var(--text-dim); margin: -4px 0 8px; }
 .group-cards { display: flex; flex-direction: column; gap: 8px; }
 
@@ -283,8 +293,18 @@ body.dark .modal-backdrop { background: rgba(5, 12, 10, 0.6); }
 }
 .modal h2 { font-size: 18px; margin-bottom: 10px; }
 .modal-help { color: var(--text-soft); font-size: 13.5px; line-height: 1.6; margin-bottom: 16px; }
-.modal label { display: block; font-size: 12.5px; font-weight: 700; color: var(--text-dim); margin-bottom: 6px; }
-.modal label.mt { margin-top: 14px; }
+.modal label, .modal-label { display: block; font-size: 12.5px; font-weight: 700; color: var(--text-dim); margin-bottom: 6px; }
+.modal label.mt, .modal .mt { margin-top: 14px; }
+.role-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+.role-opt {
+  display: flex !important; align-items: center; gap: 8px;
+  background: var(--panel-soft); border: 1px solid var(--border);
+  border-radius: 12px; padding: 9px 12px; cursor: pointer;
+  font-size: 13.5px !important; font-weight: 600 !important; color: var(--text) !important;
+  margin-bottom: 0 !important;
+}
+.role-opt:has(input:checked) { border-color: var(--accent); background: var(--bubble-agent); }
+.role-opt input { accent-color: var(--accent); }
 .modal input {
   width: 100%; padding: 11px 14px; border-radius: 13px;
   background: var(--panel-soft); border: 1px solid var(--border);

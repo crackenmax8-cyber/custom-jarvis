@@ -22,7 +22,7 @@ const CLASSROOM_SCOPES = [
 
 class ClassroomClient {
   constructor(getConfig) {
-    this.getConfig = getConfig;      // () => { googleClientId }
+    this.getConfig = getConfig;      // () => { googleClientId, role }
     this.mode = 'none';              // 'none' | 'demo' | 'google'
     this.courses = [];               // [{id, name}]
     this.items = [];                 // normalized assignments
@@ -30,6 +30,8 @@ class ClassroomClient {
     this.token = null;
     this._tokenClient = null;
   }
+
+  get role() { return (this.getConfig().role === 'teacher') ? 'teacher' : 'student'; }
 
   // ---- DEMO MODE -------------------------------------------------------------
   loadDemo() {
@@ -45,6 +47,20 @@ class ClassroomClient {
       { id: 'c3', name: 'Chemistry' },
       { id: 'c4', name: 'World History' },
     ];
+    const desc = {
+      a1: 'Write a 5-paragraph essay analyzing two central themes in The Great Gatsby. Use at least three quotes with page citations. MLA format, 800-1000 words.',
+      a2: 'Solve the 12 systems of quadratic equations on the worksheet. Show all work; graphing calculator allowed for checking only.',
+      a3: 'Write up the acid-base titration lab: purpose, procedure summary, data table, molarity calculations, and 2+ sources of error.',
+      a4: 'Problems 1-18 from section 7.4: solving quadratic inequalities. Show sign charts for each.',
+      a5: 'Read Chapter 12 (Industrial Revolution) and write a 300-word response: how did mechanization change family life?',
+      a6: 'Study the unit 9 vocabulary list (40 words) for Friday\'s quiz. Optional: make flashcards for 5 bonus points.',
+      a7: 'Complete the 15 stoichiometry practice problems. Balance each equation before computing mole ratios.',
+      a8: 'Research project: pick a primary source from 1850-1920, analyze its context, bias and significance. 4-page paper plus a 5-minute presentation.',
+      a9: 'Optional review packet covering all of chapter 7 — good practice for the chapter test.',
+      a10: 'Weekly reading journal: 3 entries on this week\'s assigned chapters.',
+      a11: 'Complete the lab safety quiz on Classroom. Retakes allowed until 100%.',
+      a12: 'Worksheet 7.2: factoring quadratics, problems 1-20.',
+    };
     this.items = [
       { id: 'a1', courseId: 'c2', courseName: 'English Lit', title: 'Essay: The Great Gatsby themes', dueAt: day(-2), points: 100, link: '', state: 'missing' },
       { id: 'a2', courseId: 'c1', courseName: 'Algebra II', title: 'Worksheet 7.3 — Quadratic systems', dueAt: day(-1, 8, 0), points: 20, link: '', state: 'missing' },
@@ -59,6 +75,11 @@ class ClassroomClient {
       { id: 'a11', courseId: 'c3', courseName: 'Chemistry', title: 'Safety quiz', dueAt: day(-6), points: 10, link: '', state: 'done' },
       { id: 'a12', courseId: 'c1', courseName: 'Algebra II', title: 'Worksheet 7.2', dueAt: day(-5, 8, 0), points: 20, link: '', state: 'done' },
     ];
+    for (const i of this.items) i.description = desc[i.id] || '';
+    if (this.role === 'teacher') {
+      // a teacher sees their own coursework — no personal submission states
+      for (const i of this.items) i.state = 'todo';
+    }
     this.mode = 'demo';
     this.lastSync = new Date();
   }
@@ -121,25 +142,29 @@ class ClassroomClient {
   }
 
   async fetchAll() {
-    const courses = await this.apiAll('courses', { courseStates: 'ACTIVE' }, 'courses');
+    const teacher = this.role === 'teacher';
+    const courses = await this.apiAll('courses', { courseStates: 'ACTIVE', ...(teacher ? { teacherId: 'me' } : {}) }, 'courses');
     this.courses = courses.map(c => ({ id: c.id, name: c.name }));
     const items = [];
     for (const c of this.courses) {
+      // teachers have no personal submissions — skip that call entirely
       const [work, subs] = await Promise.all([
         this.apiAll(`courses/${c.id}/courseWork`, {}, 'courseWork'),
-        this.apiAll(`courses/${c.id}/courseWork/-/studentSubmissions`, { userId: 'me' }, 'studentSubmissions'),
+        teacher ? Promise.resolve([]) : this.apiAll(`courses/${c.id}/courseWork/-/studentSubmissions`, { userId: 'me' }, 'studentSubmissions'),
       ]);
       const subByWork = new Map(subs.map(s => [s.courseWorkId, s]));
       for (const w of work) {
         const sub = subByWork.get(w.id);
         const dueAt = this.parseDue(w.dueDate, w.dueTime);
         const turnedIn = sub && (sub.state === 'TURNED_IN' || sub.state === 'RETURNED');
-        const state = turnedIn ? 'done'
+        const state = teacher ? 'todo'
+          : turnedIn ? 'done'
           : (sub && sub.late) || (dueAt && dueAt < new Date()) ? 'missing'
           : 'todo';
         items.push({
           id: w.id, courseId: c.id, courseName: c.name,
           title: w.title,
+          description: w.description || '',
           dueAt,
           points: w.maxPoints || 0,
           link: w.alternateLink || '',

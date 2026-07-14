@@ -81,13 +81,15 @@
     el.appendChild(title);
     el.appendChild(meta);
     if (i.state !== 'done') {
+      const teacher = loadConfig().role === 'teacher';
       const help = document.createElement('button');
       help.className = 'help-btn';
-      help.textContent = '✨ Break it down';
-      help.title = 'Get a step-by-step starter plan in the chat';
+      help.textContent = teacher ? '🧪 Test drive & rate' : '✨ Break it down';
+      help.title = teacher ? 'Rate difficulty, estimate time — and with a Claude key, a full worked solution'
+                           : 'Get a step-by-step starter plan in the chat';
       help.addEventListener('click', (e) => {
         e.preventDefault();
-        handleQuery(`Break down "${i.title}"`);
+        handleQuery(teacher ? `Test drive "${i.title}"` : `Break down "${i.title}"`);
       });
       el.appendChild(help);
     }
@@ -124,40 +126,70 @@
       : client.mode === 'demo' ? 'Demo data' : 'Not connected';
     connectBtn.textContent = connected ? (client.mode === 'demo' ? 'Connect Google' : 'Reconnect') : 'Connect Google';
 
+    const teacher = loadConfig().role === 'teacher';
     const setStat = (id, v, hot) => {
       const el = $(id);
       el.textContent = connected ? v : '–';
       el.closest('.stat').classList.toggle('hot', !!(connected && hot && v > 0));
     };
+    const setLabel = (k, txt) => { document.querySelector(`.stat[data-k="${k}"] .stat-label`).textContent = txt; };
+
     const missing = client.missing().sort((a, b) => (a.dueAt || 0) - (b.dueAt || 0));
     const today = client.dueToday();
     const week = client.dueThisWeek().filter(i => !today.includes(i));
-    setStat('statMissing', missing.length, true);
-    setStat('statToday', today.length, true);
-    setStat('statWeek', week.length + today.length);
-    setStat('statOpen', client.open().length);
-    setStat('statDone', client.done().length);
+
+    if (teacher) {
+      const pastDue = client.open().filter(i => i.dueAt && i.dueAt < new Date());
+      setLabel('missing', 'past deadline');
+      setLabel('done', 'courses');
+      setStat('statMissing', pastDue.length, false);
+      setStat('statToday', today.length, true);
+      setStat('statWeek', week.length + today.length);
+      setStat('statOpen', client.items.length);
+      setStat('statDone', client.courses.length);
+      setLabel('open', 'assignments');
+    } else {
+      setLabel('missing', 'missing');
+      setLabel('done', 'turned in');
+      setLabel('open', 'open total');
+      setStat('statMissing', missing.length, true);
+      setStat('statToday', today.length, true);
+      setStat('statWeek', week.length + today.length);
+      setStat('statOpen', client.open().length);
+      setStat('statDone', client.done().length);
+    }
     if (!connected) return;
 
-    const later = client.open()
-      .filter(i => !missing.includes(i) && !today.includes(i) && !week.includes(i) && i.dueAt)
-      .sort((a, b) => a.dueAt - b.dueAt);
-    const noDue = client.open().filter(i => !i.dueAt && !missing.includes(i));
-    const done = client.done().sort((a, b) => (b.dueAt || 0) - (a.dueAt || 0)).slice(0, 6);
+    if (teacher) {
+      // teacher board: one group per course, soonest deadline first
+      for (const course of client.courses) {
+        const list = client.items
+          .filter(i => i.courseId === course.id)
+          .sort((a, b) => (a.dueAt ? a.dueAt.getTime() : Infinity) - (b.dueAt ? b.dueAt.getTime() : Infinity));
+        const g = group(course.name, list, 'g-course');
+        if (g) boardGroups.appendChild(g);
+      }
+    } else {
+      const later = client.open()
+        .filter(i => !missing.includes(i) && !today.includes(i) && !week.includes(i) && i.dueAt)
+        .sort((a, b) => a.dueAt - b.dueAt);
+      const noDue = client.open().filter(i => !i.dueAt && !missing.includes(i));
+      const done = client.done().sort((a, b) => (b.dueAt || 0) - (a.dueAt || 0)).slice(0, 6);
 
-    for (const g of [
-      group('Needs attention', missing, 'g-missing', 'Overdue or marked missing — oldest first.'),
-      group('Due today', today, 'g-today'),
-      group('This week', week, 'g-week'),
-      group('Coming up', later, 'g-later'),
-      group('No due date', noDue, 'g-nodue'),
-      group('Recently turned in', done, 'g-done'),
-    ]) if (g) boardGroups.appendChild(g);
+      for (const g of [
+        group('Needs attention', missing, 'g-missing', 'Overdue or marked missing — oldest first.'),
+        group('Due today', today, 'g-today'),
+        group('This week', week, 'g-week'),
+        group('Coming up', later, 'g-later'),
+        group('No due date', noDue, 'g-nodue'),
+        group('Recently turned in', done, 'g-done'),
+      ]) if (g) boardGroups.appendChild(g);
+    }
 
     if (!boardGroups.children.length) {
       const p = document.createElement('p');
       p.className = 'all-clear';
-      p.textContent = '🎉 Nothing here — you\'re completely caught up.';
+      p.textContent = teacher ? 'No coursework found in your courses yet.' : '🎉 Nothing here — you\'re completely caught up.';
       boardGroups.appendChild(p);
     }
   }
@@ -286,14 +318,67 @@
   });
   connectBtn.addEventListener('click', doConnect);
   emptyConnect.addEventListener('click', doConnect);
-  emptyDemo.addEventListener('click', () => { doDemo(); addMessage('agent', `Demo mode on — a sample week so you can poke around. ${brain.quickPulse()} Say "connect" for the real thing.`); });
+  emptyDemo.addEventListener('click', () => {
+    doDemo();
+    addMessage('agent', loadConfig().role === 'teacher'
+      ? `Demo mode on — sample coursework across four courses. Hit "🧪 Test drive & rate" on any assignment, or say "rate everything".`
+      : `Demo mode on — a sample week so you can poke around. ${brain.quickPulse()} Say "connect" for the real thing.`);
+  });
   refreshBtn.addEventListener('click', doRefresh);
+
+  // ---- role ----------------------------------------------------------------------
+  function renderChips() {
+    const teacher = loadConfig().role === 'teacher';
+    const defs = teacher ? [
+      ['🧪 Rate everything', 'Rate everything'],
+      ['🔥 Which is hardest?', 'Which is hardest?'],
+      ['📅 This week', "What's due this week?"],
+      ['❓ Help', 'Help'],
+    ] : [
+      ['📅 This week', "What's due this week?"],
+      ['⚠️ Missing?', 'Am I missing anything?'],
+      ['🌅 Tomorrow', "What's due tomorrow?"],
+      ['❓ Help', 'Help'],
+    ];
+    chips.textContent = '';
+    for (const [label, q] of defs) {
+      const b = document.createElement('button');
+      b.className = 'chip';
+      b.dataset.q = q;
+      b.textContent = label;
+      chips.appendChild(b);
+    }
+  }
+
+  function setRole(role, announce) {
+    const cfg = loadConfig();
+    if (cfg.role === role) return;
+    cfg.role = role;
+    saveConfig(cfg);
+    renderChips();
+    if (client.mode === 'demo') client.loadDemo();
+    else if (client.mode === 'google') {
+      // role changes what we fetch (teacher: no submissions, teacherId filter)
+      doDisconnect();
+      addMessage('agent', `Role switched — hit "Connect Google" again so I can re-sync as a ${role}.`);
+    }
+    renderBoard();
+    if (announce && client.mode !== 'google') {
+      addMessage('agent', role === 'teacher'
+        ? `Teacher mode on. 🍎 I'll organize coursework by course, and every assignment gets a "🧪 Test drive & rate" button — difficulty, time estimate, and (with a Claude key in Settings) a full worked solution, ambiguity check and rubric suggestion. Try "rate everything".`
+        : `Student mode on. 🎒 I'll track what's missing and what's due, and every assignment gets a "✨ Break it down" starter plan.`);
+    }
+  }
+
+  document.getElementById('emptyTeacher').addEventListener('click', () => setRole('teacher', true));
 
   // ---- settings modal ----------------------------------------------------------------
   function openModal() {
     const cfg = loadConfig();
     clientIdInput.value = cfg.googleClientId || '';
     apiKeyInput.value = cfg.apiKey || '';
+    const role = cfg.role === 'teacher' ? 'teacher' : 'student';
+    for (const r of document.querySelectorAll('input[name="role"]')) r.checked = r.value === role;
     modalBackdrop.classList.remove('hidden');
     clientIdInput.focus();
   }
@@ -308,18 +393,26 @@
     cfg.googleClientId = clientIdInput.value.trim();
     cfg.apiKey = apiKeyInput.value.trim();
     saveConfig(cfg);
+    const picked = document.querySelector('input[name="role"]:checked');
+    if (picked) setRole(picked.value, true);
     closeModal();
+    renderBoard();
     addMessage('agent', cfg.googleClientId
-      ? 'Client ID saved — say "connect" (or hit the button) and I\'ll open Google sign-in.'
+      ? 'Settings saved — say "connect" (or hit the button) and I\'ll open Google sign-in.'
       : 'Saved.');
   });
   disconnectBtn.addEventListener('click', () => { doDisconnect(); closeModal(); addMessage('agent', 'Disconnected — your data is cleared from the page.'); });
 
   // ---- boot -----------------------------------------------------------------------
+  renderChips();
   renderBoard();
-  addMessage('agent',
-    'Hi, I\'m ClassMate! I check your Google Classroom and keep every assignment in one tidy place — what\'s missing, what\'s due today, what\'s coming up.\n\n' +
-    '• "Connect Google" links your school account (read-only — I can never change or submit anything)\n' +
-    '• "Try the demo" shows how it all works with sample data\n\n' +
-    'Once connected, ask me things like "what\'s due tomorrow?" or "am I missing anything?"');
+  addMessage('agent', loadConfig().role === 'teacher'
+    ? 'Hi, I\'m ClassMate! 🍎 Teacher mode: I pull the coursework from all your courses, organize it per class, and help you calibrate it — test-drive any assignment for a difficulty rating, time estimate and (with a Claude key) a full worked solution and rubric.\n\n' +
+      '• "Connect Google" links your account (read-only)\n' +
+      '• "Try the demo" shows it all with sample coursework\n\n' +
+      'Then try "rate everything" or hit 🧪 on any assignment.'
+    : 'Hi, I\'m ClassMate! I check your Google Classroom and keep every assignment in one tidy place — what\'s missing, what\'s due today, what\'s coming up.\n\n' +
+      '• "Connect Google" links your school account (read-only — I can never change or submit anything)\n' +
+      '• "Try the demo" shows how it all works with sample data\n\n' +
+      'Once connected, ask me things like "what\'s due tomorrow?" or "am I missing anything?" (Teaching? Switch roles in Settings.)');
 })();

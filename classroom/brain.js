@@ -55,6 +55,22 @@ class ClassMateBrain {
       if (!connected) return { confident: true, text: `Nothing to refresh yet — say "connect" to link your Google Classroom, or "demo" to explore with sample data.` };
       return { confident: true, text: `On it — pulling the latest from ${c.mode === 'demo' ? 'the demo data' : 'Google Classroom'}…`, action: { type: 'refresh' } };
     }
+    // ---- teacher tools: test drive / difficulty rating (teacher role only) ----
+    if (this.role === 'teacher' && has('test drive', 'test-drive', 'solve', 'answer key', 'rate', 'difficulty', 'how hard', 'hardest', 'easiest', 'calibrate')) {
+      if (!connected) {
+        return { confident: true, text: `Once I can see your coursework I'll rate away — say "connect" to link your Classroom (teacher mode), or "demo" to try it with sample assignments.` };
+      }
+      if (has('hardest', 'easiest', 'rate all', 'rate everything', 'all of them', 'rank', 'my assignments', 'rate my')) {
+        return { confident: true, text: this.rateAll(has('easiest')) };
+      }
+      const item = this.findItem(t);
+      if (!item) {
+        const ex = c.open()[0];
+        return { confident: true, text: `Which assignment? e.g. "test drive ${ex ? ex.title : 'the essay'}" — or say "rate everything" for the full ranking.` };
+      }
+      return this.testDrive(item);
+    }
+
     // assignment coaching — checked before the generic help intent, since
     // "help me start…" contains "help"
     if (has('break it down', 'break down', 'help me start', 'help me with', 'how do i start', 'get started on', 'where do i start', 'plan for')) {
@@ -76,6 +92,17 @@ class ClassMateBrain {
         : `Hey! I'm ClassMate — I keep an eye on your Google Classroom assignments. Say "connect" to link your account (read-only), or "demo" to see how it works first.` };
     }
     if (has('what can you do', 'help', 'commands', 'how do you work')) {
+      if (this.role === 'teacher') {
+        return { confident: true, text: [
+          `Teacher mode — here's what I can do with your coursework:`,
+          `• "Test drive [assignment]" — difficulty rating, time estimate, and (with a Claude key) a full worked solution, ambiguity flags and rubric`,
+          `• "Rate everything" / "which is hardest?" — rank all open assignments by difficulty`,
+          `• "What's due this week?" — deadlines across all your courses`,
+          `• "What's open in Chemistry?" — any course by name`,
+          `• "Refresh" to re-check Classroom · "connect" / "disconnect" / "demo"`,
+          `Tip: the deep analysis (worked answer keys) needs a Claude API key in Settings.`,
+        ].join('\n') };
+      }
       return { confident: true, text: [
         `Here's what I can check for you:`,
         `• "What's due today / tomorrow / this week?"`,
@@ -150,6 +177,61 @@ class ClassMateBrain {
     }
 
     return null;
+  }
+
+  get role() { return (this.getConfig().role === 'teacher') ? 'teacher' : 'student'; }
+
+  // ---- teacher tools --------------------------------------------------------------
+  // Quick heuristic difficulty from type, points and description length — a
+  // calibration starting point; the Claude hookup does the real analysis.
+  rateItem(i) {
+    const title = (i.title + ' ' + (i.description || '')).toLowerCase();
+    let score = 2;
+    if (/project|research|presentation|report/.test(title)) score += 2;
+    else if (/essay|paper|analysis|analyzing/.test(title)) score += 1.5;
+    else if (/lab/.test(title)) score += 1;
+    if (/quiz|safety|review|optional|flashcard/.test(title)) score -= 1;
+    if (i.points >= 100) score += 1; else if (i.points >= 50) score += 0.5; else if (i.points > 0 && i.points <= 15) score -= 0.5;
+    if ((i.description || '').length > 220) score += 0.5;
+    const stars = Math.min(5, Math.max(1, Math.round(score)));
+    const mins = Math.round(Math.min(300, Math.max(15,
+      (i.points ? i.points * 2 : 40) * (stars >= 4 ? 1.5 : stars <= 2 ? 0.7 : 1))) / 15) * 15;
+    return { stars, mins };
+  }
+
+  fmtRating(i) {
+    const { stars, mins } = this.rateItem(i);
+    const time = mins >= 60 ? `${(mins / 60).toFixed(mins % 60 ? 1 : 0)} h` : `${mins} min`;
+    return { stars, mins, label: `${'★'.repeat(stars)}${'☆'.repeat(5 - stars)} · ~${time} of student time` };
+  }
+
+  rateAll(easiestFirst) {
+    const rated = this.client.open()
+      .map(i => ({ i, r: this.fmtRating(i) }))
+      .sort((a, b) => easiestFirst ? a.r.stars - b.r.stars || a.r.mins - b.r.mins : b.r.stars - a.r.stars || b.r.mins - a.r.mins);
+    if (!rated.length) return `No open assignments to rate right now.`;
+    const out = [`Difficulty ranking, ${easiestFirst ? 'easiest' : 'hardest'} first (my quick calibration — ask me to "test drive" any of them for the deep dive):`];
+    rated.forEach(({ i, r }, n) => out.push(`${n + 1}. ${i.title} · ${i.courseName} · ${r.label}`));
+    const heavy = rated.filter(x => x.r.stars >= 4).length;
+    if (heavy >= 2) out.push('', `Heads up: ${heavy} heavyweight assignments are open at once — worth checking their due dates don't collide for students taking multiple of your courses.`);
+    return out.join('\n');
+  }
+
+  testDrive(item) {
+    const r = this.fmtRating(item);
+    const base = [
+      `Test drive: "${item.title}" (${item.courseName}${item.points ? `, ${item.points} pts` : ''})`,
+      ``,
+      `• Quick difficulty read: ${r.label}`,
+      item.description ? `• Instructions on file: "${item.description.slice(0, 160)}${item.description.length > 160 ? '…' : ''}"` : `• No description on this one — students may need clearer instructions.`,
+    ];
+    if (this.getConfig().apiKey) {
+      // hand off to Claude (system prompt carries the teacher instructions + full
+      // descriptions) for the worked solution, ambiguity flags and rubric
+      return { confident: false, text: base.join('\n') };
+    }
+    base.push('', `For the full test drive — a worked exemplar solution, ambiguity flags, prerequisite check and a rubric suggestion — add a Claude API key in Settings and ask again. The quick read above is heuristic (type + points + instruction length).`);
+    return { confident: true, text: base.join('\n') };
   }
 
   // ---- assignment coaching ------------------------------------------------------
@@ -338,16 +420,29 @@ class ClassMateBrain {
 
   buildSystemPrompt() {
     const c = this.client;
+    const teacher = this.role === 'teacher';
     const list = c.items.map(i =>
-      `- [${i.state}] ${i.title} (${i.courseName})${i.dueAt ? ` due ${i.dueAt.toLocaleString()}` : ''}${i.points ? `, ${i.points} pts` : ''}`
+      `- [${i.state}] ${i.title} (${i.courseName})${i.dueAt ? ` due ${i.dueAt.toLocaleString()}` : ''}${i.points ? `, ${i.points} pts` : ''}${i.description ? `\n  instructions: ${i.description.slice(0, 400)}` : ''}`
     ).join('\n');
-    return [
+    const roleBlock = teacher ? [
+      `You are ClassMate, a sharp, collegial assistant for a TEACHER reviewing their own Google Classroom coursework across multiple courses. The assignments below are the teacher's own material — they authored it.`,
+      `When asked to "test drive", solve, or rate an assignment, do the full job:`,
+      `1. Work the assignment as a strong student would — a complete exemplar solution / answer key (for essays: a model outline plus a sample paragraph; for problem sets: worked answers; for labs: the expected results and calculations).`,
+      `2. Rate difficulty 1-5 with a one-line justification, and estimate realistic student time.`,
+      `3. Flag anything ambiguous, unclearly worded, or missing from the instructions.`,
+      `4. List prerequisite concepts students need, and note any that may not have been covered yet based on the other coursework.`,
+      `5. Suggest a simple point-breakdown rubric.`,
+      `Be candid — a too-hard or unclear assignment is exactly what they want to catch before students see it.`,
+    ] : [
       `You are ClassMate, a friendly, encouraging assistant that helps a student stay on top of Google Classroom assignments.`,
-      `Keep replies short, warm and practical. Plain text only — simple "•" bullets are fine, no markdown headers.`,
       `Help with prioritizing, planning study time, breaking big assignments into steps, and explaining concepts they're stuck on.`,
       `You NEVER produce work for submission — no writing their essays, no solving their graded problems, no answers to hand in. If asked, warmly decline and coach them through doing it themselves instead (explain the concept, walk through a DIFFERENT example, ask guiding questions). This is non-negotiable, for their own good.`,
+    ];
+    return [
+      ...roleBlock,
+      `Keep replies practical and well-organized. Plain text only — simple "•" bullets and numbered lists are fine, no markdown headers.`,
       ``,
-      c.mode === 'none' ? `No Classroom data is connected yet.` : `Current assignments (synced ${c.lastSync ? c.lastSync.toLocaleTimeString() : ''}):`,
+      c.mode === 'none' ? `No Classroom data is connected yet.` : `Current coursework (synced ${c.lastSync ? c.lastSync.toLocaleTimeString() : ''}):`,
       list || '(none)',
     ].join('\n');
   }

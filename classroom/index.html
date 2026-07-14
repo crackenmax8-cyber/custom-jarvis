@@ -50,8 +50,10 @@
             <button class="btn-solid" id="emptyConnect">Connect Google</button>
             <button class="btn-ghost" id="emptyDemo">Try the demo</button>
           </div>
-          <p class="board-empty-note">Read-only access: ClassMate can see courses and your
-             own assignments, and can never change or submit anything.</p>
+          <p class="board-empty-note">Read-only access: ClassMate can see courses and assignments,
+             and can never change or submit anything.</p>
+          <p class="board-empty-note">Teaching? <button class="link-btn" id="emptyTeacher">Switch to teacher mode</button>
+             to test-drive your own assignments and rate their difficulty.</p>
         </div>
         <div id="boardGroups"></div>
       </section>
@@ -82,7 +84,12 @@
         a 5-minute, one-time setup (see the README). Both values below are stored
         only in this browser's localStorage.
       </p>
-      <label for="clientId">Google OAuth Client ID</label>
+      <span class="modal-label">I am a…</span>
+      <div class="role-row" role="radiogroup" aria-label="Your role">
+        <label class="role-opt"><input type="radio" name="role" value="student" checked /> 🎒 Student — track my work</label>
+        <label class="role-opt"><input type="radio" name="role" value="teacher" /> 🍎 Teacher — I make the assignments</label>
+      </div>
+      <label for="clientId" class="mt">Google OAuth Client ID</label>
       <input type="text" id="clientId" placeholder="1234…apps.googleusercontent.com" autocomplete="off" />
       <label for="apiKey" class="mt">Anthropic API key (optional — smarter chat)</label>
       <input type="password" id="apiKey" placeholder="sk-ant-…" autocomplete="off" />
