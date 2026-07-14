@@ -56,12 +56,12 @@
   }
 
   function card(i) {
-    const el = document.createElement(i.link ? 'a' : 'div');
+    const el = document.createElement('div');
     el.className = `card state-${i.state}`;
-    if (i.link) { el.href = i.link; el.target = '_blank'; el.rel = 'noopener'; }
-    const title = document.createElement('div');
+    const title = document.createElement(i.link ? 'a' : 'div');
     title.className = 'card-title';
     title.textContent = i.title;
+    if (i.link) { title.href = i.link; title.target = '_blank'; title.rel = 'noopener'; title.title = 'Open in Google Classroom'; }
     const meta = document.createElement('div');
     meta.className = 'card-meta';
     const course = document.createElement('span');
@@ -80,6 +80,17 @@
     }
     el.appendChild(title);
     el.appendChild(meta);
+    if (i.state !== 'done') {
+      const help = document.createElement('button');
+      help.className = 'help-btn';
+      help.textContent = '✨ Break it down';
+      help.title = 'Get a step-by-step starter plan in the chat';
+      help.addEventListener('click', (e) => {
+        e.preventDefault();
+        handleQuery(`Break down "${i.title}"`);
+      });
+      el.appendChild(help);
+    }
     return el;
   }
 

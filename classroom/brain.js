@@ -55,6 +55,20 @@ class ClassMateBrain {
       if (!connected) return { confident: true, text: `Nothing to refresh yet — say "connect" to link your Google Classroom, or "demo" to explore with sample data.` };
       return { confident: true, text: `On it — pulling the latest from ${c.mode === 'demo' ? 'the demo data' : 'Google Classroom'}…`, action: { type: 'refresh' } };
     }
+    // assignment coaching — checked before the generic help intent, since
+    // "help me start…" contains "help"
+    if (has('break it down', 'break down', 'help me start', 'help me with', 'how do i start', 'get started on', 'where do i start', 'plan for')) {
+      if (!connected) {
+        return { confident: true, text: `Happy to — once I can see your assignments. Say "connect" to link Google Classroom, or "demo" to try it with sample data.` };
+      }
+      const item = this.findItem(t);
+      if (!item) {
+        const ex = c.open()[0];
+        return { confident: true, text: `Which one? Name it and I'll break it down — e.g. "break down ${ex ? ex.title : 'the essay'}".` };
+      }
+      return { confident: true, text: this.coachPlan(item) };
+    }
+
     // greeting / help
     if (has('hello', 'hey', 'hi ', 'yo ', 'sup', 'good morning', 'good evening') || t === 'hi' || t === 'yo') {
       return { confident: true, text: connected
@@ -136,6 +150,89 @@ class ClassMateBrain {
     }
 
     return null;
+  }
+
+  // ---- assignment coaching ------------------------------------------------------
+  // Fuzzy-match an open assignment from the user's words (quoted title wins).
+  findItem(t) {
+    const open = this.client.open();
+    const quoted = t.match(/"([^"]+)"/);
+    if (quoted) {
+      const q = quoted[1].toLowerCase();
+      const hit = open.find(i => i.title.toLowerCase().includes(q) || q.includes(i.title.toLowerCase()));
+      if (hit) return hit;
+    }
+    let best = null, bestScore = 0;
+    for (const i of open) {
+      const words = i.title.toLowerCase().split(/[^a-z0-9.]+/).filter(w => w.length > 3);
+      const score = words.filter(w => t.includes(w)).length;
+      if (score > bestScore) { best = i; bestScore = score; }
+    }
+    return bestScore >= 1 ? best : null;
+  }
+
+  // A starter plan tailored to the assignment type — coaching, never the work itself.
+  coachPlan(i) {
+    const title = i.title.toLowerCase();
+    const steps =
+      /essay|paper|writing|paragraph/.test(title) ? [
+        'Re-read the prompt and underline exactly what it asks — thesis questions hide in the verbs.',
+        'Brain-dump every idea for 10 minutes, no filtering.',
+        'Pick your 2–3 strongest points and write a one-sentence thesis.',
+        'Outline: intro, one paragraph per point with a quote/example each, conclusion.',
+        'Write the ugly first draft straight through — fix nothing yet.',
+        'Revise once for argument, once for grammar. Read it aloud at the end.',
+      ] :
+      /lab|experiment/.test(title) ? [
+        'Pull up your raw data and the lab handout side by side.',
+        'Sketch the structure: purpose, hypothesis, method (brief), results, analysis, conclusion.',
+        'Make your data table/graph first — the analysis almost writes itself from it.',
+        'In the analysis, answer: did the results match the hypothesis? Why or why not?',
+        'Note at least one error source — graders always look for it.',
+      ] :
+      /worksheet|problem|practice|set\b|packet/.test(title) ? [
+        'Skim all the problems first and mark each: easy / medium / no idea.',
+        'Do every easy one first — momentum is real.',
+        'For the mediums, find the matching example in your notes or textbook and mirror it.',
+        'For the "no idea" ones, write down where exactly you get stuck — that\'s your question for the teacher or a friend.',
+        'Check answers on the easy ones before trusting your method on the hard ones.',
+      ] :
+      /quiz|test|exam|prep|review/.test(title) ? [
+        'Gather what it covers: notes, past worksheets, the study guide if there is one.',
+        'Make a one-page summary sheet from memory first, then fill gaps from notes.',
+        'Turn the gaps into flashcards or practice questions.',
+        'Do one timed self-test, then review only what you missed.',
+        'Sleep — a rested brain outscores a crammed one.',
+      ] :
+      /project|research|presentation/.test(title) ? [
+        'List every deliverable the rubric mentions — that list is your roadmap.',
+        'Work backwards from the due date: research → outline → build → polish, with a day each at minimum.',
+        'Do the research pass first and save every source link as you go.',
+        'Build the skeleton (headings/slides) before writing anything pretty.',
+        'Finish a rough complete version early — polishing beats panicking.',
+      ] :
+      /read|journal|chapter|response/.test(title) ? [
+        'Read the response prompt FIRST so you know what to watch for.',
+        'Skim the chapter headings, then read with quick margin notes or sticky flags.',
+        'Mark 2–3 quotes or moments that connect to the prompt.',
+        'Write your response from those marks — specific beats general every time.',
+      ] : [
+        'Read the instructions twice and list every deliverable.',
+        'Split it into 3–4 chunks that each take under 30 minutes.',
+        'Do the easiest chunk first to build momentum.',
+        'Leave a final pass for checking against the instructions.',
+      ];
+
+    const out = [`Let's crack "${i.title}" (${i.courseName}${i.dueAt ? `, ${this.fmtDue(i.dueAt)}` : ''}):`, ''];
+    steps.forEach((s, n) => out.push(`${n + 1}. ${s}`));
+    if (i.dueAt) {
+      const days = Math.max(0, Math.round((i.dueAt - new Date()) / 86400000));
+      out.push('', days <= 0 ? `This one's due — do steps 1–2 right now and the rest in one sitting.`
+        : days === 1 ? `Due tomorrow: steps 1–3 today, the rest tomorrow morning.`
+        : `You've got ~${days} days: spread the steps out, roughly ${Math.max(1, Math.ceil(steps.length / days))} per day.`);
+    }
+    out.push('', `I'll coach you through any step — but the work itself has to be yours. That's the honest way and the only one that actually sticks for the test.${this.getConfig().apiKey ? '' : ' (Add a Claude key in Settings and I can explain concepts step-by-step too.)'}`);
+    return out.join('\n');
   }
 
   // ---- formatting helpers -----------------------------------------------------
@@ -247,7 +344,8 @@ class ClassMateBrain {
     return [
       `You are ClassMate, a friendly, encouraging assistant that helps a student stay on top of Google Classroom assignments.`,
       `Keep replies short, warm and practical. Plain text only — simple "•" bullets are fine, no markdown headers.`,
-      `Help with prioritizing, planning study time, and breaking big assignments into steps. Do NOT do the assignments for them.`,
+      `Help with prioritizing, planning study time, breaking big assignments into steps, and explaining concepts they're stuck on.`,
+      `You NEVER produce work for submission — no writing their essays, no solving their graded problems, no answers to hand in. If asked, warmly decline and coach them through doing it themselves instead (explain the concept, walk through a DIFFERENT example, ask guiding questions). This is non-negotiable, for their own good.`,
       ``,
       c.mode === 'none' ? `No Classroom data is connected yet.` : `Current assignments (synced ${c.lastSync ? c.lastSync.toLocaleTimeString() : ''}):`,
       list || '(none)',
