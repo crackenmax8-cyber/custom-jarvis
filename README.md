@@ -91,10 +91,12 @@ Usage status thresholds: **< 70%** nominal · **70–90%** elevated · **≥ 90%
 ## Also in this repo
 
 - 🎛️ **[SELECTA — House Music DJ Agent](dj/)** — an AI agent built to be a
-  house music DJ: 17 subgenres, 35+ legends, mixing technique, live Camelot-wheel
-  harmonic math, and a set builder that routes harmonically-compatible journeys
-  through a crate of classics. Same pattern as Jarvis: fully offline local brain,
-  optional Claude hookup. See [`dj/README.md`](dj/README.md).
+  house music DJ. It **plays live house grooves** (a Web Audio beat engine with
+  Chicago/deep/tech/acid presets), knows 17 subgenres and 35+ legends, teaches
+  mixing technique, has an interactive Camelot wheel, a trivia quiz mode, and a
+  set builder that routes harmonically-compatible journeys through a 55-track
+  crate of classics. Same pattern as Jarvis: fully offline local brain, optional
+  Claude hookup, optional spoken replies. See [`dj/README.md`](dj/README.md).
 
 ---
 

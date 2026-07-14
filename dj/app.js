@@ -1,7 +1,8 @@
 /*
  * app.js — UI wiring for SELECTA: chat rendering (rich formatting for lists,
- * track cards with BPM/key pills and energy meters, headers), composer,
- * quick-prompt chips, light/dark theme toggle, and the settings modal.
+ * track cards with BPM/key pills and energy meters, headers), the live deck
+ * (Web Audio beat engine + transport controls), the interactive Camelot wheel,
+ * optional spoken replies, quick-prompt chips, theme toggle, and settings.
  *
  * All localStorage access goes through the `storage` wrapper — sandboxed
  * embeds (e.g. artifact viewers) block storage entirely, and a bare access
@@ -11,6 +12,7 @@
 (() => {
   const CONFIG_KEY = 'selecta.config.v1';
   const THEME_KEY = 'selecta.theme.v1';
+  const VOICE_KEY = 'selecta.voice.v1';
 
   // ---- safe storage (sandbox-proof) -------------------------------------------
   const storage = {
@@ -32,13 +34,24 @@
   const composer = document.getElementById('composer');
   const input = document.getElementById('input');
   const chips = document.getElementById('chips');
+  const turntable = document.getElementById('turntable');
+  const playBtn = document.getElementById('playBtn');
+  const presets = document.getElementById('presets');
+  const bpmDown = document.getElementById('bpmDown');
+  const bpmUp = document.getElementById('bpmUp');
+  const bpmReadout = document.getElementById('bpmReadout');
+  const statusLabel = document.getElementById('statusLabel');
+  const wheelBtn = document.getElementById('wheelBtn');
+  const voiceBtn = document.getElementById('voiceBtn');
   const themeBtn = document.getElementById('themeBtn');
   const settingsBtn = document.getElementById('settingsBtn');
   const modalBackdrop = document.getElementById('modalBackdrop');
   const apiKeyInput = document.getElementById('apiKey');
   const saveKeyBtn = document.getElementById('saveKey');
   const clearKeyBtn = document.getElementById('clearKey');
-  const bpmReadout = document.getElementById('bpmReadout');
+  const wheelBackdrop = document.getElementById('wheelBackdrop');
+  const wheelMount = document.getElementById('wheelMount');
+  const wheelInfo = document.getElementById('wheelInfo');
 
   // ---- theme -------------------------------------------------------------------
   function applyTheme(theme) {
@@ -54,6 +67,68 @@
     document.body.classList.add('theme-locked'); // in-app choice wins over any host theme
     applyTheme(theme);
   });
+
+  // ---- the live deck -------------------------------------------------------------
+  const deck = new window.DJDeck(updateDeckUI);
+
+  function updateDeckUI() {
+    document.body.classList.toggle('playing', deck.playing);
+    playBtn.textContent = deck.playing ? '⏹' : '▶';
+    playBtn.setAttribute('aria-label', deck.playing ? 'Stop the beat' : 'Play the beat');
+    statusLabel.textContent = deck.playing ? 'ON AIR' : 'DECKS READY';
+    bpmReadout.textContent = `${deck.bpm} BPM`;
+    for (const btn of presets.querySelectorAll('.preset')) {
+      btn.classList.toggle('active', btn.dataset.preset === deck.preset);
+    }
+  }
+
+  function startDeck() {
+    if (!deck.isSupported()) {
+      addMessage('agent', 'This browser has no Web Audio support, so the live deck stays quiet — everything else still works.');
+      return;
+    }
+    deck.start();
+  }
+
+  playBtn.addEventListener('click', () => (deck.playing ? deck.stop() : startDeck()));
+  turntable.addEventListener('click', () => (deck.playing ? deck.stop() : startDeck()));
+  presets.addEventListener('click', (e) => {
+    const btn = e.target.closest('.preset');
+    if (btn) deck.setPreset(btn.dataset.preset);
+  });
+  bpmDown.addEventListener('click', () => deck.setBpm(deck.bpm - 1));
+  bpmUp.addEventListener('click', () => deck.setBpm(deck.bpm + 1));
+  updateDeckUI();
+
+  // ---- spoken replies (optional) ---------------------------------------------------
+  let voiceOn = storage.get(VOICE_KEY) === 'on';
+  function updateVoiceUI() {
+    voiceBtn.textContent = voiceOn ? '🔊' : '🔇';
+    voiceBtn.setAttribute('aria-pressed', String(voiceOn));
+    voiceBtn.title = voiceOn ? 'Spoken replies: on' : 'Spoken replies: off';
+  }
+  updateVoiceUI();
+  voiceBtn.addEventListener('click', () => {
+    voiceOn = !voiceOn;
+    storage.set(VOICE_KEY, voiceOn ? 'on' : 'off');
+    updateVoiceUI();
+    if (!voiceOn) { try { window.speechSynthesis.cancel(); } catch (e) {} }
+  });
+
+  function speak(text) {
+    if (!voiceOn) return;
+    try {
+      const synth = window.speechSynthesis;
+      if (!synth) return;
+      synth.cancel();
+      // strip list bullets and squeeze whitespace; keep it to a spoken-size chunk
+      const clean = text.replace(/^[•\d]+[.)]\s*/gm, '').replace(/\s+/g, ' ').trim().slice(0, 420);
+      const utter = new SpeechSynthesisUtterance(clean);
+      utter.rate = 1.02;
+      utter.pitch = 0.92;
+      synth.speak(utter);
+    } catch (e) { /* speech unavailable */ }
+  }
 
   // ---- rich message rendering ------------------------------------------------------
   // The brain returns plain text with a light structure: "• " bullets, "N. "
@@ -212,6 +287,20 @@
     return row;
   }
 
+  // ---- brain actions -------------------------------------------------------------
+  function handleAction(action) {
+    if (!action) return;
+    if (action.type === 'play') {
+      deck.setPreset(action.preset || 'classic');
+      if (action.bpm) deck.setBpm(action.bpm);
+      startDeck();
+    } else if (action.type === 'stop') {
+      deck.stop();
+    } else if (action.type === 'wheel') {
+      openWheel();
+    }
+  }
+
   async function handleQuery(q) {
     const text = (q || '').trim();
     if (!text) return;
@@ -221,11 +310,13 @@
     const typing = addTyping();
     // tiny delay so local answers still feel conversational
     const started = Date.now();
-    const { text: reply } = await brain.respond(text);
+    const { text: reply, action } = await brain.respond(text);
     const elapsed = Date.now() - started;
     await new Promise(r => setTimeout(r, Math.max(0, 350 - elapsed)));
     typing.remove();
     addMessage('agent', reply);
+    speak(reply);
+    handleAction(action);
   }
 
   composer.addEventListener('submit', (e) => {
@@ -238,23 +329,105 @@
     if (btn) handleQuery(btn.dataset.q);
   });
 
+  // ---- Camelot wheel modal --------------------------------------------------------
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  let wheelBuilt = false;
+
+  function polar(cx, cy, r, deg) {
+    const rad = (deg * Math.PI) / 180;
+    return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
+  }
+
+  // annular sector path from angle a0 to a1 between radii r1 (inner) and r2 (outer)
+  function sectorPath(cx, cy, r1, r2, a0, a1) {
+    const [x1, y1] = polar(cx, cy, r2, a0);
+    const [x2, y2] = polar(cx, cy, r2, a1);
+    const [x3, y3] = polar(cx, cy, r1, a1);
+    const [x4, y4] = polar(cx, cy, r1, a0);
+    return `M ${x1} ${y1} A ${r2} ${r2} 0 0 1 ${x2} ${y2} L ${x3} ${y3} A ${r1} ${r1} 0 0 0 ${x4} ${y4} Z`;
+  }
+
+  function buildWheel() {
+    if (wheelBuilt) return;
+    wheelBuilt = true;
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 320 320');
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', 'Camelot wheel of musical keys');
+    const cx = 160, cy = 160;
+    const rings = [
+      { letter: 'B', r1: 105, r2: 152, tr: 128 }, // outer: major
+      { letter: 'A', r1: 58, r2: 105, tr: 82 },   // inner: minor
+    ];
+    for (const ring of rings) {
+      for (let n = 1; n <= 12; n++) {
+        const center = (n % 12) * 30 - 90; // 12 at the top
+        const a0 = center - 14, a1 = center + 14;
+        const path = document.createElementNS(SVG_NS, 'path');
+        path.setAttribute('d', sectorPath(cx, cy, ring.r1, ring.r2, a0, a1));
+        path.setAttribute('class', 'wheel-seg');
+        path.dataset.num = String(n);
+        path.dataset.letter = ring.letter;
+        const names = window.DJKnowledge.camelot[n];
+        const title = document.createElementNS(SVG_NS, 'title');
+        title.textContent = `${n}${ring.letter} — ${ring.letter === 'A' ? names[0] : names[1]}`;
+        path.appendChild(title);
+        svg.appendChild(path);
+        const [tx, ty] = polar(cx, cy, ring.tr, center);
+        const label = document.createElementNS(SVG_NS, 'text');
+        label.setAttribute('x', String(tx));
+        label.setAttribute('y', String(ty));
+        label.setAttribute('class', 'wheel-label');
+        label.textContent = `${n}${ring.letter}`;
+        svg.appendChild(label);
+      }
+    }
+    svg.addEventListener('click', (e) => {
+      const seg = e.target.closest('.wheel-seg');
+      if (seg) selectWheelKey(svg, Number(seg.dataset.num), seg.dataset.letter);
+    });
+    wheelMount.appendChild(svg);
+  }
+
+  function selectWheelKey(svg, num, letter) {
+    const wrap = n => ((n - 1) % 12 + 12) % 12 + 1;
+    for (const seg of svg.querySelectorAll('.wheel-seg')) {
+      const n = Number(seg.dataset.num), l = seg.dataset.letter;
+      seg.classList.toggle('sel', n === num && l === letter);
+      seg.classList.toggle('comp', (n === num && l !== letter) || (l === letter && (n === wrap(num - 1) || n === wrap(num + 1))));
+      seg.classList.toggle('boost', l === letter && n === wrap(num + 2));
+    }
+    wheelInfo.textContent = '';
+    renderRich(wheelInfo, brain.camelotAnswer(num, letter));
+  }
+
+  function openWheel() {
+    buildWheel();
+    wheelBackdrop.classList.remove('hidden');
+  }
+  wheelBtn.addEventListener('click', openWheel);
+  wheelBackdrop.addEventListener('click', (e) => { if (e.target === wheelBackdrop) wheelBackdrop.classList.add('hidden'); });
+
   // ---- settings modal --------------------------------------------------------------
   function openModal() {
     apiKeyInput.value = loadConfig().apiKey || '';
     modalBackdrop.classList.remove('hidden');
     apiKeyInput.focus();
   }
-  function closeModal() { modalBackdrop.classList.add('hidden'); }
+  function closeModals() {
+    modalBackdrop.classList.add('hidden');
+    wheelBackdrop.classList.add('hidden');
+  }
 
   settingsBtn.addEventListener('click', openModal);
-  modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) closeModal(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+  modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) closeModals(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModals(); });
 
   saveKeyBtn.addEventListener('click', () => {
     const cfg = loadConfig();
     cfg.apiKey = apiKeyInput.value.trim();
     saveConfig(cfg);
-    closeModal();
+    closeModals();
     addMessage('agent', cfg.apiKey
       ? 'Claude link is live — ask me anything and I\'ll freestyle beyond the crate.'
       : 'Running fully offline on the built-in crate.');
@@ -266,21 +439,13 @@
     saveConfig(cfg);
   });
 
-  // ---- decorative BPM readout ---------------------------------------------------------
-  let bpm = 124.0;
-  setInterval(() => {
-    bpm += (Math.random() - 0.5) * 0.2;
-    bpm = Math.min(128, Math.max(120, bpm));
-    bpmReadout.textContent = `${bpm.toFixed(1)} BPM`;
-  }, 2000);
-
   // ---- opening message -------------------------------------------------------------
   addMessage('agent',
-    'Hey! I\'m SELECTA, your house music DJ — decades of crate knowledge, from the Warehouse to the White Isle.\n\n' +
+    'Hey! I\'m SELECTA, your house music DJ — decades of crate knowledge, from the Warehouse to the White Isle. And now I have a live deck: hit the record (or say "drop a beat") and I\'ll synthesize a house groove right here.\n\n' +
     'I can help you with:\n' +
-    '• Genres — every house style, its sound, BPM and essential tracks\n' +
-    '• The legends — artists, labels and the history of house\n' +
+    '• The live deck — "drop a beat", "play some acid at 128"\n' +
+    '• Genres, legends, labels and the history of house\n' +
     '• DJ technique — beatmatching, EQ mixing, harmonic keys, set building\n' +
-    '• Gear advice and track recommendations\n\n' +
+    '• "Build me a set" for a harmonically-mixed journey, "quiz me" for trivia\n\n' +
     'Tap a suggestion below, or just type a question to get started.');
 })();

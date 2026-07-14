@@ -4,10 +4,14 @@
  * Two modes, mirroring jarvis.js:
  *   1. LOCAL (default, fully offline): intent matching over the DJ knowledge
  *      base — genres, artists, labels, techniques, gear, history, Camelot-wheel
- *      math, track recommendations, and a harmonic set builder.
+ *      math, track recommendations, a harmonic set builder, and a 5-question
+ *      quiz mode.
  *   2. CLAUDE (optional): with an Anthropic API key saved in Settings,
  *      free-form questions go to Claude with a house-DJ persona and the
  *      knowledge base injected as context. Falls back to LOCAL on any error.
+ *
+ * respond() returns { text, action? } — action asks the UI to do something
+ * beyond text: {type:'play', preset, bpm} / {type:'stop'} / {type:'wheel'}.
  */
 
 class DJBrain {
@@ -15,6 +19,7 @@ class DJBrain {
     this.getConfig = getConfig; // () => { apiKey, model }
     this.kb = window.DJKnowledge;
     this.lastTipIndex = -1;
+    this.quiz = null; // {score, asked, total, answer, explain}
   }
 
   async respond(rawText) {
@@ -22,7 +27,7 @@ class DJBrain {
     if (!text) return { text: "Didn't catch that over the monitors — run it back?" };
 
     const local = this.localIntent(text);
-    if (local && local.confident) return { text: local.text };
+    if (local && local.confident) return { text: local.text, action: local.action };
 
     const cfg = this.getConfig();
     if (cfg && cfg.apiKey) {
@@ -34,7 +39,7 @@ class DJBrain {
       }
     }
 
-    return { text: (local && local.text) || this.fallbackText() };
+    return { text: (local && local.text) || this.fallbackText(), action: local && local.action };
   }
 
   // ---- LOCAL INTENTS -------------------------------------------------------
@@ -43,22 +48,65 @@ class DJBrain {
     const kb = this.kb;
     const has = (...words) => words.some(w => t.includes(w));
 
+    // ---- quiz flow (checked first so bare "A"/"B"/"C" answers land) ----
+    if (this.quiz) {
+      if (has('stop quiz', 'quit quiz', 'end quiz', 'enough', 'give up')) {
+        const { score, asked } = this.quiz;
+        this.quiz = null;
+        return { confident: true, text: `Quiz closed — ${score}/${asked} while it ran. Respect for stepping up.` };
+      }
+      const pick = t.match(/^\s*([abc])\b/);
+      if (pick) return { confident: true, text: this.answerQuiz(pick[1].toUpperCase()) };
+    }
+    if (has('quiz', 'test me', 'trivia', 'test my knowledge')) {
+      return { confident: true, text: this.startQuiz() };
+    }
+
+    // ---- deck control: play / stop the beat ----
+    if (has('drop a beat', 'play a beat', 'play a groove', 'play some', 'play me a', 'drop some', 'spin something', 'make some noise', 'start the music', 'start the beat', 'play music', 'hit play', 'drop the beat')) {
+      const preset = has('deep', 'warm', 'chill', 'smooth') ? 'deep'
+                   : has('acid', '303', 'squelch') ? 'acid'
+                   : has('tech', 'hard', 'driving', 'peak') ? 'tech'
+                   : 'classic';
+      const bpmMatch = t.match(/(\d{3})\s*bpm|at\s+(\d{3})\b/);
+      const bpm = bpmMatch ? parseInt(bpmMatch[1] || bpmMatch[2], 10) : null;
+      const names = { classic: 'a jacking Chicago groove', deep: 'something deep and warm', tech: 'a rolling tech groove', acid: 'a 303 acid line' };
+      return {
+        confident: true,
+        text: `Needle down — ${names[preset]}${bpm ? ` at ${bpm} BPM` : ''}, synthesized live on the deck. Use the transport up top to switch styles or nudge the tempo. Say "stop" when you've had enough.`,
+        action: { type: 'play', preset, bpm },
+      };
+    }
+    if (/^\s*(stop|pause|silence|cut it|kill it)\s*[.!]*\s*$/.test(t) || has('stop the beat', 'stop the music', 'stop playing', 'turn it off')) {
+      return { confident: true, text: `Fader down. The floor catches its breath.`, action: { type: 'stop' } };
+    }
+
+    // ---- camelot wheel (visual) ----
+    if (has('show me the wheel', 'show the wheel', 'open the wheel', 'camelot wheel', 'key wheel', 'show me the camelot')) {
+      return {
+        confident: true,
+        text: `Here's the wheel — tap any key to light up its compatible mixes. Inner ring is minor (A), outer is major (B).`,
+        action: { type: 'wheel' },
+      };
+    }
+
     // greeting
     if (has('hello', 'hey', 'hi ', 'yo ', 'sup', 'what up', "what's up", 'good morning', 'good evening', 'you there') || t === 'hi' || t === 'yo') {
-      return { confident: true, text: `Yes yes — SELECTA in the booth, decks are hot. I live and breathe house music: ask me about any subgenre, the legends, mixing technique, harmonic keys ("what mixes with 8A?"), gear, history — or say "build me a set" and I'll pull from the crate.` };
+      return { confident: true, text: `Yes yes — SELECTA in the booth, decks are hot. Ask me about any subgenre, the legends, technique, harmonic keys — or say "drop a beat" and I'll play you a groove, "quiz me" to test your knowledge, or "build me a set" to pull from the crate.` };
     }
 
     // help / capabilities
     if (has('what can you do', 'help', 'commands', 'how do you work', 'what do you know')) {
       return { confident: true, text: [
         `Here's what I've got in the record bag:`,
-        `• GENRES — "what is deep house?", "tech house bpm", "tell me about acid house"`,
+        `• LIVE DECK — "drop a beat", "play some acid at 128" (styles: Chicago, deep, tech, acid)`,
+        `• GENRES — "what is deep house?", "tech house bpm"`,
         `• LEGENDS — "who is Frankie Knuckles?", "tell me about Kerri Chandler"`,
-        `• TECHNIQUE — "how do I beatmatch?", "explain the bass swap", "what is phrasing?"`,
-        `• HARMONIC MIXING — "what mixes with 8A?", "explain the camelot wheel"`,
-        `• SET CRAFT — "build me a set", "how do I warm up a room?", "recommend a tech house track"`,
-        `• GEAR — "CDJs or turntables?", "what mixer should I get?"`,
-        `• HISTORY — "history of house", "what happened in 1987?"`,
+        `• TECHNIQUE — "how do I beatmatch?", "explain the bass swap"`,
+        `• HARMONIC MIXING — "what mixes with 8A?", "show me the camelot wheel"`,
+        `• SET CRAFT — "build me a set", "recommend a tech house track"`,
+        `• QUIZ — "quiz me" for 5 rounds of house trivia`,
+        `• GEAR & HISTORY — "what mixer should I get?", "history of house"`,
         `• "give me a DJ tip" — booth wisdom on demand`,
         `Add a Claude API key in Settings and I'll freestyle on anything beyond the crate.`,
       ].join('\n') };
@@ -94,7 +142,7 @@ class DJBrain {
     }
 
     // track recommendation — "recommend a deep house track", "play me something soulful"
-    if (has('recommend', 'suggest', 'play me', 'drop', 'track for', 'song for', 'what should i play', 'give me a track', 'give me a song')) {
+    if (has('recommend', 'suggest', 'track for', 'song for', 'what should i play', 'give me a track', 'give me a song')) {
       const genre = this.findGenre(t);
       return { confident: true, text: this.recommendTracks(genre) };
     }
@@ -182,6 +230,84 @@ class DJBrain {
     }
 
     return null;
+  }
+
+  // ---- QUIZ ------------------------------------------------------------------
+  startQuiz() {
+    this.quiz = { score: 0, asked: 0, total: 5, answer: null, explain: '' };
+    return [
+      `Quiz time — 5 questions, answer with A, B or C. Say "stop quiz" to bail.`,
+      ``,
+      this.nextQuestion(),
+    ].join('\n');
+  }
+
+  nextQuestion() {
+    const kb = this.kb;
+    const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
+    const makers = [
+      () => { // genre BPM
+        const g = shuffle(kb.genres)[0];
+        const right = `${g.bpm[0]}–${g.bpm[1]} BPM`;
+        const wrongs = shuffle(kb.genres.filter(x => x.bpm[0] !== g.bpm[0] || x.bpm[1] !== g.bpm[1]))
+          .slice(0, 2).map(x => `${x.bpm[0]}–${x.bpm[1]} BPM`);
+        return { q: `What tempo range does ${this.title(g.id)} usually run?`, right, wrongs, explain: `${this.title(g.id)} sits at ${right}.` };
+      },
+      () => { // who made the track
+        const tr = shuffle(kb.tracks)[0];
+        const wrongs = shuffle(kb.tracks.filter(x => x.artist !== tr.artist)).slice(0, 2).map(x => x.artist);
+        return { q: `Who made "${tr.title}" (${tr.year})?`, right: tr.artist, wrongs, explain: `"${tr.title}" is ${tr.artist}, ${tr.year} — ${tr.genre}, ${tr.bpm} BPM in ${tr.key}.` };
+      },
+      () => { // track year
+        const tr = shuffle(kb.tracks)[0];
+        const offsets = shuffle([-7, -4, -3, 3, 4, 6]).slice(0, 2);
+        return { q: `What year did ${tr.artist} release "${tr.title}"?`, right: String(tr.year), wrongs: offsets.map(o => String(tr.year + o)), explain: `${tr.year}. ${tr.genre}, ${tr.bpm} BPM.` };
+      },
+      () => { // relative key
+        const num = 1 + Math.floor(Math.random() * 12);
+        const letter = Math.random() < 0.5 ? 'A' : 'B';
+        const rel = `${num}${letter === 'A' ? 'B' : 'A'}`;
+        const wrap = n => ((n - 1) % 12 + 12) % 12 + 1;
+        const wrongs = [`${wrap(num + 3)}${letter}`, `${wrap(num + 6)}${letter === 'A' ? 'B' : 'A'}`];
+        return { q: `On the Camelot wheel, which key is the relative ${letter === 'A' ? 'major' : 'minor'} of ${num}${letter}?`, right: rel, wrongs, explain: `Swap the letter, keep the number: ${num}${letter} ↔ ${rel}.` };
+      },
+      () => { // genre origin
+        const g = shuffle(kb.genres.filter(x => !x.origin.includes('worldwide')))[0];
+        const wrongs = shuffle(kb.genres.filter(x => x.origin !== g.origin && !x.origin.includes('worldwide')))
+          .slice(0, 2).map(x => x.origin);
+        return { q: `Where was ${this.title(g.id)} born?`, right: g.origin, wrongs, explain: `${this.title(g.id)}: ${g.origin}, ${g.era}.` };
+      },
+    ];
+    const made = makers[Math.floor(Math.random() * makers.length)]();
+    const opts = shuffle([made.right, ...made.wrongs]);
+    const letters = ['A', 'B', 'C'];
+    this.quiz.answer = letters[opts.indexOf(made.right)];
+    this.quiz.explain = made.explain;
+    return [
+      `Q${this.quiz.asked + 1}/${this.quiz.total}: ${made.q}`,
+      ...opts.map((o, i) => `• ${letters[i]}) ${o}`),
+    ].join('\n');
+  }
+
+  answerQuiz(letter) {
+    const q = this.quiz;
+    q.asked++;
+    const correct = letter === q.answer;
+    if (correct) q.score++;
+    const verdict = correct
+      ? shuffle_one(['Correct!', 'Bang on.', 'That\'s the one.', 'Clean mix!'])
+      : `Not quite — it was ${q.answer}.`;
+    const line = `${verdict} ${q.explain}`;
+    if (q.asked >= q.total) {
+      const { score, total } = q;
+      this.quiz = null;
+      const grade = score === total ? 'Perfect score — resident material.'
+                  : score >= 4 ? 'Sharp ears. You know your house.'
+                  : score >= 2 ? 'Solid foundation — keep digging.'
+                  : 'The crate awaits. Ask me anything and run it back.';
+      return `${line}\n\nFinal score: ${score}/${total}. ${grade} Say "quiz me" for another round.`;
+    }
+    return `${line}\n\n${this.nextQuestion()}`;
   }
 
   // ---- HELPERS ---------------------------------------------------------------
@@ -377,5 +503,8 @@ class DJBrain {
     ].join('\n');
   }
 }
+
+// tiny helper for quiz verdict variety (module-scope so answerQuiz stays tidy)
+function shuffle_one(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 window.DJBrain = DJBrain;

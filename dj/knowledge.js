@@ -416,6 +416,18 @@ const DJ_KNOWLEDGE = {
     { artist: 'Loleatta Holloway', title: 'Love Sensation', year: 1980, bpm: 119, key: '5B', energy: 6, genre: 'garage house' },
     { artist: 'CamelPhat & Elderbrook', title: 'Cola', year: 2017, bpm: 122, key: '12A', energy: 7, genre: 'tech house' },
     { artist: 'Honey Dijon ft. Annette Bowen & Nikki-O', title: 'Downtown', year: 2020, bpm: 124, key: '2A', energy: 6, genre: 'chicago house' },
+    { artist: 'Robin S', title: 'Show Me Love', year: 1993, bpm: 124, key: '6A', energy: 8, genre: 'garage house' },
+    { artist: 'Kerri Chandler', title: 'Bar A Thym', year: 2005, bpm: 127, key: '5A', energy: 7, genre: 'deep house' },
+    { artist: 'Frankie Knuckles', title: 'The Whistle Song', year: 1991, bpm: 118, key: '11B', energy: 4, genre: 'soulful house' },
+    { artist: 'Tori Amos', title: 'Professional Widow (Armand Van Helden Mix)', year: 1996, bpm: 130, key: '2A', energy: 9, genre: 'uk garage' },
+    { artist: 'Basement Jaxx', title: 'Red Alert', year: 1999, bpm: 126, key: '9B', energy: 8, genre: 'funky house' },
+    { artist: 'Bicep', title: 'Glue', year: 2017, bpm: 120, key: '8A', energy: 5, genre: 'melodic house' },
+    { artist: 'John Summit', title: 'Deep End', year: 2020, bpm: 126, key: '12A', energy: 9, genre: 'tech house' },
+    { artist: 'Adam Port & Stryv', title: 'Move', year: 2024, bpm: 122, key: '8A', energy: 7, genre: 'afro house' },
+    { artist: 'DJ Koze', title: 'Pick Up', year: 2018, bpm: 122, key: '4B', energy: 6, genre: 'funky house' },
+    { artist: 'Daft Punk', title: 'One More Time', year: 2000, bpm: 123, key: '2B', energy: 9, genre: 'french house' },
+    { artist: 'Hardrive', title: 'Deep Inside', year: 1993, bpm: 124, key: '8A', energy: 7, genre: 'garage house' },
+    { artist: 'Cajmere', title: 'Percolator', year: 1992, bpm: 128, key: '10A', energy: 8, genre: 'chicago house' },
   ],
 
   // ---- BOOTH WISDOM -----------------------------------------------------------
@@ -440,6 +452,11 @@ const DJ_KNOWLEDGE = {
     'A B2B set is a conversation, not a competition. Leave your partner somewhere generous to go next.',
     'End your set one energy notch below the absolute peak — the last memory should be euphoric, not exhausted.',
     'Silence is an FX unit. A one-beat full cut before a drop hits harder than any riser.',
+    'Practice doubles with two copies of the same track: beatmatch them, then play with the phase. It is the cheapest turntablism lesson there is.',
+    'Master the 64-bar long blend: two loops locked together so long the crowd forgets which song they are hearing. Deep house rewards patience.',
+    'Know three exits from every track you own: the safe blend, the quick cut, and the dramatic one. Pick per moment.',
+    'The first track of your set matters less than the second. The first is a statement; the second proves you have a plan.',
+    'When in doubt, play the record you love, not the record you think they want. Conviction is audible.',
   ],
 };
 
