@@ -22,7 +22,7 @@
         <span id="syncLabel">Not connected</span>
       </div>
       <div class="header-actions">
-        <button class="btn-solid" id="connectBtn">Connect Google</button>
+        <button class="btn-google" id="connectBtn"><span class="gmark" aria-hidden="true">G</span><span id="connectLabel">Sign in with Google</span></button>
         <button class="icon-btn" id="refreshBtn" title="Refresh" aria-label="Refresh assignments">⟳</button>
         <button class="icon-btn" id="themeBtn" title="Switch theme" aria-label="Switch between light and dark theme">🌙</button>
         <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Open settings">⚙</button>
@@ -47,7 +47,7 @@
           <p>Connect your Google account to see everything that's due — or try
              the demo to see how ClassMate works first.</p>
           <div class="board-empty-actions">
-            <button class="btn-solid" id="emptyConnect">Connect Google</button>
+            <button class="btn-google" id="emptyConnect"><span class="gmark" aria-hidden="true">G</span>Sign in with Google</button>
             <button class="btn-ghost" id="emptyDemo">Try the demo</button>
           </div>
           <p class="board-empty-note">Read-only access: ClassMate can see courses and assignments,
@@ -96,6 +96,31 @@
       <div class="modal-actions">
         <button id="disconnectBtn" class="btn-ghost">Disconnect</button>
         <button id="saveSettings" class="btn-solid">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== One-time setup wizard ===== -->
+  <div class="modal-backdrop hidden" id="setupBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="setupTitle">
+      <h2 id="setupTitle">One-time setup, then it's one-click sign-in</h2>
+      <p class="modal-help">
+        You'll sign in with your normal Google account — no new passwords, and after
+        the first time Google won't even re-ask for permission. But first, Google
+        requires every app that reads Classroom to be <strong>registered once</strong>
+        (that registration is called a "Client ID" — it identifies this app, not you):
+      </p>
+      <ol class="setup-steps">
+        <li>Open <a href="https://console.cloud.google.com" target="_blank" rel="noopener">console.cloud.google.com</a> and create a project (any name, e.g. "ClassMate").</li>
+        <li><strong>APIs &amp; Services → Library</strong> → search "Google Classroom API" → <strong>Enable</strong>.</li>
+        <li><strong>OAuth consent screen</strong> → External → app name + your email → add yourself as a <strong>test user</strong>.</li>
+        <li><strong>Credentials → Create credentials → OAuth client ID</strong> → Web application → under "Authorized JavaScript origins" add <code id="originCode">http://localhost:8000</code>.</li>
+        <li>Copy the Client ID (ends in <code>.apps.googleusercontent.com</code>) and paste it here:</li>
+      </ol>
+      <input type="text" id="setupClientId" placeholder="1234…apps.googleusercontent.com" autocomplete="off" />
+      <div class="modal-actions">
+        <button id="setupCancel" class="btn-ghost">Later</button>
+        <button id="setupSave" class="btn-solid">Save &amp; sign in</button>
       </div>
     </div>
   </div>

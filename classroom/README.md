@@ -50,11 +50,19 @@ python3 -m http.server 8000
 
 Click **Try the demo** — no account needed.
 
-## Connect your real Google Classroom (one-time, ~5 minutes)
+## Sign in with Google (plus a one-time app registration)
 
-Google requires an OAuth "Client ID" for any app that reads Classroom data.
-You create your own for free — that way *your* browser talks directly to
-Google and nobody else is in the loop:
+You log in with your **normal Google account** — hit "Sign in with Google",
+pick your account in Google's own chooser, done. After the first grant, Google
+remembers your permission and future sign-ins are one click.
+
+The only wrinkle: Google requires every app that reads Classroom data to be
+**registered once** (the registration is called an OAuth "Client ID" — it
+identifies the app, not you, and there is no way around this requirement for a
+self-hosted app). The in-app setup wizard walks you through it the first time
+you hit Sign in; the same steps are below. You create your own registration
+for free — that way *your* browser talks directly to Google and nobody else is
+in the loop:
 
 1. Go to [console.cloud.google.com](https://console.cloud.google.com) and
    create a project (any name, e.g. "ClassMate").

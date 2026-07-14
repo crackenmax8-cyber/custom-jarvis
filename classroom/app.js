@@ -37,6 +37,9 @@
   const emptyConnect = $('emptyConnect'), emptyDemo = $('emptyDemo');
   const modalBackdrop = $('modalBackdrop'), clientIdInput = $('clientId'), apiKeyInput = $('apiKey');
   const saveSettings = $('saveSettings'), disconnectBtn = $('disconnectBtn');
+  const setupBackdrop = $('setupBackdrop'), setupClientId = $('setupClientId');
+  const setupSave = $('setupSave'), setupCancel = $('setupCancel'), originCode = $('originCode');
+  const connectLabel = $('connectLabel');
 
   // ---- theme (light by default) --------------------------------------------------
   function applyTheme(theme) {
@@ -134,8 +137,8 @@
     boardGroups.textContent = '';
     syncDot.className = 'sync-dot' + (connected ? ' on' : '');
     syncLabel.textContent = client.mode === 'google' ? `Synced ${client.lastSync.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
-      : client.mode === 'demo' ? 'Demo data' : 'Not connected';
-    connectBtn.textContent = connected ? (client.mode === 'demo' ? 'Connect Google' : 'Reconnect') : 'Connect Google';
+      : client.mode === 'demo' ? 'Demo data' : 'Not signed in';
+    connectLabel.textContent = client.mode === 'google' ? 'Re-sync' : 'Sign in with Google';
 
     const teacher = loadConfig().role === 'teacher';
     const setStat = (id, v, hot) => {
@@ -260,24 +263,50 @@
   }
 
   // ---- actions --------------------------------------------------------------------
+  function openSetup() {
+    try { originCode.textContent = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:8000'; } catch (e) {}
+    setupClientId.value = loadConfig().googleClientId || '';
+    setupBackdrop.classList.remove('hidden');
+    setupClientId.focus();
+  }
+
   async function doConnect() {
     const cfg = loadConfig();
     if (!cfg.googleClientId) {
-      addMessage('agent', 'First we need a Google OAuth Client ID (free, 5-minute one-time setup — see the README). Open Settings (⚙), paste it in, then say "connect" again. Or say "demo" to explore with sample data meanwhile.');
-      openModal();
+      // first run: walk through Google's one-time app registration, then sign in
+      openSetup();
       return;
     }
-    addMessage('agent', 'Opening Google sign-in…');
+    addMessage('agent', 'Opening Google sign-in — pick your account and you\'re in…');
     try {
       await client.connect();
+      const c2 = loadConfig();
+      const firstTime = !c2.granted;
+      c2.granted = true;
+      saveConfig(c2);
       renderBoard();
-      addMessage('agent', `Connected! I can see ${client.courses.length} classes and ${client.items.length} assignments. ${brain.quickPulse()}`);
+      addMessage('agent', `Signed in! I can see ${client.courses.length} ${loadConfig().role === 'teacher' ? 'courses you teach' : 'classes'} and ${client.items.length} assignments. ${brain.quickPulse()}${firstTime ? ' (Next time it\'s one click — Google remembers your permission.)' : ''}`);
     } catch (e) {
-      if (e.message === 'NO_CLIENT_ID') { openModal(); return; }
+      if (e.message === 'NO_CLIENT_ID') { openSetup(); return; }
       renderBoard();
-      addMessage('agent', `Couldn't connect: ${e.message} You can say "demo" to explore with sample data.`);
+      addMessage('agent', `Couldn't sign in: ${e.message} You can say "demo" to explore with sample data.`);
     }
   }
+
+  setupSave.addEventListener('click', () => {
+    const v = setupClientId.value.trim();
+    const cfg = loadConfig();
+    cfg.googleClientId = v;
+    saveConfig(cfg);
+    setupBackdrop.classList.add('hidden');
+    if (v) doConnect();
+    else addMessage('agent', 'No worries — say "demo" to explore meanwhile, and hit "Sign in with Google" whenever you\'re ready to finish the one-time setup.');
+  });
+  setupCancel.addEventListener('click', () => {
+    setupBackdrop.classList.add('hidden');
+    addMessage('agent', 'Setup parked — say "demo" to explore with sample data anytime, or hit "Sign in with Google" to pick the setup back up.');
+  });
+  setupBackdrop.addEventListener('click', (e) => { if (e.target === setupBackdrop) setupBackdrop.classList.add('hidden'); });
 
   function doDemo() {
     client.loadDemo();
@@ -393,7 +422,7 @@
     modalBackdrop.classList.remove('hidden');
     clientIdInput.focus();
   }
-  function closeModal() { modalBackdrop.classList.add('hidden'); }
+  function closeModal() { modalBackdrop.classList.add('hidden'); setupBackdrop.classList.add('hidden'); }
 
   settingsBtn.addEventListener('click', openModal);
   modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) closeModal(); });

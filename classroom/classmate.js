@@ -88,10 +88,12 @@ class ClassroomClient {
   loadGsi() {
     return new Promise((resolve, reject) => {
       if (window.google && window.google.accounts) return resolve();
+      const fail = () => reject(new Error('Could not load Google sign-in (no network access here, or it is blocked).'));
+      const timer = setTimeout(fail, 8000); // don't hang forever in offline/sandboxed pages
       const s = document.createElement('script');
       s.src = 'https://accounts.google.com/gsi/client';
-      s.onload = () => resolve();
-      s.onerror = () => reject(new Error('Could not load Google sign-in (no network access here, or it is blocked).'));
+      s.onload = () => { clearTimeout(timer); resolve(); };
+      s.onerror = () => { clearTimeout(timer); fail(); };
       document.head.appendChild(s);
     });
   }

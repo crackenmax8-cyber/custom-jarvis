@@ -46,7 +46,7 @@ class ClassMateBrain {
       return { confident: true, text: `Disconnected. Your data is cleared from the page. Say "connect" anytime.`, action: { type: 'disconnect' } };
     }
     if (has('connect', 'sign in', 'log in', 'login', 'link my', 'sync my google')) {
-      return { confident: true, text: `Opening Google sign-in — pick your school account and allow read-only access. I never see your password and can't change anything in Classroom.`, action: { type: 'connect' } };
+      return { confident: true, text: `Opening Google sign-in — you log in with your normal Google account and pick it from the chooser. I never see your password, access is read-only, and after the first time it's one click.`, action: { type: 'connect' } };
     }
     if (has('demo', 'sample', 'try it', 'example data', 'test data')) {
       return { confident: true, text: `Demo mode on — here's a sample week so you can poke around. Say "connect" whenever you want your real Classroom.`, action: { type: 'demo' } };
