@@ -1,19 +1,29 @@
 /*
- * app.js — UI wiring for SELECTA: chat rendering (with rich formatting for
- * lists, tracklists and headers), composer, quick-prompt chips, light/dark
- * theme toggle, and the settings modal (optional Claude API key).
+ * app.js — UI wiring for SELECTA: chat rendering (rich formatting for lists,
+ * track cards with BPM/key pills and energy meters, headers), composer,
+ * quick-prompt chips, light/dark theme toggle, and the settings modal.
+ *
+ * All localStorage access goes through the `storage` wrapper — sandboxed
+ * embeds (e.g. artifact viewers) block storage entirely, and a bare access
+ * would throw and kill every event listener on the page.
  */
 
 (() => {
   const CONFIG_KEY = 'selecta.config.v1';
   const THEME_KEY = 'selecta.theme.v1';
 
+  // ---- safe storage (sandbox-proof) -------------------------------------------
+  const storage = {
+    get(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { window.localStorage.setItem(k, v); } catch (e) { /* storage unavailable */ } },
+  };
+
   // ---- config ----------------------------------------------------------------
   function loadConfig() {
-    try { return JSON.parse(localStorage.getItem(CONFIG_KEY)) || {}; }
+    try { return JSON.parse(storage.get(CONFIG_KEY)) || {}; }
     catch (e) { return {}; }
   }
-  function saveConfig(cfg) { localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg)); }
+  function saveConfig(cfg) { storage.set(CONFIG_KEY, JSON.stringify(cfg)); }
 
   const brain = new window.DJBrain(loadConfig);
 
@@ -36,19 +46,56 @@
     themeBtn.textContent = theme === 'light' ? '🌙' : '☀️';
     themeBtn.title = theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme';
   }
-  let theme = localStorage.getItem(THEME_KEY) || 'dark';
+  let theme = storage.get(THEME_KEY) || 'dark';
   applyTheme(theme);
   themeBtn.addEventListener('click', () => {
     theme = theme === 'light' ? 'dark' : 'light';
-    localStorage.setItem(THEME_KEY, theme);
+    storage.set(THEME_KEY, theme);
+    document.body.classList.add('theme-locked'); // in-app choice wins over any host theme
     applyTheme(theme);
   });
 
   // ---- rich message rendering ------------------------------------------------------
-  // The brain returns plain text with a light structure: "• " bullets, "N. " numbered
-  // tracklist lines, ALL-CAPS/colon-terminated header lines, and blank-line paragraph
-  // breaks. Render those as real elements (built via DOM APIs — no innerHTML with
-  // message content, so nothing can inject markup).
+  // The brain returns plain text with a light structure: "• " bullets, "N. "
+  // numbered tracklist lines, header lines, blank-line paragraph breaks, and
+  // " · "-separated track metadata (BPM / Camelot key / energy). Everything is
+  // built via DOM APIs — no innerHTML with message content.
+
+  // "Artist — Title (1999) · 126 BPM · 11B · energy 8/10" → title + metadata pills
+  function renderTrackText(container, text) {
+    const parts = text.split(' · ');
+    if (parts.length < 2) { container.appendChild(document.createTextNode(text)); return; }
+    const title = document.createElement('span');
+    title.className = 'track-title';
+    title.textContent = parts[0];
+    container.appendChild(title);
+    const pills = document.createElement('span');
+    pills.className = 'pills';
+    for (const p of parts.slice(1)) {
+      const energy = p.match(/^energy\s+(\d+)\/10$/i);
+      const pill = document.createElement('span');
+      if (energy) {
+        pill.className = 'pill pill-energy';
+        pill.title = `Energy ${energy[1]} out of 10`;
+        const label = document.createElement('span');
+        label.textContent = 'energy';
+        const meter = document.createElement('span');
+        meter.className = 'meter';
+        const fill = document.createElement('span');
+        fill.className = 'meter-fill';
+        fill.style.width = `${Math.min(10, Number(energy[1])) * 10}%`;
+        meter.appendChild(fill);
+        pill.appendChild(label);
+        pill.appendChild(meter);
+      } else {
+        pill.className = /^\d{1,2}[AB]$/.test(p) ? 'pill pill-key' : 'pill';
+        pill.textContent = p;
+      }
+      pills.appendChild(pill);
+    }
+    container.appendChild(pills);
+  }
+
   function renderRich(container, text) {
     const lines = text.split('\n');
     let list = null;      // open <ul>
@@ -67,7 +114,7 @@
         tracklist = null;
         if (!list) { list = document.createElement('ul'); container.appendChild(list); }
         const li = document.createElement('li');
-        li.textContent = bullet[1];
+        renderTrackText(li, bullet[1]);
         list.appendChild(li);
         continue;
       }
@@ -84,14 +131,12 @@
         body.className = 'track-body';
         // split off a trailing "(note)" so transition hints read as a subtle second line
         const noteMatch = numbered[2].match(/^(.*)\s{2,}\((.+)\)$/);
+        renderTrackText(body, noteMatch ? noteMatch[1] : numbered[2]);
         if (noteMatch) {
-          body.textContent = noteMatch[1];
           const note = document.createElement('span');
           note.className = 'track-note';
           note.textContent = noteMatch[2];
           body.appendChild(note);
-        } else {
-          body.textContent = numbered[2];
         }
         row.appendChild(badge);
         row.appendChild(body);
@@ -108,20 +153,36 @@
     }
   }
 
+  function makeAvatar() {
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar';
+    avatar.setAttribute('aria-hidden', 'true');
+    const disc = document.createElement('div');
+    disc.className = 'avatar-disc';
+    avatar.appendChild(disc);
+    return avatar;
+  }
+
   function addMessage(role, text) {
     const row = document.createElement('div');
     row.className = `msg ${role}`;
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
     if (role === 'agent') {
+      renderRich(bubble, text);
+      const col = document.createElement('div');
+      col.className = 'msg-col';
       const tag = document.createElement('div');
       tag.className = 'msg-tag';
       tag.textContent = 'SELECTA';
-      row.appendChild(tag);
+      col.appendChild(tag);
+      col.appendChild(bubble);
+      row.appendChild(makeAvatar());
+      row.appendChild(col);
+    } else {
+      bubble.textContent = text;
+      row.appendChild(bubble);
     }
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble';
-    if (role === 'agent') renderRich(bubble, text);
-    else bubble.textContent = text;
-    row.appendChild(bubble);
     chat.appendChild(row);
     chat.scrollTop = chat.scrollHeight;
     return bubble;
@@ -130,7 +191,22 @@
   function addTyping() {
     const row = document.createElement('div');
     row.className = 'msg agent typing';
-    row.innerHTML = '<div class="msg-tag">SELECTA</div><div class="bubble"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
+    const col = document.createElement('div');
+    col.className = 'msg-col';
+    const tag = document.createElement('div');
+    tag.className = 'msg-tag';
+    tag.textContent = 'SELECTA';
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    for (let i = 0; i < 3; i++) {
+      const dot = document.createElement('span');
+      dot.className = 'dot';
+      bubble.appendChild(dot);
+    }
+    col.appendChild(tag);
+    col.appendChild(bubble);
+    row.appendChild(makeAvatar());
+    row.appendChild(col);
     chat.appendChild(row);
     chat.scrollTop = chat.scrollHeight;
     return row;
