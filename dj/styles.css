@@ -83,6 +83,9 @@ body.light .bg-grid { opacity: 0.45; }
   display: flex; flex-direction: column;
   padding: 16px;
   gap: 12px;
+  /* if the fixed sections outgrow a very short viewport, scroll the shell
+     rather than letting sections overlap */
+  overflow-y: auto;
 }
 
 /* ---- header ---- */
@@ -93,6 +96,7 @@ body.light .bg-grid { opacity: 0.45; }
   border-radius: 18px;
   padding: 14px 18px;
   box-shadow: var(--shadow);
+  flex-shrink: 0; /* never let the flex column crush the header into the chat */
 }
 
 .turntable {
@@ -209,7 +213,7 @@ body.playing .led.on { background: var(--accent); box-shadow: 0 0 6px var(--acce
 
 /* ---- chat ---- */
 .chat {
-  flex: 1; overflow-y: auto;
+  flex: 1; min-height: 200px; overflow-y: auto; /* shrinks and scrolls, but never below a usable height */
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 18px;
@@ -337,7 +341,7 @@ li .track-title { display: inline; font-weight: 400; }
 @keyframes bounce { 30% { transform: translateY(-6px); opacity: 0.5; } }
 
 /* ---- chips ---- */
-.chips-row { display: flex; align-items: flex-start; gap: 10px; }
+.chips-row { display: flex; align-items: flex-start; gap: 10px; flex-shrink: 0; }
 .chips-label {
   flex: none; font-size: 12.5px; color: var(--text-dim);
   padding-top: 9px; letter-spacing: 0.5px;
@@ -358,7 +362,7 @@ li .track-title { display: inline; font-weight: 400; }
 }
 
 /* ---- composer ---- */
-.composer { display: flex; gap: 10px; }
+.composer { display: flex; gap: 10px; flex-shrink: 0; }
 .composer input {
   flex: 1; padding: 14px 20px; border-radius: 999px;
   background: var(--panel); border: 1px solid var(--border);
@@ -446,7 +450,10 @@ body.light .wheel-info p.lead { color: var(--accent-strong); }
 }
 
 @media (max-width: 560px) {
-  .header-text h1 { font-size: 19px; letter-spacing: 4px; }
+  .deck-header { flex-wrap: wrap; gap: 10px 12px; padding: 12px 14px; }
+  .header-text { flex: 1 1 200px; }
+  .header-text h1 { font-size: 18px; letter-spacing: 3px; white-space: nowrap; }
+  .tagline { display: none; }
   .turntable, .platter { width: 52px; height: 52px; }
   .vinyl { width: 43px; height: 43px; }
   .msg { max-width: 100%; }
@@ -454,5 +461,15 @@ body.light .wheel-info p.lead { color: var(--accent-strong); }
   .chips-label { display: none; }
   .send-btn { padding: 0 18px; }
   .icon-btn { width: 36px; height: 36px; }
-  .header-actions { flex-wrap: wrap; }
+  .header-actions { margin-left: auto; }
+}
+
+/* short viewports: compact the header so the conversation keeps the room */
+@media (max-height: 640px) {
+  .shell { padding: 10px 12px; gap: 8px; }
+  .deck-header { padding: 10px 14px; }
+  .tagline { display: none; }
+  .status-row { margin-top: 4px; }
+  .deck-controls { margin-top: 6px; }
+  .chat { padding: 14px; }
 }
