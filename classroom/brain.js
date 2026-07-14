@@ -55,10 +55,10 @@ class ClassMateBrain {
       if (!connected) return { confident: true, text: `Nothing to refresh yet — say "connect" to link your Google Classroom, or "demo" to explore with sample data.` };
       return { confident: true, text: `On it — pulling the latest from ${c.mode === 'demo' ? 'the demo data' : 'Google Classroom'}…`, action: { type: 'refresh' } };
     }
-    // ---- teacher tools: test drive / difficulty rating (teacher role only) ----
-    if (this.role === 'teacher' && has('test drive', 'test-drive', 'solve', 'answer key', 'rate', 'difficulty', 'how hard', 'hardest', 'easiest', 'calibrate')) {
+    // ---- teacher tools: teach / solve / rate (teacher role only) ----
+    if (this.role === 'teacher' && has('test drive', 'test-drive', 'solve', 'answer key', 'work through', 'rate', 'difficulty', 'how hard', 'hardest', 'easiest', 'calibrate', 'teach', 'explain the concept', 'mini-lesson', 'mini lesson', 'lesson for')) {
       if (!connected) {
-        return { confident: true, text: `Once I can see your coursework I'll rate away — say "connect" to link your Classroom (teacher mode), or "demo" to try it with sample assignments.` };
+        return { confident: true, text: `Once I can see your coursework I'm all yours — say "connect" to link your Classroom (teacher mode), or "demo" to try it with sample assignments.` };
       }
       if (has('hardest', 'easiest', 'rate all', 'rate everything', 'all of them', 'rank', 'my assignments', 'rate my')) {
         return { confident: true, text: this.rateAll(has('easiest')) };
@@ -66,8 +66,10 @@ class ClassMateBrain {
       const item = this.findItem(t);
       if (!item) {
         const ex = c.open()[0];
-        return { confident: true, text: `Which assignment? e.g. "test drive ${ex ? ex.title : 'the essay'}" — or say "rate everything" for the full ranking.` };
+        return { confident: true, text: `Which assignment? e.g. "solve ${ex ? ex.title : 'the essay'}", "teach the concept behind it", or "rate everything" for the full ranking.` };
       }
+      if (has('teach', 'explain the concept', 'mini-lesson', 'mini lesson', 'lesson for')) return this.teachConcept(item);
+      if (has('solve', 'answer key', 'work through')) return this.solveItem(item);
       return this.testDrive(item);
     }
 
@@ -95,12 +97,13 @@ class ClassMateBrain {
       if (this.role === 'teacher') {
         return { confident: true, text: [
           `Teacher mode — here's what I can do with your coursework:`,
-          `• "Test drive [assignment]" — difficulty rating, time estimate, and (with a Claude key) a full worked solution, ambiguity flags and rubric`,
+          `• "Solve [assignment]" — work it through for a full exemplar solution / answer key`,
+          `• "Teach [assignment]" — a classroom-ready mini-lesson on the concept behind it`,
+          `• "Test drive [assignment]" — difficulty rating, time estimate, ambiguity flags, rubric`,
           `• "Rate everything" / "which is hardest?" — rank all open assignments by difficulty`,
-          `• "What's due this week?" — deadlines across all your courses`,
-          `• "What's open in Chemistry?" — any course by name`,
+          `• "What's due this week?" — deadlines across all your courses · any course by name`,
           `• "Refresh" to re-check Classroom · "connect" / "disconnect" / "demo"`,
-          `Tip: the deep analysis (worked answer keys) needs a Claude API key in Settings.`,
+          `Tip: Solve and Teach do the real work via Claude — add an API key in Settings.`,
         ].join('\n') };
       }
       return { confident: true, text: [
@@ -232,6 +235,36 @@ class ClassMateBrain {
     }
     base.push('', `For the full test drive — a worked exemplar solution, ambiguity flags, prerequisite check and a rubric suggestion — add a Claude API key in Settings and ask again. The quick read above is heuristic (type + points + instruction length).`);
     return { confident: true, text: base.join('\n') };
+  }
+
+  // ✅ Solve: the full worked solution / answer key (Claude does the working)
+  solveItem(item) {
+    if (this.getConfig().apiKey) {
+      return { confident: false, text: `Working "${item.title}" (${item.courseName}) end-to-end — full solution coming up.` };
+    }
+    const r = this.fmtRating(item);
+    return { confident: true, text: [
+      `Solving "${item.title}" needs the Claude hookup — that's the part that actually works the assignment (worked answers, model outline + sample paragraph for essays, expected lab results).`,
+      ``,
+      `Add an Anthropic API key in Settings (⚙) and hit Solve again. Meanwhile, my quick read: ${r.label}.`,
+    ].join('\n') };
+  }
+
+  // 🧑‍🏫 Teach: a classroom-ready mini-lesson on the concept behind the assignment
+  teachConcept(item) {
+    if (this.getConfig().apiKey) {
+      return { confident: false, text: `Building a mini-lesson for the concept behind "${item.title}" (${item.courseName})…` };
+    }
+    return { confident: true, text: [
+      `Mini-lesson skeleton for "${item.title}" (${item.courseName}) — add a Claude API key in Settings and I'll fill in every beat with real content:`,
+      ``,
+      `1. Learning objective — one sentence: "Students will be able to…"`,
+      `2. Hook — a 60-second real-world question that makes the concept matter.`,
+      `3. Core explanation — the idea in plain language, then the formal version.`,
+      `4. Worked example — one you do on the board (different from the assignment, so the assignment still assesses).`,
+      `5. Common misconceptions — the 2 mistakes half the class will make, named out loud.`,
+      `6. Quick check — 3 exit-ticket questions from easy to stretch.`,
+    ].join('\n') };
   }
 
   // ---- assignment coaching ------------------------------------------------------
@@ -426,8 +459,10 @@ class ClassMateBrain {
     ).join('\n');
     const roleBlock = teacher ? [
       `You are ClassMate, a sharp, collegial assistant for a TEACHER reviewing their own Google Classroom coursework across multiple courses. The assignments below are the teacher's own material — they authored it.`,
-      `When asked to "test drive", solve, or rate an assignment, do the full job:`,
-      `1. Work the assignment as a strong student would — a complete exemplar solution / answer key (for essays: a model outline plus a sample paragraph; for problem sets: worked answers; for labs: the expected results and calculations).`,
+      `When asked to SOLVE an assignment (or "answer key" / "work through"), work it completely as a strong student would — a full exemplar solution / answer key (for essays: a model outline plus a sample paragraph; for problem sets: worked answers with steps shown; for labs: the expected results and calculations). Then add a one-line difficulty read and anything that felt ambiguous while working it.`,
+      `When asked to TEACH or explain the concept behind an assignment, produce a classroom-ready mini-lesson: (1) a one-sentence learning objective, (2) a 60-second hook, (3) the core explanation in plain language then the formal version, (4) one worked example DIFFERENT from the assignment so the assignment still assesses, (5) the two most common misconceptions, (6) three exit-ticket questions from easy to stretch.`,
+      `When asked to "test drive" or rate an assignment, do the full job:`,
+      `1. Work the assignment as a strong student would — a complete exemplar solution / answer key.`,
       `2. Rate difficulty 1-5 with a one-line justification, and estimate realistic student time.`,
       `3. Flag anything ambiguous, unclearly worded, or missing from the instructions.`,
       `4. List prerequisite concepts students need, and note any that may not have been covered yet based on the other coursework.`,

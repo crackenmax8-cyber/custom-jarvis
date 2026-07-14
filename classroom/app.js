@@ -85,16 +85,24 @@
     el.appendChild(meta);
     if (i.state !== 'done') {
       const teacher = loadConfig().role === 'teacher';
-      const help = document.createElement('button');
-      help.className = 'help-btn';
-      help.textContent = teacher ? '🧪 Test drive & rate' : '✨ Break it down';
-      help.title = teacher ? 'Rate difficulty, estimate time — and with a Claude key, a full worked solution'
-                           : 'Get a step-by-step starter plan in the chat';
-      help.addEventListener('click', (e) => {
-        e.preventDefault();
-        handleQuery(teacher ? `Test drive "${i.title}"` : `Break down "${i.title}"`);
-      });
-      el.appendChild(help);
+      const actions = document.createElement('div');
+      actions.className = 'card-actions';
+      const mkBtn = (label, title, query) => {
+        const b = document.createElement('button');
+        b.className = 'help-btn';
+        b.textContent = label;
+        b.title = title;
+        b.addEventListener('click', (e) => { e.preventDefault(); handleQuery(query); });
+        actions.appendChild(b);
+      };
+      if (teacher) {
+        mkBtn('🧑‍🏫 Teach', 'A classroom-ready mini-lesson on the concept behind this assignment', `Teach the concept behind "${i.title}"`);
+        mkBtn('✅ Solve', 'Work the assignment through — a full exemplar solution / answer key (needs a Claude key)', `Solve "${i.title}"`);
+        mkBtn('🧪 Rate', 'Difficulty rating, time estimate, ambiguity flags and a rubric suggestion', `Test drive "${i.title}"`);
+      } else {
+        mkBtn('✨ Break it down', 'Get a step-by-step starter plan in the chat', `Break down "${i.title}"`);
+      }
+      el.appendChild(actions);
     }
     return el;
   }

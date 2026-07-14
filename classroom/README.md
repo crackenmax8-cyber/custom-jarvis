@@ -21,11 +21,21 @@ Everything runs in your browser. No server, no build step, read-only access.
   deliberate.
 - **🍎 Teacher mode** — switch roles in Settings and ClassMate becomes an
   assignment-calibration tool for the coursework *you* authored, across all the
-  courses you teach: the board groups by course, and every assignment gets a
-  **🧪 Test drive & rate** button — an instant difficulty rating (1–5 stars) and
-  student-time estimate, and with a Claude key a full worked exemplar solution /
-  answer key, ambiguity and prerequisite flags, and a suggested rubric. Chat
-  commands: *"rate everything"*, *"which is hardest?"*, *"test drive the essay"*.
+  courses you teach: the board groups by course, and every assignment gets three
+  buttons:
+  - **🧑‍🏫 Teach** — a classroom-ready mini-lesson on the concept behind the
+    assignment: objective, hook, plain-language explanation, a worked example
+    (different from the assignment), common misconceptions, exit-ticket questions
+  - **✅ Solve** — works the assignment through for a full exemplar solution /
+    answer key (worked steps for problem sets, model outline + sample paragraph
+    for essays, expected results for labs)
+  - **🧪 Rate** — instant difficulty rating (1–5 stars) and student-time
+    estimate, plus ambiguity flags, a prerequisite check and a suggested rubric
+
+  Chat commands: *"solve the essay"*, *"teach worksheet 7.3"*, *"rate
+  everything"*, *"which is hardest?"*. Solve and Teach do the real work via the
+  Claude hookup (API key in Settings); without it you get the instant heuristic
+  rating and lesson/solution skeletons.
 - **Demo mode** — sample data so you can explore everything before connecting.
 - **Optional Claude hookup** — add an Anthropic API key in Settings and the chat
   can also help you plan and prioritize, with your live assignment list as context.
