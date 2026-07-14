@@ -1,5 +1,5 @@
 /*
- * knowledge.js — SELECTA's house-music brain food.
+ * knowledge.js — MixIt's house-music brain food.
  *
  * A structured, fully-offline knowledge base covering:
  *   - GENRES      house subgenres: BPM ranges, origins, sound, key artists, essential tracks

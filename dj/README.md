@@ -1,4 +1,4 @@
-# SELECTA — House Music DJ Agent
+# MixIt — Your House Music DJ
 
 An AI agent built to be a **house music DJ** — a veteran selector with three
 decades of crate knowledge you can chat with in the browser. Fully offline by
@@ -6,7 +6,7 @@ default, with an optional Claude hookup for open-ended conversation.
 
 ## The live deck 🔊
 
-SELECTA doesn't just talk about house — it **plays** it. A built-in Web Audio
+MixIt doesn't just talk about house — it **plays** it. A built-in Web Audio
 beat engine (`audio.js`) synthesizes a live groove from scratch: 909-style
 kick, noise-burst hats and claps, a resonant sawtooth bassline and detuned
 chord stabs — no samples, no network. Four presets voice the main strains:
@@ -18,7 +18,7 @@ chord stabs — no samples, no network. Four presets voice the main strains:
 | TECH | Rolling and driving — 16th-note hats | 127 |
 | ACID | 303 worship — one riff, big resonance sweep | 126 |
 
-Hit the spinning record (or the ▶ transport), or just tell SELECTA:
+Hit the spinning record (or the ▶ transport), or just tell MixIt:
 *"drop a beat"*, *"play some acid at 128"*, *"stop"*. The tempo nudgers run
 112–135 BPM.
 
@@ -36,12 +36,12 @@ verdict at the end.
 
 ## Spoken replies 🔈
 
-Toggle the speaker button and SELECTA reads its answers aloud via the browser's
+Toggle the speaker button and MixIt reads its answers aloud via the browser's
 speech synthesis (off by default).
 
 ## What it knows
 
-SELECTA ships with a structured, built-in knowledge base (`knowledge.js`):
+MixIt ships with a structured, built-in knowledge base (`knowledge.js`):
 
 | Domain | Coverage |
 |--------|----------|
@@ -57,7 +57,7 @@ SELECTA ships with a structured, built-in knowledge base (`knowledge.js`):
 ## The set builder
 
 Say **"build me a set"** (or *"build me a warm-up deep house set"*, *"make a
-peak time tech house playlist"*) and SELECTA routes a multi-track journey
+peak time tech house playlist"*) and MixIt routes a multi-track journey
 through the crate: each pick is chained by **Camelot key compatibility**,
 **small BPM steps** and a **rising (or arcing) energy curve**, with per-transition
 notes ("harmonic move", "key jump — use an echo out").
@@ -90,7 +90,7 @@ Or just open `index.html` directly — everything works from `file://`.
 ## Optional: connect Claude
 
 Open **Settings** (gear icon), paste an Anthropic API key, Save. Questions the
-local brain can't answer confidently are routed to Claude with SELECTA's DJ
+local brain can't answer confidently are routed to Claude with MixIt's DJ
 persona and the knowledge base injected as context — so it stays in character
 and factually grounded. The key lives only in your browser's `localStorage`
 and is sent directly to Anthropic from your machine; don't ship a page with a
