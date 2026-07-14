@@ -32,26 +32,33 @@
           <span class="bpm-readout" id="bpmReadout">124.0 BPM</span>
         </div>
       </div>
-      <button class="settings-btn" id="settingsBtn" title="Settings" aria-label="Open settings">⚙</button>
+      <div class="header-actions">
+        <button class="icon-btn" id="themeBtn" title="Switch theme" aria-label="Switch between light and dark theme">☀️</button>
+        <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Open settings">⚙</button>
+      </div>
     </header>
 
     <!-- ===== Chat log ===== -->
     <section class="chat" id="chat" aria-live="polite"></section>
 
     <!-- ===== Quick prompts ===== -->
-    <div class="chips" id="chips">
-      <button class="chip" data-q="Build me a set">🎚 Build me a set</button>
-      <button class="chip" data-q="What mixes with 8A?">🎹 What mixes with 8A?</button>
-      <button class="chip" data-q="What is deep house?">🌊 What is deep house?</button>
-      <button class="chip" data-q="How do I beatmatch?">🎧 How do I beatmatch?</button>
-      <button class="chip" data-q="History of house">📜 History of house</button>
-      <button class="chip" data-q="Give me a DJ tip">💡 DJ tip</button>
+    <div class="chips-row">
+      <span class="chips-label">Try asking:</span>
+      <div class="chips" id="chips">
+        <button class="chip" data-q="Build me a set">🎚 Build me a set</button>
+        <button class="chip" data-q="What is deep house?">🌊 What is deep house?</button>
+        <button class="chip" data-q="How do I beatmatch?">🎧 How do I beatmatch?</button>
+        <button class="chip" data-q="What mixes with 8A?">🎹 What mixes with 8A?</button>
+        <button class="chip" data-q="History of house">📜 History of house</button>
+        <button class="chip" data-q="Give me a DJ tip">💡 Give me a DJ tip</button>
+        <button class="chip" data-q="Help">❓ What can you do?</button>
+      </div>
     </div>
 
     <!-- ===== Composer ===== -->
     <form class="composer" id="composer">
-      <input type="text" id="input" placeholder="Ask about genres, legends, technique, keys, gear…" autocomplete="off" />
-      <button type="submit" class="send-btn">DROP ⏎</button>
+      <input type="text" id="input" placeholder="Ask me anything about house music and DJing…" autocomplete="off" aria-label="Message SELECTA" />
+      <button type="submit" class="send-btn">Send ➤</button>
     </form>
   </main>
 
