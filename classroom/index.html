@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClassMate — Assignment Checker</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="bg-glow" aria-hidden="true"></div>
+
+  <main class="shell">
+    <!-- ===== Header ===== -->
+    <header class="top-bar">
+      <div class="logo" aria-hidden="true">📚</div>
+      <div class="header-text">
+        <h1>ClassMate</h1>
+        <p class="tagline">keeps an eye on your Google Classroom assignments</p>
+      </div>
+      <div class="header-status" id="headerStatus">
+        <span class="sync-dot" id="syncDot"></span>
+        <span id="syncLabel">Not connected</span>
+      </div>
+      <div class="header-actions">
+        <button class="btn-google" id="connectBtn"><span class="gmark" aria-hidden="true">G</span><span id="connectLabel">Sign in with Google</span></button>
+        <button class="icon-btn" id="refreshBtn" title="Refresh" aria-label="Refresh assignments">⟳</button>
+        <button class="icon-btn" id="themeBtn" title="Switch theme" aria-label="Switch between light and dark theme">🌙</button>
+        <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Open settings">⚙</button>
+      </div>
+    </header>
+
+    <!-- ===== Stat tiles ===== -->
+    <div class="stats" id="stats">
+      <div class="stat" data-k="missing"><span class="stat-num" id="statMissing">–</span><span class="stat-label">missing</span></div>
+      <div class="stat" data-k="today"><span class="stat-num" id="statToday">–</span><span class="stat-label">due today</span></div>
+      <div class="stat" data-k="week"><span class="stat-num" id="statWeek">–</span><span class="stat-label">due this week</span></div>
+      <div class="stat" data-k="open"><span class="stat-num" id="statOpen">–</span><span class="stat-label">open total</span></div>
+      <div class="stat" data-k="done"><span class="stat-num" id="statDone">–</span><span class="stat-label">turned in</span></div>
+    </div>
+
+    <div class="columns">
+      <!-- ===== Assignment board ===== -->
+      <section class="board" id="board" aria-label="Assignments">
+        <div class="board-tools hidden" id="boardTools">
+          <input type="search" id="searchBox" placeholder="Filter by title or course…" aria-label="Filter assignments" autocomplete="off" />
+          <button class="clear-filter hidden" id="clearFilter">Clear filter ✕</button>
+        </div>
+        <div class="board-empty" id="boardEmpty">
+          <div class="board-empty-icon">🎒</div>
+          <h2>Let's find your assignments</h2>
+          <p>Connect your Google account to see everything that's due — or try
+             the demo to see how ClassMate works first.</p>
+          <div class="board-empty-actions">
+            <button class="btn-google" id="emptyConnect"><span class="gmark" aria-hidden="true">G</span>Sign in with Google</button>
+            <button class="btn-ghost" id="emptyDemo">Try the demo</button>
+          </div>
+          <p class="board-empty-note">Read-only access: ClassMate can see courses and assignments,
+             and can never change or submit anything.</p>
+          <p class="board-empty-note">Teaching? <button class="link-btn" id="emptyTeacher">Switch to teacher mode</button>
+             to test-drive your own assignments and rate their difficulty.</p>
+        </div>
+        <div id="boardGroups"></div>
+      </section>
+
+      <!-- ===== Chat ===== -->
+      <aside class="chat-pane">
+        <div class="chat" id="chat" aria-live="polite"></div>
+        <div class="chips" id="chips">
+          <button class="chip" data-q="What's due this week?">📅 This week</button>
+          <button class="chip" data-q="Am I missing anything?">⚠️ Missing?</button>
+          <button class="chip" data-q="What's due tomorrow?">🌅 Tomorrow</button>
+          <button class="chip" data-q="Help">❓ Help</button>
+        </div>
+        <form class="composer" id="composer">
+          <input type="text" id="input" placeholder="Ask about your assignments…" autocomplete="off" aria-label="Message ClassMate" />
+          <button type="submit" class="send-btn">Send</button>
+        </form>
+      </aside>
+    </div>
+  </main>
+
+  <!-- ===== Settings modal ===== -->
+  <div class="modal-backdrop hidden" id="modalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h2 id="modalTitle">Settings</h2>
+      <p class="modal-help">
+        To connect your real Google Classroom you need a free OAuth Client ID —
+        a 5-minute, one-time setup (see the README). Both values below are stored
+        only in this browser's localStorage.
+      </p>
+      <span class="modal-label">I am a…</span>
+      <div class="role-row" role="radiogroup" aria-label="Your role">
+        <label class="role-opt"><input type="radio" name="role" value="student" checked /> 🎒 Student — track my work</label>
+        <label class="role-opt"><input type="radio" name="role" value="teacher" /> 🍎 Teacher — I make the assignments</label>
+      </div>
+      <label for="clientId" class="mt">Google OAuth Client ID</label>
+      <input type="text" id="clientId" placeholder="1234…apps.googleusercontent.com" autocomplete="off" />
+      <label for="apiKey" class="mt">Anthropic API key (optional — smarter chat)</label>
+      <input type="password" id="apiKey" placeholder="sk-ant-…" autocomplete="off" />
+      <div class="modal-actions">
+        <button id="disconnectBtn" class="btn-ghost">Disconnect</button>
+        <button id="saveSettings" class="btn-solid">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== One-time setup wizard ===== -->
+  <div class="modal-backdrop hidden" id="setupBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="setupTitle">
+      <h2 id="setupTitle">One-time setup, then it's one-click sign-in</h2>
+      <p class="modal-help">
+        You'll sign in with your normal Google account — no new passwords, and after
+        the first time Google won't even re-ask for permission. But first, Google
+        requires every app that reads Classroom to be <strong>registered once</strong>
+        (that registration is called a "Client ID" — it identifies this app, not you):
+      </p>
+      <ol class="setup-steps">
+        <li>Open <a href="https://console.cloud.google.com" target="_blank" rel="noopener">console.cloud.google.com</a> and create a project (any name, e.g. "ClassMate").</li>
+        <li><strong>APIs &amp; Services → Library</strong> → search "Google Classroom API" → <strong>Enable</strong>.</li>
+        <li><strong>OAuth consent screen</strong> → External → app name + your email → add yourself as a <strong>test user</strong>.</li>
+        <li><strong>Credentials → Create credentials → OAuth client ID</strong> → Web application → under "Authorized JavaScript origins" add <code id="originCode">http://localhost:8000</code>.</li>
+        <li>Copy the Client ID (ends in <code>.apps.googleusercontent.com</code>) and paste it here:</li>
+      </ol>
+      <input type="text" id="setupClientId" placeholder="1234…apps.googleusercontent.com" autocomplete="off" />
+      <div class="modal-actions">
+        <button id="setupCancel" class="btn-ghost">Later</button>
+        <button id="setupSave" class="btn-solid">Save &amp; sign in</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="classmate.js"></script>
+  <script src="brain.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

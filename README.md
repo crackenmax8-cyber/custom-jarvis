@@ -90,6 +90,13 @@ Usage status thresholds: **< 70%** nominal · **70–90%** elevated · **≥ 90%
 
 ## Also in this repo
 
+- 📚 **[ClassMate — Google Classroom Assignment Checker](classroom/)** — a
+  friendly agent that checks your Google Classroom: a color-coded board of
+  what's missing / due today / due this week, stat tiles, and a chat assistant
+  ("what's due tomorrow?", "am I missing anything?"). Connects with your own
+  free Google OAuth Client ID (read-only scopes), includes a full demo mode,
+  optional Claude hookup. See [`classroom/README.md`](classroom/README.md).
+
 - 🎛️ **[MixIt — Your House Music DJ](dj/)** — a friendly house-music DJ you
   can chat with. It **plays live house grooves** (a Web Audio beat engine with
   Chicago/deep/tech/acid presets), knows 17 subgenres and 35+ legends, teaches
