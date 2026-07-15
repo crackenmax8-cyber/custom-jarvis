@@ -41,6 +41,10 @@
     <div class="columns">
       <!-- ===== Assignment board ===== -->
       <section class="board" id="board" aria-label="Assignments">
+        <div class="board-tools hidden" id="boardTools">
+          <input type="search" id="searchBox" placeholder="Filter by title or course…" aria-label="Filter assignments" autocomplete="off" />
+          <button class="clear-filter hidden" id="clearFilter">Clear filter ✕</button>
+        </div>
         <div class="board-empty" id="boardEmpty">
           <div class="board-empty-icon">🎒</div>
           <h2>Let's find your assignments</h2>

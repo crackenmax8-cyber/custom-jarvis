@@ -56,6 +56,16 @@
   });
 
   // ---- board rendering ------------------------------------------------------------
+  const COURSE_COLORS = ['#0f9b80', '#6366f1', '#d97706', '#db2777', '#0284c7', '#7c3aed'];
+  function courseColor(courseId) {
+    const idx = client.courses.findIndex(c => c.id === courseId);
+    return COURSE_COLORS[(idx >= 0 ? idx : 0) % COURSE_COLORS.length];
+  }
+
+  // board filters: free-text search + a stat-tile filter
+  let searchQuery = '';
+  let statFilter = null; // 'missing' | 'today' | 'week' | 'done' | null
+
   function fmtDueShort(i) {
     if (!i.dueAt) return 'no due date';
     return brain.fmtDue(i.dueAt);
@@ -64,6 +74,8 @@
   function card(i) {
     const el = document.createElement('div');
     el.className = `card state-${i.state}`;
+    const color = courseColor(i.courseId);
+    if (i.state !== 'missing' && i.state !== 'done') el.style.borderLeftColor = color;
     const title = document.createElement(i.link ? 'a' : 'div');
     title.className = 'card-title';
     title.textContent = i.title;
@@ -73,6 +85,7 @@
     const course = document.createElement('span');
     course.className = 'card-pill course';
     course.textContent = i.courseName;
+    course.style.color = color;
     const due = document.createElement('span');
     due.className = 'card-pill due';
     due.textContent = fmtDueShort(i);
@@ -83,6 +96,14 @@
       pts.className = 'card-pill';
       pts.textContent = `${i.points} pts`;
       meta.appendChild(pts);
+    }
+    if (loadConfig().role === 'teacher' && i.state !== 'done') {
+      const r = brain.fmtRating(i);
+      const diff = document.createElement('span');
+      diff.className = 'card-pill diff';
+      diff.textContent = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
+      diff.title = `Estimated difficulty ${r.stars}/5 · ${r.label.split('· ')[1] || ''}`;
+      meta.appendChild(diff);
     }
     el.appendChild(title);
     el.appendChild(meta);
@@ -172,15 +193,35 @@
       setStat('statOpen', client.open().length);
       setStat('statDone', client.done().length);
     }
+    document.getElementById('boardTools').classList.toggle('hidden', !connected);
     if (!connected) return;
 
+    // active filters: free-text search + a clicked stat tile
+    const q = searchQuery.trim().toLowerCase();
+    const todaySet = new Set(client.dueToday());
+    const weekSet = new Set(client.dueThisWeek());
+    const now = new Date();
+    const visible = (i) => {
+      if (q && !(i.title.toLowerCase().includes(q) || i.courseName.toLowerCase().includes(q))) return false;
+      if (statFilter === 'missing') return teacher ? (i.dueAt && i.dueAt < now && i.state !== 'done') : i.state === 'missing';
+      if (statFilter === 'today') return todaySet.has(i);
+      if (statFilter === 'week') return todaySet.has(i) || weekSet.has(i);
+      if (statFilter === 'done') return i.state === 'done';
+      return true;
+    };
+    for (const tile of document.querySelectorAll('.stat')) {
+      tile.classList.toggle('active', tile.dataset.k === statFilter);
+    }
+    document.getElementById('clearFilter').classList.toggle('hidden', !statFilter && !q);
+
     if (teacher) {
-      // teacher board: one group per course, soonest deadline first
+      // teacher board: one group per course, soonest deadline first, points total in the header
       for (const course of client.courses) {
         const list = client.items
-          .filter(i => i.courseId === course.id)
+          .filter(i => i.courseId === course.id && visible(i))
           .sort((a, b) => (a.dueAt ? a.dueAt.getTime() : Infinity) - (b.dueAt ? b.dueAt.getTime() : Infinity));
-        const g = group(course.name, list, 'g-course');
+        const pts = list.reduce((s, i) => s + (i.points || 0), 0);
+        const g = group(course.name, list, 'g-course', pts ? `${pts} points across ${list.length} assignment${list.length === 1 ? '' : 's'}` : null);
         if (g) boardGroups.appendChild(g);
       }
     } else {
@@ -191,22 +232,45 @@
       const done = client.done().sort((a, b) => (b.dueAt || 0) - (a.dueAt || 0)).slice(0, 6);
 
       for (const g of [
-        group('Needs attention', missing, 'g-missing', 'Overdue or marked missing — oldest first.'),
-        group('Due today', today, 'g-today'),
-        group('This week', week, 'g-week'),
-        group('Coming up', later, 'g-later'),
-        group('No due date', noDue, 'g-nodue'),
-        group('Recently turned in', done, 'g-done'),
+        group('Needs attention', missing.filter(visible), 'g-missing', 'Overdue or marked missing — oldest first.'),
+        group('Due today', today.filter(visible), 'g-today'),
+        group('This week', week.filter(visible), 'g-week'),
+        group('Coming up', later.filter(visible), 'g-later'),
+        group('No due date', noDue.filter(visible), 'g-nodue'),
+        group('Recently turned in', done.filter(visible), 'g-done'),
       ]) if (g) boardGroups.appendChild(g);
     }
 
     if (!boardGroups.children.length) {
       const p = document.createElement('p');
       p.className = 'all-clear';
-      p.textContent = teacher ? 'No coursework found in your courses yet.' : '🎉 Nothing here — you\'re completely caught up.';
+      p.textContent = (q || statFilter) ? 'Nothing matches that filter — clear it to see everything.'
+        : teacher ? 'No coursework found in your courses yet.'
+        : '🎉 Nothing here — you\'re completely caught up.';
       boardGroups.appendChild(p);
     }
   }
+
+  // filter wiring: type to search, click a stat tile to filter, click again to clear
+  document.getElementById('searchBox').addEventListener('input', (e) => {
+    searchQuery = e.target.value;
+    renderBoard();
+  });
+  document.getElementById('clearFilter').addEventListener('click', () => {
+    searchQuery = '';
+    statFilter = null;
+    document.getElementById('searchBox').value = '';
+    renderBoard();
+  });
+  document.getElementById('stats').addEventListener('click', (e) => {
+    const tile = e.target.closest('.stat');
+    if (!tile || client.mode === 'none') return;
+    const k = tile.dataset.k;
+    if (k === 'open') { statFilter = null; renderBoard(); return; }
+    if (loadConfig().role === 'teacher' && k === 'done') return; // 'courses' tile isn't a filter
+    statFilter = statFilter === k ? null : k;
+    renderBoard();
+  });
 
   // ---- chat ---------------------------------------------------------------------
   function renderRich(container, text) {
@@ -234,6 +298,25 @@
     }
   }
 
+  function copyText(text, btn) {
+    const ok = () => { btn.textContent = '✓ copied'; setTimeout(() => { btn.textContent = '📋 copy'; }, 1500); };
+    try {
+      navigator.clipboard.writeText(text).then(ok, () => fallbackCopy(text, btn, ok));
+    } catch (e) { fallbackCopy(text, btn, ok); }
+  }
+  function fallbackCopy(text, btn, ok) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      ok();
+    } catch (e) { btn.textContent = '✗'; }
+  }
+
   function addMessage(role, text) {
     const row = document.createElement('div');
     row.className = `msg ${role}`;
@@ -245,6 +328,15 @@
       tag.textContent = 'ClassMate';
       row.appendChild(tag);
       renderRich(bubble, text);
+      // longer replies (plans, lessons, rankings) get a copy button
+      if (text.length > 160) {
+        const copy = document.createElement('button');
+        copy.className = 'copy-btn';
+        copy.textContent = '📋 copy';
+        copy.title = 'Copy this reply as text';
+        copy.addEventListener('click', () => copyText(text, copy));
+        bubble.appendChild(copy);
+      }
     } else {
       bubble.textContent = text;
     }
@@ -308,8 +400,16 @@
   });
   setupBackdrop.addEventListener('click', (e) => { if (e.target === setupBackdrop) setupBackdrop.classList.add('hidden'); });
 
+  function resetFilters() {
+    searchQuery = '';
+    statFilter = null;
+    const box = document.getElementById('searchBox');
+    if (box) box.value = '';
+  }
+
   function doDemo() {
     client.loadDemo();
+    resetFilters();
     renderBoard();
   }
 
@@ -325,6 +425,7 @@
 
   function doDisconnect() {
     client.disconnect();
+    resetFilters();
     renderBoard();
   }
 
@@ -396,6 +497,7 @@
     cfg.role = role;
     saveConfig(cfg);
     renderChips();
+    resetFilters();
     if (client.mode === 'demo') client.loadDemo();
     else if (client.mode === 'google') {
       // role changes what we fetch (teacher: no submissions, teacherId filter)
