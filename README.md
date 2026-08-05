@@ -98,6 +98,15 @@ Usage status thresholds: **< 70%** nominal · **70–90%** elevated · **≥ 90%
   crate of classics. Same pattern as Jarvis: fully offline local brain, optional
   Claude hookup, optional spoken replies. See [`dj/README.md`](dj/README.md).
 
+- 💊 **[PepTalk — use safer, or don't use](peptalk/)** — a calm, non-judgmental
+  **harm-reduction reference** for anabolic steroids and peptides. For 22 common
+  compounds it lays out the supportive **supplements**, the **nutrients you run
+  low on**, and the **bloodwork** to monitor — then a **stack planner** merges
+  everything you're running into one consolidated support & lab plan with
+  combined-risk flags. Educational only, **not medical advice**; the same
+  offline-brain-plus-optional-Claude pattern. See
+  [`peptalk/README.md`](peptalk/README.md).
+
 ---
 
 Built as a self-contained static site — no build step, no dependencies.

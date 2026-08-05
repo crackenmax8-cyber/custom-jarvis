@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PepTalk — Harm-reduction guide for peptides &amp; steroids</title>
+  <meta name="description" content="An educational harm-reduction reference: what to take and monitor to make peptide and anabolic-steroid use safer — supportive supplements, nutrient gaps, and bloodwork. Not medical advice." />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='34' y='14' width='32' height='72' rx='16' fill='none' stroke='%2320c39a' stroke-width='9'/><path d='M42 40h16M42 54h16M42 68h16' stroke='%2320c39a' stroke-width='7' stroke-linecap='round'/></svg>" />
+</head>
+<body>
+  <div class="bg-glow" aria-hidden="true"></div>
+
+  <!-- ===== Persistent disclaimer ===== -->
+  <div class="disclaimer" id="disclaimer" role="note">
+    <span class="disc-icon" aria-hidden="true">⚠️</span>
+    <p><strong>Harm reduction, not medical advice.</strong> These substances carry real, sometimes permanent risks and nothing here endorses using them. Get baseline bloodwork, monitor on-cycle, and work with a doctor. Not using is always the safest option.</p>
+    <button class="disc-more" id="discMore" aria-expanded="false">Details</button>
+  </div>
+
+  <main class="shell">
+    <!-- ===== Header ===== -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 48 48"><rect x="16" y="6" width="16" height="36" rx="8" fill="none" stroke="currentColor" stroke-width="4.5"/><path d="M21 18h6M21 24h6M21 30h6" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/></svg>
+        </div>
+        <div class="brand-text">
+          <h1>PepTalk</h1>
+          <p class="tagline">use safer — supplements, nutrient gaps &amp; labs for peptides &amp; steroids</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="themeBtn" title="Switch theme" aria-label="Switch between light and dark theme">🌙</button>
+        <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Open settings">⚙</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <!-- ===== Sidebar: nav + library ===== -->
+      <aside class="sidebar">
+        <nav class="nav" id="nav">
+          <button class="nav-item active" data-view="home">🏠 <span>Overview</span></button>
+          <button class="nav-item" data-view="stack">🧬 <span>Stack planner</span></button>
+          <button class="nav-item" data-view="supplements">💊 <span>Supplements</span></button>
+          <button class="nav-item" data-view="labs">🩸 <span>Bloodwork</span></button>
+          <button class="nav-item" data-view="chat">💬 <span>Ask PepTalk</span></button>
+        </nav>
+
+        <div class="lib-head">
+          <span class="lib-title">Library</span>
+          <span class="lib-count" id="libCount"></span>
+        </div>
+        <input type="search" id="libSearch" class="lib-search" placeholder="Search compounds…" aria-label="Search compounds" autocomplete="off" />
+        <div class="lib-list" id="libList" role="list"></div>
+      </aside>
+
+      <!-- ===== Main content ===== -->
+      <section class="content" id="content" tabindex="-1"></section>
+    </div>
+
+    <!-- ===== Ask composer (always available) ===== -->
+    <form class="composer" id="composer">
+      <input type="text" id="input" placeholder="Ask: “what vitamins on tren?”, “labs before a cycle?”, “tell me about semaglutide”…" autocomplete="off" aria-label="Ask PepTalk" />
+      <button type="submit" class="send-btn">Ask ➤</button>
+    </form>
+  </main>
+
+  <!-- ===== Settings modal ===== -->
+  <div class="modal-backdrop hidden" id="modalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h2 id="modalTitle">Settings</h2>
+      <p class="modal-help">
+        Optional: add an Anthropic API key and free-form questions route to Claude,
+        staying in PepTalk's harm-reduction framing and grounded in this reference.
+        Without a key everything still works fully offline. The key is stored only in
+        this browser's localStorage and sent directly to Anthropic.
+      </p>
+      <label for="apiKey">Anthropic API key <span class="opt">(optional)</span></label>
+      <input type="password" id="apiKey" placeholder="sk-ant-…" autocomplete="off" spellcheck="false" />
+      <label for="model">Model</label>
+      <input type="text" id="model" value="claude-opus-4-8" spellcheck="false" />
+      <div class="modal-actions">
+        <button id="clearKey" class="btn-ghost" type="button">Clear</button>
+        <button id="saveKey" class="btn-solid" type="button">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="data.js"></script>
+  <script src="brain.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
