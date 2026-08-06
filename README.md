@@ -99,15 +99,16 @@ Usage status thresholds: **< 70%** nominal · **70–90%** elevated · **≥ 90%
   Claude hookup, optional spoken replies. See [`dj/README.md`](dj/README.md).
 
 - 💊 **[PepTalk — use safer, or don't use](peptalk/)** — a calm, non-judgmental
-  **harm-reduction reference** for anabolic steroids and peptides. For 22 common
-  compounds it lays out the supportive **supplements**, the **nutrients you run
-  low on**, and the **bloodwork** to monitor — then a **stack planner** merges
-  everything you're running into one consolidated support & lab plan with
-  combined-risk flags. Also covers **emergency warning signs** (one click from
-  anywhere), **injection safety**, **coming off & PCT**, **women & virilization**,
-  and prints a **lab request sheet** for a doctor. Educational only, **not medical
-  advice**; the same offline-brain-plus-optional-Claude pattern. See
-  [`peptalk/README.md`](peptalk/README.md).
+  **harm-reduction reference** for anabolic steroids and peptides. Its centrepiece
+  is **My Protocol**: save what you're running with a start date and get a
+  personal dashboard — your cycle phase ("Week 5 of 12"), an **ester-aware
+  timeline** with baseline/mid-cycle/last-dose/PCT dates, a rolled-up support
+  stack, bloodwork, and a watch-list, printable as a one-pager for a doctor. Plus
+  a 22-compound library, a **side-effect → countermeasure** index (free / OTC /
+  prescription), a **stack planner**, **emergency warning signs** (one click from
+  anywhere), **injection safety**, **coming off & PCT**, and **women &
+  virilization**. Educational only, **not medical advice**; offline brain with an
+  optional Claude hookup. See [`peptalk/README.md`](peptalk/README.md).
 
 ---
 

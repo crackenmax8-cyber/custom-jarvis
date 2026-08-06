@@ -1,17 +1,37 @@
 /* ============================================================================
-   PepTalk — app.  View router, rendering, stack planner, chat, settings.
+   PepTalk — app.  View router, My Protocol dashboard, stack planner,
+   countermeasures, printable sheets, chat, theme.
    ========================================================================== */
 (() => {
   "use strict";
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-  const KEY = { api: "peptalk.apiKey", model: "peptalk.model", theme: "peptalk.theme", stack: "peptalk.stack" };
+  const KEY = { api: "peptalk.apiKey", model: "peptalk.model", theme: "peptalk.theme", stack: "peptalk.stack", protocol: "peptalk.protocol.v1" };
+
+  function loadProtocol() {
+    try {
+      const p = JSON.parse(localStorage.getItem(KEY.protocol) || "null");
+      if (p && Array.isArray(p.items) && p.items.length) return p;
+    } catch (e) { /* corrupt — ignore */ }
+    return null;
+  }
 
   const state = {
     view: "home",
     compound: null,
     stack: new Set(JSON.parse(localStorage.getItem(KEY.stack) || "[]")),
     chat: [],
+    protocol: loadProtocol(),
+    protocolEditing: false,
+    draft: null,
+  };
+
+  const fmtDate = (iso) => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || "");
+    if (!m) return "—";
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(undefined, {
+      weekday: "short", day: "numeric", month: "short", year: "numeric",
+    });
   };
 
   /* ---- tiny markdown (bold, bullets, newlines) for bot messages -------- */
@@ -70,6 +90,7 @@
     $$(".nav-item").forEach((n) => n.classList.toggle("active", n.dataset.view === v));
     const c = $("#content");
     if (v === "home") renderHome(c);
+    else if (v === "protocol") renderProtocol(c);
     else if (v === "stack") renderStack(c);
     else if (v === "supplements") renderSupplements(c);
     else if (v === "labs") renderLabs(c);
@@ -81,7 +102,10 @@
     else if (v === "women") renderWomen(c);
     else if (v === "compound") renderCompound(c);
     c.scrollTop = 0;
-    c.focus({ preventScroll: true });
+    // move focus to the new heading so screen readers announce the view change
+    const h = c.querySelector("h2");
+    if (h) { h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true }); }
+    else c.focus({ preventScroll: true });
   }
 
   function openCompound(id) {
@@ -103,6 +127,8 @@
       <h2>Use safer, or don't use.</h2>
       <p class="hero-sub">PepTalk gathers what people report doing to reduce the harm of anabolic steroids and peptides — the supportive supplements, the nutrients you can run low on, and the bloodwork that turns invisible damage into something you can actually manage. It is <strong>not medical advice</strong>, and the safest cycle is the one you don't run.</p>
 
+      ${homeProtocolCard()}
+
       <h3>Ask anything</h3>
       <div class="chips">${chips.map((q) => `<button class="chip" data-q="${q.replace(/"/g, "&quot;")}">${q}</button>`).join("")}</div>
 
@@ -120,6 +146,10 @@
 
       <h3>Get started</h3>
       <div class="start-grid">
+        ${state.protocol ? "" : `<button class="start-card feature" data-go="protocol">
+          <span class="sc-ic">📋</span><b>Build my protocol</b>
+          <span>Save what you're running with dates — get your personal timeline, labs and watch-list.</span>
+        </button>`}
         <button class="start-card alarm" data-go="emergency">
           <span class="sc-ic">🚨</span><b>Emergency signs</b>
           <span>The symptoms that mean stop and get help now. Read this one before you need it.</span>
@@ -260,7 +290,10 @@
       <h2>Stack planner</h2>
       <p class="hero-sub">Select what you're running and PepTalk merges it into one consolidated plan — every supportive supplement, the full bloodwork list, and the warnings that matter when compounds combine.</p>
       <div class="stack-pick">${picks}</div>
-      ${state.stack.size ? `<button class="btn-ghost" id="clearStack" style="margin-top:6px">Clear all</button>` : ""}
+      ${state.stack.size ? `<div class="stack-actions">
+        <button class="btn-solid" id="saveAsProto">📋 Save as my protocol</button>
+        <button class="btn-ghost" id="clearStack">Clear all</button>
+      </div>` : ""}
       <div id="planOut">${plan ? renderPlan(plan) : `<div class="plan-empty">Select one or more compounds above to build your support &amp; bloodwork plan.</div>`}</div>
     `;
     $$(".pick input", c).forEach((cb) =>
@@ -283,6 +316,8 @@
       renderStack(c);
       renderLibrary($("#libSearch").value);
     });
+    const sp = $("#saveAsProto");
+    if (sp) sp.addEventListener("click", () => openProtocolSetup([...state.stack]));
   }
 
   function renderPlan(plan) {
@@ -348,6 +383,323 @@
   }
   const sevPillMini = (sev) =>
     `<span style="color:var(--sev-${sev});font-weight:700;font-size:.68rem">•${sev}</span>`;
+
+  /* ======================= MY PROTOCOL ================================= */
+  const PHASE = {
+    before:   { label: "Not started yet", tone: "soon" },
+    on:       { label: "On cycle",        tone: "warn" },
+    clearing: { label: "Esters clearing", tone: "warn" },
+    pct:      { label: "PCT / recovery",  tone: "warn" },
+    done:     { label: "Recovery complete", tone: "good" },
+  };
+
+  function protocolIds() {
+    return (state.protocol ? state.protocol.items.map((i) => i.id) : []);
+  }
+
+  // Compact card shown on the Overview when a protocol exists
+  function homeProtocolCard() {
+    if (!state.protocol) return "";
+    const tl = Brain.protocol.timeline(state.protocol, new Date());
+    const names = state.protocol.items.map((i) => PT.byId[i.id] && PT.byId[i.id].name).filter(Boolean).join(" · ");
+    let status;
+    if (tl.planning) status = "Add a start date to see your timeline";
+    else if (tl.phase === "on") status = `Week ${tl.weekNum} of ${tl.weeks}`;
+    else if (tl.phase === "before") status = `Starts in ${tl.daysToStart} day${tl.daysToStart === 1 ? "" : "s"}`;
+    else status = PHASE[tl.phase].label;
+    const nextLine = !tl.planning && tl.next
+      ? `Next: <b>${tl.next.label}</b> ${tl.next.inDays <= 0 ? "now" : `in ${tl.next.inDays} day${tl.next.inDays === 1 ? "" : "s"}`}`
+      : "";
+    return `
+      <button class="proto-summary" data-go="protocol">
+        <div class="ps-top"><span class="ps-eyebrow">Your protocol</span><span class="ps-status">${status}</span></div>
+        <div class="ps-names">${names}</div>
+        ${nextLine ? `<div class="ps-next">${nextLine}</div>` : ""}
+        <span class="ps-cta">Open dashboard →</span>
+      </button>`;
+  }
+
+  function renderProtocol(c) {
+    if (state.protocol && !state.protocolEditing) renderProtocolDash(c);
+    else renderProtocolSetup(c);
+  }
+
+  /* ---- Dashboard ---- */
+  function renderProtocolDash(c) {
+    const p = state.protocol;
+    const tl = Brain.protocol.timeline(p, new Date());
+    const plan = Brain.buildPlan(protocolIds());
+    const names = p.items.map((it) => {
+      const co = PT.byId[it.id];
+      return `<span class="tag">${co.name}${it.dose ? ` · ${mdEscape(it.dose)}` : ""}</span>`;
+    }).join("");
+
+    // status header
+    let big, sub, tone;
+    if (tl.planning) {
+      big = "Ready when you are"; tone = "soon";
+      sub = "Add a start date and length to unlock your timeline, bloodwork schedule and PCT window.";
+    } else {
+      tone = PHASE[tl.phase].tone;
+      if (tl.phase === "on") { big = `Week ${tl.weekNum} <span class="pd-of">of ${tl.weeks}</span>`; sub = "On cycle. Keep monitoring — the damage you can't feel is on your bloodwork."; }
+      else if (tl.phase === "before") { big = `Starts in ${tl.daysToStart} day${tl.daysToStart === 1 ? "" : "s"}`; sub = "Get your baseline bloodwork done before the first dose — it's the reference for everything after."; }
+      else if (tl.phase === "clearing") { big = "Esters clearing"; sub = `Cycle finished. Hold PCT until your longest ester clears${tl.clearedBy ? ` (${tl.clearedBy})` : ""} — starting too early wastes it.`; }
+      else if (tl.phase === "pct") { big = "PCT / recovery window"; sub = "The highest-risk stretch for mood. Confirm recovery with bloods, not by feel — and get support if it gets dark."; }
+      else { big = "Recovery complete"; sub = "Re-check hormones to confirm you're actually back to baseline before considering anything else."; }
+    }
+    const progPct = tl.planning ? 0 : Math.round(tl.progress * 100);
+
+    // timeline
+    const milestones = tl.planning ? "" : tl.milestones.map((m) => {
+      const isNext = tl.next && tl.next.key === m.key;
+      const cls = m.done ? "done" : isNext ? "next" : "todo";
+      return `<li class="ms ${cls}">
+        <span class="ms-dot" aria-hidden="true">${m.done ? "✓" : ""}</span>
+        <div class="ms-body">
+          <div class="ms-head"><span class="ms-label">${m.label}</span><span class="ms-date">${fmtDate(m.iso)}</span></div>
+          <p class="ms-note">${m.note}</p>
+          ${isNext ? `<span class="ms-badge">Next up${m.inDays > 0 ? ` — in ${m.inDays} days` : ""}</span>` : ""}
+        </div>
+      </li>`;
+    }).join("");
+
+    const supp = plan.supplements.map((s) => {
+      const S = PT.supplements[s.id];
+      return `<div class="support-card"><div class="sc-name">${S.name}</div><div class="sc-note">${S.why}</div><span class="sc-dose">${S.dose}</span></div>`;
+    }).join("");
+    const counters = plan.counters.length ? plan.counters.map((x) => {
+      const k = PT.counterById[x.id];
+      return `<button class="ctr-mini" data-counter="${x.id}"><span class="cm-ic">${k.icon}</span><span class="cm-name">${k.name}</span><span class="cm-first">${k.first[0]}</span></button>`;
+    }).join("") : "";
+    const flags = plan.flags.map((f) => `<div class="flag ${f.level}"><span class="flag-ic">${f.level === "severe" ? "⛔" : "⚠️"}</span><span>${f.text}</span></div>`).join("");
+
+    c.innerHTML = `
+      <div class="detail-head">
+        <div class="dh-main"><h2>My protocol</h2><p class="aka">Saved on this device only — nothing leaves your browser.</p></div>
+        <div class="pd-actions">
+          <button class="btn-ghost" id="protoEdit">Edit</button>
+          <button class="btn-ghost" id="protoClear">Clear</button>
+        </div>
+      </div>
+
+      <div class="pd-status ${tone}">
+        <div class="pd-big">${big}</div>
+        <p class="pd-sub">${sub}</p>
+        ${tl.planning ? "" : `<div class="pd-bar"><i style="width:${progPct}%"></i></div>`}
+        <div class="meta-row" style="margin-top:12px">${names}</div>
+      </div>
+
+      ${flags ? `<h3>Flags for this stack</h3>${flags}` : ""}
+
+      ${tl.planning ? `<div class="depletes-note">Set a start date to see your baseline, mid-cycle, last-dose${tl.hasPCT ? " and PCT" : ""} milestones with real dates. <button class="link-btn" id="protoAddDate">Add dates →</button></div>`
+        : `<div class="pd-2col">
+            <div>
+              <h3>Your timeline</h3>
+              <ul class="ms-list">${milestones}</ul>
+            </div>
+          </div>`}
+
+      <div class="print-row">
+        <button class="btn-solid" id="printProto">🖨️ Print my protocol</button>
+        <span class="print-note">A one-page summary — compounds, dates, support and the labs to run — to hand a doctor.</span>
+      </div>
+
+      <h3>Your support stack</h3>
+      <div class="support-grid">${supp}</div>
+
+      ${counters ? `<h3>Watch for — and what counters each</h3><div class="ctr-mini-grid">${counters}</div>` : ""}
+
+      <h3>Your bloodwork</h3>
+      <div class="lab-list">
+        ${plan.labs.map((l) => { const L = PT.labs[l.id]; return `<div class="lab-row"><div class="lab-name">${L.name}</div><div class="lab-body"><span class="lab-markers">${L.markers}</span><p class="lab-why">${L.why}</p></div></div>`; }).join("")}
+      </div>
+
+      ${p.sex === "f" ? `<div class="ctr-red" style="margin-top:16px">♀ You've set this protocol as female. Virilization is the priority risk and some of it is permanent — the first sign (especially any voice change) means stop that day. <button class="link-btn" data-go="women">Open Women &amp; virilization →</button></div>` : ""}
+
+      <p style="font-size:.8rem;color:var(--text-faint);margin-top:18px">
+        Dates are estimates from typical ester clearance, not a medical schedule. Doses you enter are your own notes.
+        Confirm everything with bloodwork and a doctor.
+      </p>`;
+
+    $("#protoEdit").addEventListener("click", () => openProtocolSetup());
+    $("#protoClear").addEventListener("click", () => {
+      if (!confirm("Clear your saved protocol? This can't be undone.")) return;
+      state.protocol = null;
+      localStorage.removeItem(KEY.protocol);
+      toast("Protocol cleared.");
+      setView("protocol");
+    });
+    $("#printProto").addEventListener("click", printProtocolSheet);
+    const addDate = $("#protoAddDate");
+    if (addDate) addDate.addEventListener("click", () => openProtocolSetup());
+    wireGo(c);
+    $$("[data-counter]", c).forEach((b) => b.addEventListener("click", () => {
+      setView("counters");
+      const el = $("#ctr-" + b.dataset.counter);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }));
+  }
+
+  /* ---- Setup ---- */
+  function openProtocolSetup(seedIds) {
+    state.protocolEditing = true;
+    const base = state.protocol || {};
+    state.draft = { items: {}, start: base.start || "", weeks: base.weeks || 12, sex: base.sex || "m" };
+    const ids = seedIds || (base.items || []).map((i) => i.id);
+    ids.forEach((id) => {
+      if (!PT.byId[id]) return;
+      const existing = (base.items || []).find((x) => x.id === id) || {};
+      state.draft.items[id] = { dose: existing.dose || "", ester: existing.ester || Brain.protocol.defaultEster(PT.byId[id]) };
+    });
+    setView("protocol");
+  }
+
+  function protocolDraftItems() {
+    const ids = Object.keys(state.draft.items);
+    if (!ids.length) return `<p class="plan-empty">Tick what you're running above, then add doses and esters here.</p>`;
+    return ids.map((id) => {
+      const co = PT.byId[id];
+      const it = state.draft.items[id];
+      const supp = Brain.protocol.isSuppressive(co);
+      return `<div class="draft-row">
+        <div class="dr-name">${co.name}<span class="dr-sub">${co.aka}</span></div>
+        <input class="dr-dose" data-dose="${id}" value="${(it.dose || "").replace(/"/g, "&quot;")}" placeholder="dose (optional), e.g. 250 mg/wk" aria-label="Dose for ${co.name}" />
+        ${supp
+          ? `<select class="dr-ester" data-ester="${id}" aria-label="Ester for ${co.name}">
+               ${Brain.protocol.ESTERS.map((e) => `<option value="${e.id}" ${it.ester === e.id ? "selected" : ""}>${e.label}</option>`).join("")}
+             </select>`
+          : `<span class="dr-noester">peptide — no PCT</span>`}
+      </div>`;
+    }).join("");
+  }
+
+  function renderProtocolSetup(c) {
+    const d = state.draft || (state.draft = { items: {}, start: "", weeks: 12, sex: "m" });
+    const picker = PT.groups.map((g) => {
+      const items = PT.compounds.filter((co) => co.group === g);
+      return `<div class="lib-group-label">${g}</div>
+        <div class="stack-pick">
+          ${items.map((co) => `<label class="pick ${d.items[co.id] ? "on" : ""}">
+            <input type="checkbox" data-pick="${co.id}" ${d.items[co.id] ? "checked" : ""}/>
+            <span class="pk-name">${co.name}</span>
+          </label>`).join("")}
+        </div>`;
+    }).join("");
+
+    c.innerHTML = `
+      <h2>${state.protocol ? "Edit your protocol" : "Build your protocol"}</h2>
+      <p class="hero-sub">Save what you're actually running — with a start date — and PepTalk builds your personal timeline, the bloodwork schedule, an ester-aware PCT window, and a watch-list of what to counter. It's stored only in this browser.</p>
+
+      <h3>Who's this for</h3>
+      <div class="seg" role="group" aria-label="Sex for dosing and virilization guidance">
+        <button class="seg-btn ${d.sex === "m" ? "on" : ""}" data-sex="m">Male</button>
+        <button class="seg-btn ${d.sex === "f" ? "on" : ""}" data-sex="f">Female</button>
+      </div>
+      <p class="seg-note">Female adds virilization guidance and flags that the compound risk ratings are written from a male-dosing perspective.</p>
+
+      <h3>What are you running</h3>
+      ${picker}
+
+      <h3>Doses &amp; esters</h3>
+      <p class="seg-note">Ester sets how long a compound lingers — it's what your PCT timing is calculated from. Dose is just your own note.</p>
+      <div class="draft-list" id="draftItems">${protocolDraftItems()}</div>
+
+      <h3>Dates</h3>
+      <div class="date-row">
+        <label class="date-field">Cycle start
+          <input type="date" id="protoStart" value="${d.start || ""}" />
+        </label>
+        <label class="date-field">Length (weeks)
+          <input type="number" id="protoWeeks" min="1" max="52" value="${d.weeks || ""}" placeholder="12" />
+        </label>
+      </div>
+      <p class="seg-note">Leave dates blank to save now and add them later — you'll still get your support stack and labs.</p>
+
+      <div class="setup-actions">
+        <button class="btn-solid" id="protoSave">${state.protocol ? "Save changes" : "Save protocol"}</button>
+        <button class="btn-ghost" id="protoCancel">Cancel</button>
+      </div>`;
+
+    const rerenderItems = () => { $("#draftItems").innerHTML = protocolDraftItems(); bindDraftItemInputs(); };
+    function bindDraftItemInputs() {
+      $$("[data-dose]", c).forEach((i) => i.addEventListener("input", () => {
+        if (state.draft.items[i.dataset.dose]) state.draft.items[i.dataset.dose].dose = i.value;
+      }));
+      $$("[data-ester]", c).forEach((s) => s.addEventListener("change", () => {
+        if (state.draft.items[s.dataset.ester]) state.draft.items[s.dataset.ester].ester = s.value;
+      }));
+    }
+
+    $$("[data-pick]", c).forEach((cb) => cb.addEventListener("change", () => {
+      const id = cb.dataset.pick;
+      if (cb.checked) state.draft.items[id] = { dose: "", ester: Brain.protocol.defaultEster(PT.byId[id]) };
+      else delete state.draft.items[id];
+      cb.closest(".pick").classList.toggle("on", cb.checked);
+      rerenderItems();
+    }));
+    bindDraftItemInputs();
+    $$("[data-sex]", c).forEach((b) => b.addEventListener("click", () => {
+      state.draft.sex = b.dataset.sex;
+      $$("[data-sex]", c).forEach((x) => x.classList.toggle("on", x === b));
+    }));
+    $("#protoStart").addEventListener("change", (e) => { state.draft.start = e.target.value; });
+    $("#protoWeeks").addEventListener("input", (e) => { state.draft.weeks = e.target.value; });
+    $("#protoCancel").addEventListener("click", () => {
+      state.protocolEditing = false; state.draft = null;
+      setView(state.protocol ? "protocol" : "home");
+    });
+    $("#protoSave").addEventListener("click", () => {
+      const ids = Object.keys(state.draft.items);
+      if (!ids.length) { toast("Pick at least one compound first."); return; }
+      state.protocol = {
+        items: ids.map((id) => {
+          const it = state.draft.items[id];
+          const o = { id };
+          if (it.dose) o.dose = it.dose;
+          if (it.ester) o.ester = it.ester;
+          return o;
+        }),
+        start: state.draft.start || null,
+        weeks: state.draft.weeks ? Math.max(1, Math.min(52, Math.round(+state.draft.weeks))) : null,
+        sex: state.draft.sex,
+        savedAt: new Date().toISOString(),
+      };
+      localStorage.setItem(KEY.protocol, JSON.stringify(state.protocol));
+      state.protocolEditing = false; state.draft = null;
+      toast("Protocol saved.");
+      setView("protocol");
+    });
+  }
+
+  function printProtocolSheet() {
+    const p = state.protocol;
+    const tl = Brain.protocol.timeline(p, new Date());
+    const plan = Brain.buildPlan(protocolIds());
+    const compRows = p.items.map((it) => {
+      const co = PT.byId[it.id];
+      return `<tr><td><b>${co.name}</b> <span class="mk">${co.aka}</span></td><td>${it.dose ? mdEscape(it.dose) : "—"}</td><td>${it.ester ? (Brain.protocol.ESTERS.find((e) => e.id === it.ester) || {}).label || it.ester : "—"}</td></tr>`;
+    }).join("");
+    const dateRows = tl.planning ? "" : tl.milestones.map((m) => `<tr><td class="chk">☐</td><td><b>${m.label}</b></td><td class="wh">${fmtDate(m.iso)}</td></tr>`).join("");
+    const labRows = plan.labs.map((l) => { const L = PT.labs[l.id]; return `<tr><td class="chk">☐</td><td><b>${L.name}</b><div class="mk">${L.markers}</div></td></tr>`; }).join("");
+    const suppList = plan.supplements.map((s) => PT.supplements[s.id].name).join(" · ");
+
+    let sheet = $("#printSheet");
+    if (!sheet) { sheet = document.createElement("div"); sheet.id = "printSheet"; document.body.appendChild(sheet); }
+    sheet.innerHTML = `
+      <h1>My protocol</h1>
+      <p class="sub">Prepared with PepTalk — educational harm-reduction information, not a prescription or a doctor's order. Please discuss it with a clinician, and be straightforward about what you're taking.</p>
+      <h2>Compounds</h2>
+      <table><thead><tr><th>Compound</th><th>Dose (self-reported)</th><th>Ester</th></tr></thead><tbody>${compRows}</tbody></table>
+      ${dateRows ? `<h2>Timeline</h2><table><tbody>${dateRows}</tbody></table>` : ""}
+      <h2>Bloodwork to run</h2><table><tbody>${labRows}</tbody></table>
+      <h2>Support</h2><p class="sub">${suppList}</p>
+      <div class="sig"><span>Date: ______________</span><span>Name: ____________________________</span></div>`;
+    document.body.classList.add("printing");
+    const done = () => { document.body.classList.remove("printing"); window.removeEventListener("afterprint", done); };
+    window.addEventListener("afterprint", done);
+    window.print();
+    setTimeout(done, 1500);
+  }
 
   /* ======================= SUPPLEMENTS ================================= */
   function renderSupplements(c) {

@@ -438,7 +438,105 @@ const Brain = (() => {
       .trim();
   }
 
-  return { findCompound, buildPlan, answerLocal, answerClaude };
+  /* --- personal protocol: cycle phase + ester-aware timeline ------------- */
+  const ESTERS = [
+    { id: "oral", label: "Oral (17aa)", days: 3, hint: "clears in a few days" },
+    { id: "short", label: "Short ester — propionate, acetate, NPP", days: 5, hint: "~5 days to clear" },
+    { id: "long", label: "Long ester — enanthate, cypionate", days: 18, hint: "~2–3 weeks to clear" },
+    { id: "verylong", label: "Very long — Deca, EQ, undecylenate", days: 40, hint: "~4–6 weeks to clear" },
+  ];
+  const esterDays = (id) => (ESTERS.find((e) => e.id === id) || { days: 18 }).days;
+  const isSuppressive = (c) => !!c && c.klass === "Anabolic steroid";
+  function defaultEster(c) {
+    if (!isSuppressive(c)) return null; // peptides / GH / GLP-1 don't need SERM PCT
+    if (/oral/i.test(c.route)) return "oral";
+    if (c.id === "nandrolone" || c.id === "boldenone") return "verylong";
+    if (c.id === "trenbolone") return "short";
+    return "long";
+  }
+
+  const DAY = 86400000;
+  const midnight = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const addDays = (d, n) => midnight(new Date(d.getTime() + n * DAY));
+  const daysBetween = (a, b) => Math.round((midnight(b) - midnight(a)) / DAY);
+  function parseISO(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
+    if (!m) return null;
+    const d = new Date(+m[1], +m[2] - 1, +m[3]);
+    return isNaN(d) ? null : d;
+  }
+
+  // protocol: { items:[{id,dose,ester}], start:"yyyy-mm-dd"|null, weeks:Number|null, sex:"m"|"f" }
+  // todayDate: a Date (defaults handled by caller so this stays pure/testable)
+  function timeline(protocol, todayDate) {
+    const items = (protocol.items || []).map((it) => ({ ...it, c: PT.byId[it.id] })).filter((it) => it.c);
+    const suppressive = items.filter((it) => isSuppressive(it.c));
+    const hasPCT = suppressive.length > 0;
+    const clearance = hasPCT
+      ? Math.max(...suppressive.map((it) => esterDays(it.ester || defaultEster(it.c))))
+      : 0;
+    const clearedBy = suppressive
+      .slice()
+      .sort((a, b) => esterDays(b.ester || defaultEster(b.c)) - esterDays(a.ester || defaultEster(a.c)))[0];
+
+    const start = parseISO(protocol.start);
+    const weeks = Math.max(0, Math.min(52, Math.round(+protocol.weeks || 0)));
+    if (!start || !weeks) {
+      return { planning: true, hasPCT, clearance, clearedBy: clearedBy && clearedBy.c.name };
+    }
+
+    const today = midnight(todayDate || new Date());
+    const end = addDays(start, weeks * 7);
+    const mid = addDays(start, Math.min(Math.round((weeks * 7) / 2), 42));
+    const pctStart = hasPCT ? addDays(end, clearance) : null;
+    const recovery = hasPCT ? addDays(pctStart, 42) : null;
+
+    let phase, weekNum = null, daysToStart = null;
+    if (today < start) {
+      phase = "before";
+      daysToStart = daysBetween(today, start);
+    } else if (today <= end) {
+      phase = "on";
+      weekNum = Math.floor(daysBetween(start, today) / 7) + 1;
+    } else if (hasPCT && today < pctStart) {
+      phase = "clearing";
+    } else if (hasPCT && recovery && today < recovery) {
+      phase = "pct";
+    } else {
+      phase = "done";
+    }
+
+    const span = Math.max(1, daysBetween(start, end));
+    const progress = Math.max(0, Math.min(1, daysBetween(start, today) / span));
+
+    const iso = (d) => (d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` : null);
+    const milestones = [
+      { key: "baseline", label: "Baseline bloodwork", date: addDays(start, -3), note: "Before you start — the reference point everything else is measured against.", done: today >= addDays(start, -3) },
+      { key: "start", label: "Cycle start", date: start, note: `Planned ${weeks}-week run.`, done: today >= start },
+      { key: "mid", label: "Mid-cycle bloodwork", date: mid, note: "Catch lipid, hematocrit and liver shifts while you can still act on them.", done: today >= mid },
+      { key: "end", label: "Last dose", date: end, note: "End of the planned cycle.", done: today >= end },
+    ];
+    if (hasPCT) {
+      milestones.push({ key: "pct", label: "Start PCT", date: pctStart, note: `After your longest ester clears (~${clearance} days${clearedBy ? `, driven by ${clearedBy.c.name}` : ""}). Too early is wasted.`, done: today >= pctStart });
+      milestones.push({ key: "recovery", label: "Confirm recovery", date: recovery, note: "Re-test LH, FSH and total testosterone ~6 weeks into recovery — by bloods, not by feel.", done: today >= recovery });
+    } else {
+      milestones.push({ key: "post", label: "Post bloodwork", date: addDays(end, 21), note: "Re-check ~3 weeks after finishing to confirm things settled.", done: today >= addDays(end, 21) });
+    }
+    // next upcoming milestone
+    const next = milestones.find((m) => !m.done) || null;
+
+    return {
+      planning: false, phase, weekNum, weeks, daysToStart, progress, hasPCT, clearance,
+      clearedBy: clearedBy && clearedBy.c.name,
+      dates: { start, mid, end, pctStart, recovery, baseline: addDays(start, -3) },
+      milestones: milestones.map((m) => ({ ...m, iso: iso(m.date) })),
+      next: next && { ...next, iso: iso(next.date), inDays: daysBetween(today, next.date) },
+    };
+  }
+
+  const protocol = { ESTERS, esterDays, defaultEster, isSuppressive, timeline };
+
+  return { findCompound, buildPlan, answerLocal, answerClaude, protocol };
 })();
 
 if (typeof module !== "undefined" && module.exports) module.exports = Brain;

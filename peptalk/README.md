@@ -19,6 +19,16 @@ something you can actually manage.
 
 ## What it does
 
+- 📋 **My Protocol** — the part that makes it a tool rather than a reference. Save
+  what you're actually running (compounds, doses, esters, a start date and
+  length, and whether you're male or female) and PepTalk builds a **personal
+  dashboard**: your current cycle phase ("Week 5 of 12"), a progress bar, and an
+  **ester-aware timeline** with real dates — baseline and mid-cycle bloodwork,
+  last dose, and a **PCT window computed from your longest-clearing ester** (the
+  thing people most often get wrong). It rolls up your support stack, the labs to
+  run, and a watch-list of what to counter, and prints a **one-page summary for a
+  doctor**. Stored only in your browser; peptide-only protocols correctly skip
+  PCT. Bridged from the Stack planner via "Save as my protocol".
 - 🚨 **Emergency warning signs** — 15 red-flag presentations sorted by what to do
   *right now*: call an ambulance (heart attack, stroke, pulmonary embolism, DVT,
   severe hypoglycemia, anaphylaxis), get seen today (liver injury, pancreatitis,
@@ -108,11 +118,11 @@ fully offline.
 
 | File | Purpose |
 |------|---------|
-| `index.html` | App shell — disclaimer bar, sidebar/library, content area, composer, settings |
-| `styles.css` | Clinical, calm design; dark + light themes; accessible severity labels |
-| `data.js` | The knowledge base — compounds, supportive supplements, lab panels, principles |
-| `brain.js` | Compound resolver, topic answers, consolidated stack planner, optional Claude |
-| `app.js` | View router, rendering, stack builder, chat, theme & settings |
+| `index.html` | App shell — disclaimer bar, grouped nav, library, content area, composer |
+| `styles.css` | Clinical, calm design; dark + light themes; accessible severity labels; print + timeline styling |
+| `data.js` | Knowledge base — compounds, supplements, labs, countermeasures, emergency, injection, PCT, women |
+| `brain.js` | Compound/symptom routing, stack planner, ester-aware protocol timeline, optional Claude |
+| `app.js` | View router, My Protocol dashboard, stack builder, printable sheets, chat, theme |
 
 ---
 
