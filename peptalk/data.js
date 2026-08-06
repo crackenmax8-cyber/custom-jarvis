@@ -795,6 +795,420 @@ PT.compounds = [
 ];
 
 /* ============================================================================
+   COUNTERMEASURES — "this side effect is happening, what counters it?"
+   Deliberately split into: what's free (usually the real fix), what's
+   over-the-counter, and what's an actual prescription drug. Several of the
+   effective answers here are real medicines with real risks — those are
+   flagged, because the community habit of casually running them is itself
+   a source of harm.
+   ========================================================================== */
+PT.counterIntro =
+  "The honest pattern in almost every row below: the free fix — lower the dose, " +
+  "shorten the run, do cardio, sleep, hydrate — outperforms anything you can buy. " +
+  "Supplements blunt damage; they don't cancel it. And several genuinely effective " +
+  "countermeasures are prescription drugs whose side effects can be worse than the " +
+  "problem if you dose them blind.";
+
+PT.counters = [
+  {
+    id: "estrogen", name: "High estrogen / gyno", icon: "🌸",
+    compounds: ["testosterone", "dianabol", "anadrol", "nandrolone"],
+    what: "Aromatizing compounds convert testosterone into estradiol. Too much brings bloat, high blood pressure, mood swings and breast tissue growth — and once gyno becomes established fibrous tissue, only surgery removes it.",
+    first: [
+      "Lower the dose — aromatization is dose-dependent, and this is the actual fix rather than a workaround.",
+      "Lose body fat: fat tissue contains aromatase, so a leaner person converts less.",
+      "Cut alcohol, which raises estrogen and loads the liver.",
+    ],
+    otc: [
+      { name: "DIM / calcium-D-glucarate", note: "Mild support for estrogen metabolism. Evidence is thin — do not rely on it to control real gyno." },
+      { name: "Zinc", note: "Supports healthy androgen function generally." },
+    ],
+    rx: [
+      { name: "Aromatase inhibitor (anastrozole, exemestane)", note: "Lowers estradiol directly and works well. The mistake is dosing it blind — see below." },
+      { name: "SERM (tamoxifen, raloxifene)", note: "Blocks estrogen at breast tissue and can reverse early gyno without flattening estradiol everywhere. Often the better choice for gyno specifically." },
+    ],
+    avoid: [
+      "Taking an AI \"just in case\" from day one — crushing estrogen is its own harm, and a common one.",
+      "Dosing an AI off how you feel. High and low estrogen symptoms overlap heavily; use a sensitive estradiol assay.",
+      "Ignoring a tender lump for months. Early is drug-treatable; established is surgical.",
+    ],
+  },
+  {
+    id: "lowE2", name: "Estrogen crushed too low", icon: "🥀",
+    compounds: ["testosterone", "masteron", "winstrol", "anavar"],
+    what: "Usually self-inflicted with an aromatase inhibitor. Estrogen is not the enemy — you need it for joints, mood, libido, bone and lipids. Low estrogen feels worse than slightly high estrogen, and does more long-term damage.",
+    first: [
+      "Stop or reduce the aromatase inhibitor. It reverses over days to a couple of weeks.",
+      "Re-test with a sensitive estradiol assay before changing anything again.",
+    ],
+    otc: [
+      { name: "Fish oil + collagen", note: "Helps the aching joints while estradiol recovers — doesn't fix the cause." },
+    ],
+    rx: [
+      { name: "Adjusting the AI with a doctor", note: "Many people on a sane testosterone dose need no AI at all." },
+    ],
+    avoid: [
+      "Adding more AI because the symptoms \"feel like high estrogen\". Flat mood, dead libido, aching joints and night sweats occur at BOTH ends — this is the single most common self-inflicted mistake in this space. Test, don't guess.",
+    ],
+  },
+  {
+    id: "prolactin", name: "High prolactin", icon: "🧪",
+    compounds: ["nandrolone", "trenbolone"],
+    what: "19-nor compounds raise prolactin, which brings sexual dysfunction, low mood, and occasionally nipple discharge.",
+    first: [
+      "Lower the dose or drop the 19-nor.",
+      "Make sure there's adequate testosterone/DHT alongside it — a lot of \"prolactin\" problems are actually not enough androgen.",
+    ],
+    otc: [
+      { name: "Vitamin B6 as P5P", note: "~100–200 mg. Mild, cheap and commonly used. Don't megadose indefinitely — chronic very high B6 can cause nerve damage." },
+    ],
+    rx: [
+      { name: "Cabergoline", note: "Effective dopamine agonist.", caution: "Not a casual supplement: nausea, blood-pressure drops, and at higher or chronic doses genuine concerns about heart-valve changes and impulse-control problems (compulsive gambling, spending, sexual behaviour). Test prolactin first and involve a doctor." },
+    ],
+    avoid: [
+      "Running cabergoline preventatively without ever testing prolactin.",
+      "Blaming prolactin when the real culprit is crushed estrogen or no DHT.",
+    ],
+  },
+  {
+    id: "hematocrit", name: "Thick blood (high hematocrit)", icon: "🩸",
+    compounds: ["testosterone", "boldenone", "trenbolone"],
+    what: "More red cells means thicker blood, which raises the risk of clots, stroke and heart attack. It's silent — you find it on a blood test, not by feel.",
+    first: [
+      "Hydrate properly and consistently — dehydration concentrates it further.",
+      "Lower the dose, and consider more frequent smaller injections rather than large spikes.",
+      "Do cardio, stop nicotine, and get sleep apnea treated if you have it — all three drive it up.",
+    ],
+    otc: [
+      { name: "Omega-3", note: "Modest help with blood viscosity and cardiovascular risk." },
+      { name: "Electrolytes / water", note: "Keeps plasma volume up." },
+    ],
+    rx: [
+      { name: "Blood donation or therapeutic phlebotomy", note: "The actual fix — it directly removes red cells. Many clinicians act somewhere around 52–54% hematocrit; agree your threshold with a doctor." },
+    ],
+    avoid: [
+      "Treating aspirin as a substitute for actually lowering hematocrit.",
+      "Donating every few weeks without checking ferritin — you can swing into iron deficiency, which has its own miserable symptoms.",
+    ],
+    red: "Chest pain, sudden breathlessness, one-sided leg swelling or stroke symptoms — that's an emergency, not a bloodwork problem.",
+  },
+  {
+    id: "bp", name: "High blood pressure", icon: "💓",
+    compounds: ["anadrol", "trenbolone", "dianabol", "testosterone", "boldenone"],
+    what: "The most consistently damaging and most ignored side effect. It's symptomless until it isn't, and it quietly damages heart, kidneys, eyes and brain.",
+    first: [
+      "Real cardio, several times a week — the single biggest lever you have.",
+      "Buy a home cuff and actually use it. You cannot manage what you don't measure.",
+      "Lower the dose, reduce sodium moderately, drop stimulants and pre-workout, fix sleep.",
+    ],
+    otc: [
+      { name: "L-Citrulline", note: "~6–8 g, supports vasodilation." },
+      { name: "Magnesium", note: "~200–400 mg." },
+      { name: "Omega-3 + potassium-rich food", note: "Both help modestly and stack with the above." },
+      { name: "Taurine", note: "~3–5 g, some blood-pressure benefit." },
+    ],
+    rx: [
+      { name: "ARBs (e.g. telmisartan) or nebivolol", note: "Commonly prescribed, generally well tolerated by lifters, and a doctor should pick which. Treating high BP properly is one of the highest-value things you can do." },
+    ],
+    avoid: [
+      "Waiting for symptoms before treating it.",
+      "Recreational diuretics to 'drop water and pressure' — electrolyte crashes from this have killed bodybuilders.",
+      "Non-selective beta blockers, which flatten performance and are rarely the right pick here.",
+    ],
+    red: "Very high readings with headache, chest pain, visual change or breathlessness — get urgent care.",
+  },
+  {
+    id: "lipids", name: "Wrecked cholesterol", icon: "🫀",
+    compounds: ["winstrol", "superdrol", "anadrol", "dianabol", "turinabol", "anavar", "masteron", "trenbolone"],
+    what: "AAS flatten HDL and push LDL/ApoB up — orals worst of all. This is the mechanism behind the long-term heart risk, and it moves within weeks.",
+    first: [
+      "Drop or shorten the oral. Nothing else you can do comes close to this.",
+      "Cardio, and swap saturated fat for mono/polyunsaturated.",
+    ],
+    otc: [
+      { name: "Omega-3", note: "~3–4 g EPA+DHA — the front-line supplement here." },
+      { name: "Citrus bergamot", note: "~500–1,000 mg. One of the few with human data for nudging LDL down and HDL up." },
+      { name: "Psyllium / soluble fiber", note: "~5–10 g, binds cholesterol in the gut." },
+    ],
+    rx: [
+      { name: "Statin / ezetimibe", note: "A doctor's call if lipids stay bad off-cycle. Note statins deplete CoQ10 — supplement it if you're put on one." },
+    ],
+    avoid: [
+      "Believing a supplement stack makes a harsh oral cardiovascularly safe. It blunts the damage; it does not prevent it.",
+    ],
+  },
+  {
+    id: "liver", name: "Liver stress", icon: "🫁",
+    compounds: ["dianabol", "anadrol", "winstrol", "anavar", "superdrol", "turinabol"],
+    what: "17-alpha-alkylated orals back up bile flow and stress liver cells. Superdrol and Anadrol are the worst offenders, with documented cases of real liver injury.",
+    first: [
+      "Shorten the run and lower the dose — most harm-reduction guidance caps orals around 4–6 weeks.",
+      "Never run two 17aa orals at once. That's doubling the toxicity, not adding to it.",
+      "Zero alcohol, and go easy on paracetamol/acetaminophen.",
+    ],
+    otc: [
+      { name: "TUDCA", note: "~500–1,000 mg daily while dosing an oral — the community standard for keeping bile moving." },
+      { name: "NAC", note: "~600–1,200 mg, glutathione precursor." },
+    ],
+    rx: [
+      { name: "None — stopping is the treatment", note: "If liver enzymes or bilirubin are climbing, the intervention is discontinuing the oral, not adding another pill." },
+    ],
+    avoid: [
+      "Treating TUDCA as a licence to run a hepatotoxic oral longer or harder.",
+      "Cheap \"liver support\" blends with token doses of everything.",
+      "Judging your liver by how you feel — enzymes climb silently.",
+    ],
+    red: "Yellow eyes or skin, very dark urine, pale stools, pain under the right ribs — stop and get seen the same day.",
+  },
+  {
+    id: "hairloss", name: "Hair loss", icon: "💈",
+    compounds: ["masteron", "winstrol", "anavar", "testosterone", "trenbolone", "primobolan"],
+    what: "Androgens accelerate male-pattern baldness in people genetically prone to it. What's lost is generally gone — prevention massively beats rescue here.",
+    first: [
+      "If you're genetically prone, avoid or minimise the strongly DHT-derived compounds (Masteron, Winstrol, Anavar, Primobolan).",
+      "Lower the dose — this is dose-responsive like everything else.",
+    ],
+    otc: [
+      { name: "Topical minoxidil 5%", note: "Well-established, works while you keep using it." },
+      { name: "Ketoconazole 2% shampoo", note: "Modest anti-androgenic effect at the scalp." },
+      { name: "Microneedling", note: "Some decent evidence as an adjunct to minoxidil." },
+    ],
+    rx: [
+      { name: "Finasteride / dutasteride", note: "Blocks the conversion of testosterone to DHT.", caution: "Two big caveats. It does nothing against compounds that aren't DHT-derived — trenbolone and nandrolone hit the receptor directly, so finasteride will not save your hair on those. And a minority report sexual and mood side effects that can persist after stopping. Topical finasteride may reduce systemic exposure. Think it through rather than panic-starting mid-cycle." },
+    ],
+    avoid: [
+      "Expecting finasteride to protect you on trenbolone — it won't.",
+      "Starting three treatments at once mid-cycle, so you can't tell what did what.",
+    ],
+  },
+  {
+    id: "acne", name: "Acne & oily skin", icon: "🧼",
+    compounds: ["testosterone", "trenbolone", "dianabol", "anadrol"],
+    what: "Androgens drive sebum production. Usually manageable — but cystic acne scars permanently, so acting early matters.",
+    first: [
+      "Shower straight after training, change pillowcases often, don't pick.",
+      "Lower the dose and get estradiol in a sane range.",
+    ],
+    otc: [
+      { name: "Benzoyl peroxide 2.5–5%", note: "First-line and cheap." },
+      { name: "Salicylic acid wash", note: "Keeps pores clear, good for back and chest." },
+      { name: "Adapalene (topical retinoid)", note: "Over the counter in many countries and genuinely effective." },
+      { name: "Zinc", note: "Modest help." },
+    ],
+    rx: [
+      { name: "Topical/oral antibiotics, or isotretinoin for severe cystic acne", note: "Isotretinoin works.", caution: "It also raises lipids and stresses the liver — exactly the two things a cycle is already doing — and carries mood and pregnancy risks. Needs proper medical supervision, and your doctor needs to know what else you're taking." },
+    ],
+    avoid: [
+      "Letting cystic lesions run for months. Scarring doesn't reverse.",
+    ],
+  },
+  {
+    id: "cramps", name: "Muscle cramps", icon: "⚡",
+    compounds: ["trenbolone", "winstrol", "anadrol"],
+    what: "Brutal, sudden cramping — classically on trenbolone and stanozolol, and worse if you're dieting or sweating heavily.",
+    first: [
+      "Hydrate seriously and don't strip electrolytes while dieting.",
+      "Warm up properly; ease back on volume if calves and hamstrings keep seizing.",
+    ],
+    otc: [
+      { name: "Taurine", note: "~3–5 g daily — the standard answer, and it works for most people." },
+      { name: "Magnesium glycinate", note: "~200–400 mg in the evening." },
+      { name: "Sodium + potassium", note: "Don't over-restrict salt while sweating hard." },
+    ],
+    rx: [{ name: "None needed", note: "If cramping is severe and constant, it's a signal to lower the dose." }],
+    avoid: ["Assuming it's purely dehydration — these compounds cause it directly too."],
+  },
+  {
+    id: "joints", name: "Dry, painful joints", icon: "🦴",
+    compounds: ["winstrol", "masteron", "anavar", "trenbolone"],
+    what: "Drying compounds and low estrogen leave joints and tendons feeling grating and unlubricated — and meaningfully raise tear risk while you feel strongest.",
+    first: [
+      "Don't crush estradiol. Low E2 is the most common cause of \"Winstrol joints\", and people blame the compound.",
+      "Don't chase heavy PRs while dry — this is how tendons rupture.",
+    ],
+    otc: [
+      { name: "Fish oil", note: "~3–4 g, joint and lipid support in one." },
+      { name: "Collagen + vitamin C", note: "~10–15 g with vitamin C, 30–60 min before training." },
+      { name: "Glucosamine / hydration", note: "Modest, but cheap and low risk." },
+    ],
+    rx: [{ name: "Physio for an actual injury", note: "Pain that's sharp, localised and doesn't settle is an injury, not dryness." }],
+    avoid: ["Painkillers so you can train through it — that's how a niggle becomes a rupture."],
+  },
+  {
+    id: "sleep", name: "Insomnia & night sweats", icon: "🌙",
+    compounds: ["trenbolone", "mk677", "boldenone"],
+    what: "Trenbolone is notorious for wrecking sleep and soaking the sheets. Chronic sleep loss then makes blood pressure, mood, insulin sensitivity and recovery all worse — it compounds.",
+    first: [
+      "Lower the dose. Tren insomnia is dose-dependent, and no supplement out-competes this.",
+      "Cool, dark room; no stimulants after midday; consistent bed and wake times.",
+    ],
+    otc: [
+      { name: "Magnesium glycinate", note: "~200–400 mg in the evening." },
+      { name: "Glycine", note: "~3 g before bed." },
+      { name: "L-theanine", note: "~200 mg, takes the edge off." },
+      { name: "Melatonin", note: "0.3–1 mg. Low doses work better than the large ones sold everywhere." },
+    ],
+    rx: [
+      { name: "Sedatives", note: "A poor long-term answer with real dependence risk. If you need them to sleep through a cycle, the cycle is the problem." },
+    ],
+    avoid: [
+      "Alcohol as a sleep aid — it fragments sleep and stacks liver load.",
+      "Pushing through days without sleep. That's the compound telling you to come down.",
+    ],
+  },
+  {
+    id: "libido", name: "Sexual dysfunction", icon: "💔",
+    compounds: ["nandrolone", "trenbolone", "masteron", "testosterone"],
+    what: "\"Deca dick\" and its relatives. Almost always one of four things: estradiol too low, estradiol too high, prolactin high, or not enough androgen/DHT alongside a 19-nor.",
+    first: [
+      "Get bloods before changing anything — estradiol (sensitive), prolactin, total and free testosterone. Guessing here usually makes it worse.",
+      "Run adequate testosterone alongside a 19-nor. A lot of cases are simply this.",
+    ],
+    otc: [{ name: "Nothing reliable", note: "This is a hormone problem, not a supplement one." }],
+    rx: [
+      { name: "PDE5 inhibitors (tadalafil, sildenafil)", note: "Treat the symptom effectively; tadalafil also has blood-pressure and prostate benefits." },
+      { name: "Cabergoline, or adjusting the AI", note: "Only once bloods show prolactin or estradiol is actually the problem." },
+    ],
+    avoid: ["Stacking three fixes at once so you learn nothing about the cause."],
+  },
+  {
+    id: "glucose", name: "Blood sugar & insulin resistance", icon: "🍬",
+    compounds: ["hgh", "mk677", "insulin", "ipamorelin"],
+    what: "Growth hormone and MK-677 push blood glucose up and insulin sensitivity down. Left unchecked over years this is a genuine diabetes risk.",
+    first: [
+      "Cardio — the strongest non-drug lever on insulin sensitivity.",
+      "Lower the GH dose and aim for a sane IGF-1 rather than chasing a big number.",
+      "Fibre and protein before carbs at meals; cut liquid sugar.",
+    ],
+    otc: [
+      { name: "Soluble fiber", note: "Blunts glucose spikes." },
+      { name: "Berberine", note: "Works — but it's pharmacologically active, so treat it like a drug and don't combine with metformin without medical advice." },
+      { name: "Magnesium + omega-3", note: "Both support insulin sensitivity modestly." },
+    ],
+    rx: [{ name: "Metformin", note: "A doctor's call, and a reasonable one if fasting glucose or HbA1c is drifting." }],
+    avoid: ["Ignoring a rising fasting glucose because you feel fine — you won't feel this one until it's advanced."],
+    red: "On insulin: confusion, seizure or unconsciousness is a life-threatening emergency, not a monitoring issue.",
+  },
+  {
+    id: "atrophy", name: "Testicular atrophy & shutdown", icon: "🔻",
+    compounds: ["testosterone", "nandrolone", "trenbolone", "boldenone", "dianabol", "anadrol", "winstrol", "anavar", "masteron", "primobolan", "superdrol", "turinabol"],
+    what: "Expected on every AAS — external androgen switches off the signal to your testicles, so they shrink and sperm production falls, often to zero.",
+    first: [
+      "Shorter, lower cycles recover far more reliably than long heavy ones.",
+      "Decide your exit plan before you start, not after.",
+    ],
+    otc: [{ name: "Nothing", note: "No supplement prevents suppression. Anyone selling you one is lying." }],
+    rx: [
+      { name: "hCG", note: "Low-dose on-cycle hCG mimics LH and keeps the testes responsive, which can ease recovery and help preserve fertility. Badly run it can desensitize the testes and spike estrogen — worth a doctor's input rather than a forum protocol." },
+    ],
+    avoid: [
+      "Assuming shrinkage means permanent infertility — it usually recovers.",
+      "Assuming it's harmless — see the Coming off & PCT section for what recovery actually involves.",
+    ],
+  },
+  {
+    id: "appetite", name: "Appetite loss & nausea", icon: "🤢",
+    compounds: ["anadrol", "superdrol", "semaglutide", "tirzepatide", "melanotan2", "trenbolone"],
+    what: "Two very different causes: harsh orals that make food unappealing, and GLP-1s that are supposed to. Either way the risk is the same — losing muscle and falling short on micronutrients.",
+    first: [
+      "Smaller, more frequent meals; eat slowly; avoid large greasy meals on a GLP-1.",
+      "Liquid calories when solid food is a struggle — shakes still count.",
+      "On GLP-1s, slow the dose escalation. Most nausea is titration going too fast.",
+    ],
+    otc: [
+      { name: "Protein powder", note: "The priority — protect muscle at ~1.6–2.2 g/kg even when eating little." },
+      { name: "Ginger", note: "Genuinely helps nausea." },
+      { name: "Multivitamin + B12 + electrolytes", note: "Backfills what a much smaller intake stops delivering." },
+    ],
+    rx: [{ name: "Anti-nausea medication", note: "Available if it's severe, but slowing the titration usually solves it." }],
+    avoid: ["Simply eating almost nothing because you're not hungry — that's how a fat-loss phase becomes muscle loss."],
+    red: "Severe unrelenting abdominal pain boring through to the back means possible pancreatitis — urgent.",
+  },
+  {
+    id: "pip", name: "Injection pain (PIP)", icon: "💉",
+    compounds: ["testosterone", "nandrolone", "trenbolone", "masteron", "primobolan", "boldenone", "winstrol"],
+    what: "Post-injection pain. Ordinary soreness for a day or two is normal; severe, repeated PIP usually points at the oil, the concentration or the technique rather than at you.",
+    first: [
+      "Warm the vial in your hands and inject slowly.",
+      "Split larger volumes across two sites, and move gently afterwards — walking helps disperse it.",
+      "Warm compress after; rotate sites so you're not hitting scar tissue.",
+    ],
+    otc: [{ name: "Heat + gentle movement", note: "More effective than anything you can swallow." }],
+    rx: [{ name: "Not usually needed", note: "Persistent severe PIP from one source is a sourcing problem — high benzyl alcohol, high concentration, or poorly filtered gear." }],
+    avoid: ["Assuming all PIP is normal. If it's getting worse rather than better after 48 hours, think infection."],
+    red: "Spreading redness, heat, a hard or growing lump, fever or red streaks — that's a possible abscess and needs a doctor today.",
+  },
+  {
+    id: "kidney", name: "Kidney strain", icon: "🫘",
+    compounds: ["trenbolone", "testosterone", "boldenone", "anadrol"],
+    what: "High blood pressure, thick blood, dehydration and very high protein all load the kidneys. Trenbolone has a particular reputation for it.",
+    first: [
+      "Hydrate properly — the simplest and most effective thing here.",
+      "Control blood pressure. It's the main driver of kidney damage in this population.",
+      "Keep protein sensible rather than extreme, and avoid routine NSAIDs (ibuprofen, naproxen) which are hard on kidneys.",
+    ],
+    otc: [
+      { name: "Electrolytes + water", note: "Maintains perfusion." },
+      { name: "NAC", note: "Antioxidant support." },
+      { name: "Citrulline", note: "Indirect help via blood pressure." },
+    ],
+    rx: [{ name: "Blood-pressure treatment", note: "Managing hypertension properly is the single best thing you can do for your kidneys." }],
+    avoid: [
+      "Judging kidney function by creatinine alone — it reads high in muscular people and causes needless panic. Ask for cystatin C and eGFR.",
+    ],
+    red: "Passing very little urine, swelling in the ankles or face, or ongoing flank pain — get checked.",
+  },
+  {
+    id: "mood", name: "Mood, aggression & anxiety", icon: "🧠",
+    compounds: ["trenbolone", "boldenone", "anadrol", "nandrolone"],
+    what: "Irritability, anxiety, low mood, rage. Trenbolone is the worst offender and boldenone is known for anxiety — and the crash coming off is its own high-risk window.",
+    first: [
+      "Lower the dose or drop the compound. This is the fix; everything else is management.",
+      "Protect sleep and keep doing cardio — both do more for mood than any supplement here.",
+      "Tell someone close to you what you're taking, so they can flag changes you can't see in yourself.",
+    ],
+    otc: [
+      { name: "Magnesium + omega-3", note: "Both have reasonable mood and stress support." },
+      { name: "Ashwagandha", note: "Helps some people, but it blunts cortisol and a number of users report emotional flatness; rare liver issues reported. Not a default." },
+    ],
+    rx: [{ name: "Actual mental health support", note: "If you're struggling, this is worth far more than a supplement stack. Being honest about what you're taking helps them help you." }],
+    avoid: [
+      "Dismissing it as \"just tren\" and pushing through. Feeling mentally unwell is a real side effect and a legitimate reason to stop.",
+    ],
+    red: "Thoughts of suicide or self-harm — treat that as an emergency and get help today.",
+  },
+  {
+    id: "water", name: "Water retention & bloat", icon: "💧",
+    compounds: ["dianabol", "anadrol", "testosterone", "hgh", "mk677"],
+    what: "Mostly estrogen-driven on aromatizing compounds, and dose-related on GH and MK-677. Cosmetically annoying, but it also drives up blood pressure, which is the part that matters.",
+    first: [
+      "Get estradiol into a sane range — not zero.",
+      "Drink more water, not less. Restricting fluid makes retention worse.",
+      "Moderate sodium rather than eliminating it, and do cardio.",
+    ],
+    otc: [
+      { name: "Potassium-rich food", note: "Helps balance sodium." },
+      { name: "Dandelion root", note: "Very mild and heavily overhyped — don't expect much." },
+      { name: "Magnesium", note: "Supports fluid balance." },
+    ],
+    rx: [
+      { name: "Prescription diuretics", note: "Effective and genuinely dangerous.", caution: "Recreational diuretic use has killed bodybuilders through electrolyte and cardiac events. This is not a cosmetic tool for a beach weekend — and never one to use without medical supervision." },
+    ],
+    avoid: ["Hard diuretics to look drier. This is one of the few things in this space that kills otherwise healthy people quickly."],
+  },
+];
+
+/* reverse index: compound id -> counters that apply to it */
+PT.countersByCompound = {};
+PT.counters.forEach((k) =>
+  k.compounds.forEach((cid) => {
+    (PT.countersByCompound[cid] = PT.countersByCompound[cid] || []).push(k.id);
+  })
+);
+PT.counterById = {};
+PT.counters.forEach((k) => (PT.counterById[k.id] = k));
+
+/* ============================================================================
    EMERGENCY — the "this symptom means get help now" list.
    level: 'emergency' (call an ambulance) | 'urgent' (same day) | 'soon'
    ========================================================================== */

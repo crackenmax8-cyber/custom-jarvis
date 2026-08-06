@@ -62,30 +62,11 @@ const Brain = (() => {
     return bestScore >= 3 ? best : null;
   }
 
-  // topic-based answers for concern questions with no specific compound
+  // Topic answers for concerns that the countermeasure index doesn't own.
+  // Anything that maps to a named side effect lives in PT.counters instead —
+  // one source of truth, so the two can't drift apart.
   const TOPICS = [
-    { rx: /\bliver\b|hepato|17 ?aa|orals?\b/, sups: ["tudca", "nac"],
-      lead: "Protecting the liver (relevant to any oral 17aa steroid):",
-      tail: "Keep orals short, never run two at once, skip alcohol, and get a liver panel (AST/ALT/GGT) mid-cycle." },
-    { rx: /lipid|cholesterol|hdl|ldl|artery|arterial/, sups: ["omega3", "bergamot", "fiber"],
-      lead: "Protecting your lipids (AAS crush HDL and raise LDL — orals worst):",
-      tail: "Do real cardio, keep saturated fat moderate, and get a lipid panel (ideally ApoB) baseline and mid-cycle." },
-    { rx: /cramp|spasm/, sups: ["taurine", "magnesium", "electrolytes"],
-      lead: "For the muscle cramps (classic on tren, winstrol and with creatine):",
-      tail: "Hydrate well — cramps are often just dehydration plus low taurine/magnesium." },
-    { rx: /joint|tendon|dry joints/, sups: ["omega3", "citrulline"],
-      lead: "For dry, achy joints (especially on Winstrol / drying compounds):",
-      tail: "Fish oil and hydration help; don't chase heavy PRs while your joints are dried out — tear risk is real." },
-    { rx: /hematocrit|blood ?thick|rbc|red blood|donate blood|clot/, sups: ["citrulline", "omega3"],
-      lead: "For high hematocrit / thick blood (testosterone, boldenone, tren):",
-      tail: "Monitor CBC, stay very hydrated, and if hematocrit climbs above ~52–54% discuss donating blood / therapeutic phlebotomy with a doctor." },
-    { rx: /blood ?sugar|glucose|insulin resist|diabet|hba1c/, sups: ["fiber", "omega3", "magnesium"],
-      lead: "For blood-sugar / insulin sensitivity (GH, MK-677, insulin):",
-      tail: "Monitor fasting glucose and HbA1c. With actual insulin, hypoglycemia can be fatal — never dose and sleep, always keep fast carbs on hand." },
-    { rx: /prolactin/, sups: ["magnesium"],
-      lead: "For prolactin issues (19-nors like Deca/Tren):",
-      tail: "Test prolactin first. Vitamin B6 (P5P) ~100–200 mg is commonly used; cabergoline is a real medication with real side effects, not a casual add-on." },
-    { rx: /muscle loss|lose muscle|preserve muscle|glp|semaglutide|ozempic|tirzep/, sups: ["protein", "multivit", "b12", "electrolytes"],
+    { rx: /muscle loss|lose muscle|preserve muscle|keep muscle/, sups: ["protein", "multivit", "b12", "electrolytes"],
       lead: "For keeping muscle & nutrition on GLP-1 weight-loss peptides:",
       tail: "Hit ~1.6–2.2 g protein/kg, keep lifting, and backfill micronutrients since you're eating much less." },
   ];
@@ -106,6 +87,18 @@ const Brain = (() => {
     const supplements = [...supMap.values()].sort(
       (a, b) => b.forCompounds.length - a.forCompounds.length
     );
+
+    // Countermeasures: which side effects this stack can bring, and from what
+    const ctrMap = new Map();
+    chosen.forEach((c) =>
+      (PT.countersByCompound[c.id] || []).forEach((kid) => {
+        if (!ctrMap.has(kid)) ctrMap.set(kid, new Set());
+        ctrMap.get(kid).add(c.name);
+      })
+    );
+    const counters = [...ctrMap.entries()]
+      .map(([id, set]) => ({ id, forCompounds: [...set] }))
+      .sort((a, b) => b.forCompounds.length - a.forCompounds.length);
 
     // Labs: union, track which compounds ask for each
     const labMap = new Map();
@@ -162,7 +155,7 @@ const Brain = (() => {
         text: "This stack contains a compound rated 'severe' risk. Reconsider whether the trade-off is worth it, and don't run it as a beginner.",
       });
 
-    return { chosen, supplements, labs, warnings, flags };
+    return { chosen, supplements, labs, warnings, flags, counters };
   }
 
   /* --- local answer engine ------------------------------------------------ */
@@ -193,6 +186,52 @@ const Brain = (() => {
           `Open **Emergency signs** in the sidebar for the full list and what to do.`,
         emergency: true,
       };
+    }
+
+    // side effect -> countermeasure
+    const CTR_RX = [
+      ["estrogen", /gyno|gynecomastia|bitch tit|puffy nipple|sore nipple|high e2|high estrogen|aromatiz/],
+      ["lowE2", /low e2|e2 (is )?too low|estrogen (is )?too low|crushed? (my )?e(strogen|2)|killed my e(strogen|2)|no estrogen/],
+      ["prolactin", /prolactin|lactat|caber|cabergoline/],
+      ["hematocrit", /hematocrit|haematocrit|thick blood|donate blood|phlebotom|high (rbc|red blood)/],
+      ["bp", /blood pressure|hypertens|\bbp\b|telmisartan/],
+      ["lipids", /cholesterol|lipid|\bhdl\b|\bldl\b|apob/],
+      ["liver", /liver|hepato|tudca|liver enzyme|alt|ast/],
+      ["hairloss", /hair ?loss|balding|bald|receding|finasterid|dutasterid|minoxidil|shedding/],
+      ["acne", /acne|spots|oily skin|breakout|accutane|isotretinoin/],
+      ["cramps", /cramp|spasm/],
+      ["joints", /joint|tendon|dry joints|ligament/],
+      ["sleep", /insomnia|can'?t sleep|night sweat|sleepless/],
+      ["libido", /libido|erectile|\bed\b|deca dick|sex drive|can'?t get hard/],
+      ["glucose", /blood sugar|glucose|insulin resist|hba1c|diabet|metformin|berberine/],
+      ["atrophy", /atroph|balls? (shrink|shrunk)|testicle|shrinkage|\bhcg\b/],
+      ["appetite", /appetite|nausea|can'?t eat|no hunger|vomit/],
+      ["pip", /\bpip\b|injection pain|sore after inject|painful inject/],
+      ["kidney", /kidney|renal|creatinine|egfr/],
+      ["mood", /mood|aggress|anger|rage|anxiety|depress|irritab/],
+      ["water", /water retention|bloat|puffy|holding water|diuretic/],
+    ];
+    // the symptom patterns are specific enough to stand alone — only step aside
+    // when the question is explicitly about ordering labs
+    if (!/blood ?work|blood test|\blabs?\b|panel|get tested/.test(t)) {
+      const hit = CTR_RX.find(([, rx]) => rx.test(t));
+      if (hit) {
+        const k = PT.counterById[hit[0]];
+        const bullets = (arr) => arr.map((x) => `• ${x}`).join("\n");
+        const named = (arr) =>
+          arr.map((x) => `• **${x.name}** — ${x.note}${x.caution ? `\n   ⚠️ ${x.caution}` : ""}`).join("\n");
+        return {
+          text:
+            `**${k.name}** — ${k.what}\n\n` +
+            `**Free, and usually the real fix:**\n${bullets(k.first)}\n\n` +
+            `**Over the counter:**\n${named(k.otc)}\n\n` +
+            `**Prescription — needs a doctor:**\n${named(k.rx)}\n\n` +
+            `**Don't do this:**\n${bullets(k.avoid)}` +
+            (k.red ? `\n\n🚨 ${k.red}` : "") +
+            `\n\nFull breakdown in **Side effects & counters** in the sidebar.`,
+          counter: k.id,
+        };
+      }
     }
 
     // topic sections

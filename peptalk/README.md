@@ -37,6 +37,16 @@ something you can actually manage.
 - 📚 **Compound library** — 22 common compounds grouped by class (injectable &
   oral steroids; growth-hormone, recovery, metabolic/GLP-1 and other peptides),
   each with a severity rating shown as a **label, never color alone**.
+- 🛡️ **Side effects & what counters them** — 20 side effects, each answering
+  *"this is happening, what do I actually do?"* in three honest tiers: what's
+  **free** (lower the dose, cardio, hydrate — usually the real fix), what's
+  **over the counter**, and what's an actual **prescription drug**, with the
+  serious ones (cabergoline, finasteride, isotretinoin, diuretics) carrying
+  explicit risk warnings. Plus a *"don't do this"* block per entry — including
+  the mistakes that cause more harm than the original problem, like blind AI
+  dosing or expecting finasteride to save your hair on trenbolone. Wired both
+  ways: every compound card lists the counters relevant to it, and the stack
+  planner rolls them up for everything you're running.
 - 💊 **"What to take"** — for every compound: the supportive supplements and the
   nutrients you can run low on, each with *why*, a typical range, and the catch.
 - 🩸 **Bloodwork to monitor** — the specific panels that matter for each compound

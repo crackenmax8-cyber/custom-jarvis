@@ -74,6 +74,7 @@
     else if (v === "supplements") renderSupplements(c);
     else if (v === "labs") renderLabs(c);
     else if (v === "chat") renderChat(c);
+    else if (v === "counters") renderCounters(c);
     else if (v === "emergency") renderEmergency(c);
     else if (v === "injection") renderInjection(c);
     else if (v === "pct") renderPct(c);
@@ -122,6 +123,10 @@
         <button class="start-card alarm" data-go="emergency">
           <span class="sc-ic">🚨</span><b>Emergency signs</b>
           <span>The symptoms that mean stop and get help now. Read this one before you need it.</span>
+        </button>
+        <button class="start-card" data-go="counters">
+          <span class="sc-ic">🛡️</span><b>Side effects &amp; counters</b>
+          <span>Something's going wrong — here's what actually counters it, free, OTC or prescription.</span>
         </button>
         <button class="start-card" data-go="stack">
           <span class="sc-ic">🧬</span><b>Stack planner</b>
@@ -188,6 +193,23 @@
         }).join("")}
       </div>
 
+      ${(PT.countersByCompound[d.id] || []).length ? `
+      <h3>If a side effect actually shows up — what counters it</h3>
+      <p style="font-size:.83rem;color:var(--text-dim);margin:0 0 10px">
+        Specific to ${d.name}. Each opens the full breakdown of free fixes, over-the-counter options and
+        prescription treatments.
+      </p>
+      <div class="ctr-mini-grid">
+        ${PT.countersByCompound[d.id].map((kid) => {
+          const k = PT.counterById[kid];
+          return `<button class="ctr-mini" data-counter="${kid}">
+            <span class="cm-ic">${k.icon}</span>
+            <span class="cm-name">${k.name}</span>
+            <span class="cm-first">${k.first[0]}</span>
+          </button>`;
+        }).join("")}
+      </div>` : ""}
+
       <h3>Bloodwork to monitor</h3>
       <div class="lab-list">
         ${d.labs.map((id) => {
@@ -214,6 +236,13 @@
       toggleStack(d.id);
       renderCompound(c);
     });
+    $$("[data-counter]", c).forEach((b) =>
+      b.addEventListener("click", () => {
+        setView("counters");
+        const el = $("#ctr-" + b.dataset.counter);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      })
+    );
   }
 
   /* ======================= STACK PLANNER =============================== */
@@ -238,6 +267,13 @@
       cb.addEventListener("change", () => {
         toggleStack(cb.dataset.id);
         renderStack(c);
+      })
+    );
+    $$("[data-counter]", c).forEach((b) =>
+      b.addEventListener("click", () => {
+        setView("counters");
+        const el = $("#ctr-" + b.dataset.counter);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
       })
     );
     const cl = $("#clearStack");
@@ -287,6 +323,20 @@
       ${flags ? `<h3>Read this first</h3>${flags}` : ""}
       <h3>Your consolidated support stack</h3>
       <div class="support-grid">${supp}</div>
+      ${plan.counters.length ? `
+      <h3>Side effects this stack can bring — and what counters each</h3>
+      <div class="ctr-mini-grid">
+        ${plan.counters.map((x) => {
+          const k = PT.counterById[x.id];
+          return `<button class="ctr-mini" data-counter="${x.id}">
+            <span class="cm-ic">${k.icon}</span>
+            <span class="cm-name">${k.name}</span>
+            <span class="cm-first">${k.first[0]}</span>
+            <span class="for-tags">${x.forCompounds.map((n) => `<span class="for-tag">${n}</span>`).join("")}</span>
+          </button>`;
+        }).join("")}
+      </div>` : ""}
+
       <h3>Bloodwork checklist</h3>
       <div class="lab-list">${labs}</div>
       <h3>All warnings</h3>
@@ -315,6 +365,69 @@
       </div>
       <p style="font-size:.8rem;color:var(--text-faint);margin-top:18px">Supplements support the body under stress — they don't neutralize the underlying risk. Ranges are commonly-reported, not prescriptions.</p>
     `;
+  }
+
+  /* ======================= COUNTERMEASURES ============================ */
+  function counterCard(k, opts = {}) {
+    const list = (arr, cls) => arr.map((x) => `<li class="${cls}">${x}</li>`).join("");
+    const items = (arr) =>
+      arr.map((x) => `<li><b>${x.name}</b> — ${x.note}${
+        x.caution ? `<span class="ctr-caution">⚠️ ${x.caution}</span>` : ""
+      }</li>`).join("");
+    const causedBy = k.compounds
+      .map((id) => PT.byId[id])
+      .filter(Boolean)
+      .map((c) => `<button class="for-tag as-btn" data-open="${c.id}">${c.name}</button>`)
+      .join("");
+    return `
+      <div class="ctr-card" id="ctr-${k.id}">
+        <div class="ctr-head"><span class="ctr-ic">${k.icon}</span><h4>${k.name}</h4></div>
+        <p class="ctr-what">${k.what}</p>
+        ${opts.hideCauses ? "" : `<div class="for-tags">${causedBy}</div>`}
+        <div class="ctr-cols">
+          <div class="ctr-col free">
+            <div class="ctr-label">Free — and usually the real fix</div>
+            <ul>${list(k.first, "")}</ul>
+          </div>
+          <div class="ctr-col otc">
+            <div class="ctr-label">Over the counter</div>
+            <ul>${items(k.otc)}</ul>
+          </div>
+          <div class="ctr-col rx">
+            <div class="ctr-label">Prescription — needs a doctor</div>
+            <ul>${items(k.rx)}</ul>
+          </div>
+        </div>
+        <div class="ctr-avoid">
+          <div class="ctr-label">Don't do this</div>
+          <ul>${list(k.avoid, "")}</ul>
+        </div>
+        ${k.red ? `<div class="ctr-red">🚨 ${k.red}</div>` : ""}
+      </div>`;
+  }
+
+  function renderCounters(c) {
+    c.innerHTML = `
+      <h2>Side effects &amp; what counters them</h2>
+      <p class="hero-sub">${PT.counterIntro}</p>
+      <div class="chips" style="margin:14px 0 4px">
+        ${PT.counters.map((k) => `<button class="chip" data-jump="ctr-${k.id}">${k.icon} ${k.name}</button>`).join("")}
+      </div>
+      ${PT.counters.map((k) => counterCard(k)).join("")}
+      <p style="font-size:.8rem;color:var(--text-faint);margin-top:20px">
+        Prescription entries are listed because they're what actually works — not as a shopping list.
+        Several carry side effects worse than the problem if dosed blind, and every one of them is a
+        conversation to have with a doctor alongside bloodwork.
+      </p>`;
+    $$("[data-jump]", c).forEach((b) =>
+      b.addEventListener("click", () => {
+        const el = $("#" + b.dataset.jump);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      })
+    );
+    $$("[data-open]", c).forEach((b) =>
+      b.addEventListener("click", () => openCompound(b.dataset.open))
+    );
   }
 
   /* ======================= EMERGENCY ================================== */
