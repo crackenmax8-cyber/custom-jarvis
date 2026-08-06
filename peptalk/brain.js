@@ -457,7 +457,8 @@ const Brain = (() => {
 
   const DAY = 86400000;
   const midnight = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const addDays = (d, n) => midnight(new Date(d.getTime() + n * DAY));
+  // component arithmetic is immune to DST fall-back/spring-forward shifts
+  const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
   const daysBetween = (a, b) => Math.round((midnight(b) - midnight(a)) / DAY);
   function parseISO(s) {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");

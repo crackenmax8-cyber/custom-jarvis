@@ -26,6 +26,11 @@ const Store = (() => {
 
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   const nowISO = () => new Date().toISOString();
+  const midnight = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  // calendar days between two epoch-ms instants (DST/time-of-day safe)
+  const calDays = (fromMs, toMs) => Math.round((midnight(new Date(toMs)) - midnight(new Date(fromMs))) / 864e5);
+  // parse a stored date: "yyyy-mm-dd" at local noon, else the ISO ts
+  const eventMs = (dateStr, ts) => new Date(/^\d{4}-\d{2}-\d{2}$/.test(dateStr || "") ? dateStr + "T12:00:00" : ts).getTime();
 
   function fresh() { return { version: 1, events: [], settings: { units: "metric" } }; }
   function normalize(d) {
@@ -34,19 +39,26 @@ const Store = (() => {
     d.settings = d.settings && typeof d.settings === "object" ? d.settings : { units: "metric" };
     if (!d.settings.units) d.settings.units = "metric";
     d.events = Array.isArray(d.events) ? d.events.filter((e) => e && e.id && e.ts && e.type) : [];
+    // sanitize fields that get rendered, so an imported backup can't inject markup
+    d.events.forEach((e) => {
+      if (e.metric === "weight" && e.unit !== "kg" && e.unit !== "lb") e.unit = "kg";
+    });
     return d;
   }
   let data = normalize((() => { try { return JSON.parse(localStorage.getItem(LOG_KEY) || "null"); } catch (e) { return null; } })());
 
-  function save() {
-    try { localStorage.setItem(LOG_KEY, JSON.stringify(data)); return true; }
-    catch (e) { return false; } // quota / privacy mode — caller can warn
+  let saveOk = true;
+  function persist(value) { // save a specific value, report success
+    try { localStorage.setItem(LOG_KEY, JSON.stringify(value)); saveOk = true; return true; }
+    catch (e) { saveOk = false; return false; } // quota / private mode
   }
+  const save = () => persist(data);
 
   const sortedDesc = () => data.events.slice().sort((a, b) => (a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0));
 
   return {
     all: sortedDesc,
+    ok: () => saveOk, // did the last write persist?
     byType: (t) => sortedDesc().filter((e) => e.type === t),
     settings: () => data.settings,
     add(ev) {
@@ -67,16 +79,16 @@ const Store = (() => {
     metricSeries(metric, field) {
       return data.events
         .filter((e) => e.type === "metric" && e.metric === metric && (field ? e[field] != null : true))
-        .map((e) => ({ t: new Date(e.ts).getTime(), v: field ? +e[field] : +e.value, ev: e }))
-        .filter((p) => !isNaN(p.v))
+        .map((e) => ({ t: eventMs(e.date, e.ts), v: field ? +e[field] : +e.value, ev: e }))
+        .filter((p) => Number.isFinite(p.t) && !isNaN(p.v))
         .sort((a, b) => a.t - b.t);
     },
-    // blood-marker series ascending from "labs" events
+    // blood-marker series ascending from "labs" events (panelDate at local noon)
     markerSeries(markerId) {
       return data.events
         .filter((e) => e.type === "labs" && e.values && e.values[markerId] != null && e.values[markerId] !== "")
-        .map((e) => ({ t: new Date(e.panelDate || e.ts).getTime(), v: +e.values[markerId], ev: e }))
-        .filter((p) => !isNaN(p.v))
+        .map((e) => ({ t: eventMs(e.panelDate, e.ts), v: +e.values[markerId], ev: e }))
+        .filter((p) => Number.isFinite(p.t) && !isNaN(p.v))
         .sort((a, b) => a.t - b.t);
     },
     markersLogged() {
@@ -92,7 +104,7 @@ const Store = (() => {
         preferIM == null ? true : preferIM ? s.id.indexOf("subq") !== 0 : s.id.indexOf("subq") === 0);
       const list = (pool.length ? pool : SITES).map((s) => ({
         site: s,
-        days: last[s.id] ? Math.floor((now - last[s.id].t) / 864e5) : null,
+        days: last[s.id] ? Math.max(0, calDays(last[s.id].t, now)) : null,
       }));
       list.sort((a, b) => {
         if (a.days == null && b.days == null) return 0;
@@ -127,7 +139,11 @@ const Store = (() => {
     importBundle(obj) {
       if (!obj || obj.app !== "peptalk") return { ok: false, error: "That doesn't look like a PepTalk backup file." };
       if (obj.log && !Array.isArray(obj.log.events)) return { ok: false, error: "The backup's log is malformed." };
-      if (obj.log) { data = normalize(obj.log); if (!save()) return { ok: false, error: "Couldn't save — storage may be full or blocked." }; }
+      if (obj.log) {
+        const next = normalize(obj.log);
+        if (!persist(next)) return { ok: false, error: "Couldn't save — storage may be full or blocked. Nothing changed." };
+        data = next; // only replace in-memory data once it's safely stored
+      }
       if (obj.protocol && Array.isArray(obj.protocol.items)) {
         try { localStorage.setItem(PROTO_KEY, JSON.stringify(obj.protocol)); } catch (e) {}
       }
@@ -176,7 +192,8 @@ const Chart = (() => {
 
     const xs = series.flatMap((s) => s.points.map((p) => p.t));
     let minX = Math.min(...xs), maxX = Math.max(...xs);
-    if (minX === maxX) { minX -= 3 * 864e5; maxX += 3 * 864e5; }
+    const single = minX === maxX, singleDate = minX;
+    if (single) { minX -= 3 * 864e5; maxX += 3 * 864e5; }
     const ys = series.flatMap((s) => s.points.map((p) => p.v));
     let minY = Math.min(...ys), maxY = Math.max(...ys);
     (cfg.bands || []).forEach((b) => { if (b.lo != null) minY = Math.min(minY, b.lo); if (b.hi != null) maxY = Math.max(maxY, b.hi); });
@@ -202,10 +219,15 @@ const Chart = (() => {
       ctx.globalAlpha = 1; ctx.fillStyle = ink; ctx.textAlign = "left";
       ctx.fillText(fmtNum(v), 4, y + 3);
     }
-    // x labels (first / last)
+    // x labels — one centered label for a single reading, else first / last
     ctx.fillStyle = ink;
-    ctx.fillText(fmtDay(minX), pad.l, H - 6);
-    const lbl = fmtDay(maxX); ctx.fillText(lbl, W - pad.r - ctx.measureText(lbl).width, H - 6);
+    if (single) {
+      const lbl = fmtDay(singleDate);
+      ctx.fillText(lbl, pad.l + (plotW - ctx.measureText(lbl).width) / 2, H - 6);
+    } else {
+      ctx.fillText(fmtDay(minX), pad.l, H - 6);
+      const lbl = fmtDay(maxX); ctx.fillText(lbl, W - pad.r - ctx.measureText(lbl).width, H - 6);
+    }
 
     const dangerC = cssVar("--danger"), amberC = cssVar("--amber"), surface = cssVar("--panel");
     const baseC = cssVar("--chart-line");
@@ -218,10 +240,21 @@ const Chart = (() => {
       ctx.stroke(); ctx.setLineDash([]);
       pts.forEach((p) => {
         const st = s.status ? s.status(p.v) : "ok";
-        const bad = st && st !== "ok";
-        ctx.fillStyle = bad ? (st === "watch" ? amberC : dangerC) : (s.color || baseC);
-        ctx.beginPath(); ctx.arc(X(p.t), Y(p.v), bad ? 4.5 : 3, 0, Math.PI * 2); ctx.fill();
-        if (bad) { ctx.strokeStyle = surface; ctx.lineWidth = 1.6; ctx.stroke(); }
+        const x = X(p.t), y = Y(p.v);
+        if (st === "watch") {
+          // hollow amber ring — distinct in shape as well as colour
+          ctx.beginPath(); ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+          ctx.fillStyle = surface; ctx.fill();
+          ctx.lineWidth = 2; ctx.strokeStyle = amberC; ctx.stroke();
+        } else if (st === "low" || st === "high" || st === "critical") {
+          // filled danger dot with a surface ring
+          ctx.beginPath(); ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+          ctx.fillStyle = dangerC; ctx.fill();
+          ctx.lineWidth = 1.6; ctx.strokeStyle = surface; ctx.stroke();
+        } else {
+          ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2);
+          ctx.fillStyle = s.color || baseC; ctx.fill();
+        }
       });
       // direct label on the latest point
       const last = pts[pts.length - 1];

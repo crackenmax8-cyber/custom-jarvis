@@ -4,6 +4,18 @@
    ========================================================================== */
 (() => {
   "use strict";
+  // Guarded storage: accessing window.localStorage throws in a sandboxed frame
+  // or with site-data blocked. Shadow it with a safe shim so nothing — including
+  // the top-level state initializer below — can crash the app at load.
+  const localStorage = (() => {
+    try {
+      const k = "__pt_probe"; window.localStorage.setItem(k, "1"); window.localStorage.removeItem(k);
+      return window.localStorage;
+    } catch (e) {
+      const m = new Map();
+      return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) };
+    }
+  })();
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const KEY = { api: "peptalk.apiKey", model: "peptalk.model", theme: "peptalk.theme", stack: "peptalk.stack", protocol: "peptalk.protocol.v1" };
@@ -73,7 +85,8 @@
             <span class="li-name">${c.name}</span><br>
             <span class="li-aka">${c.aka}</span>
           </span>
-          <span class="sev-dot ${c.severity}" title="${c.severity} risk"></span>
+          <span class="sev-dot ${c.severity}" title="${c.severity} risk" aria-hidden="true"></span>
+          <span class="sr-only">${c.severity} risk</span>
         </button>`;
       });
     });
@@ -597,8 +610,8 @@
 
       <h3>Who's this for</h3>
       <div class="seg" role="group" aria-label="Sex for dosing and virilization guidance">
-        <button class="seg-btn ${d.sex === "m" ? "on" : ""}" data-sex="m">Male</button>
-        <button class="seg-btn ${d.sex === "f" ? "on" : ""}" data-sex="f">Female</button>
+        <button class="seg-btn ${d.sex === "m" ? "on" : ""}" data-sex="m" aria-pressed="${d.sex === "m"}">Male</button>
+        <button class="seg-btn ${d.sex === "f" ? "on" : ""}" data-sex="f" aria-pressed="${d.sex === "f"}">Female</button>
       </div>
       <p class="seg-note">Female adds virilization guidance and flags that the compound risk ratings are written from a male-dosing perspective.</p>
 
@@ -645,7 +658,7 @@
     bindDraftItemInputs();
     $$("[data-sex]", c).forEach((b) => b.addEventListener("click", () => {
       state.draft.sex = b.dataset.sex;
-      $$("[data-sex]", c).forEach((x) => x.classList.toggle("on", x === b));
+      $$("[data-sex]", c).forEach((x) => { const on = x === b; x.classList.toggle("on", on); x.setAttribute("aria-pressed", String(on)); });
     }));
     $("#protoStart").addEventListener("change", (e) => { state.draft.start = e.target.value; });
     $("#protoWeeks").addEventListener("input", (e) => { state.draft.weeks = e.target.value; });
@@ -682,7 +695,7 @@
     const plan = Brain.buildPlan(protocolIds());
     const compRows = p.items.map((it) => {
       const co = PT.byId[it.id];
-      return `<tr><td><b>${co.name}</b> <span class="mk">${co.aka}</span></td><td>${it.dose ? mdEscape(it.dose) : "—"}</td><td>${it.ester ? (Brain.protocol.ESTERS.find((e) => e.id === it.ester) || {}).label || it.ester : "—"}</td></tr>`;
+      return `<tr><td><b>${co.name}</b> <span class="mk">${co.aka}</span></td><td>${it.dose ? mdEscape(it.dose) : "—"}</td><td>${it.ester ? (Brain.protocol.ESTERS.find((e) => e.id === it.ester) || {}).label || mdEscape(String(it.ester)) : "—"}</td></tr>`;
     }).join("");
     const dateRows = tl.planning ? "" : tl.milestones.map((m) => `<tr><td class="chk">☐</td><td><b>${m.label}</b></td><td class="wh">${fmtDate(m.iso)}</td></tr>`).join("");
     const labRows = plan.labs.map((l) => { const L = PT.labs[l.id]; return `<tr><td class="chk">☐</td><td><b>${L.name}</b><div class="mk">${L.markers}</div></td></tr>`; }).join("");
@@ -710,7 +723,9 @@
   const protocolSex = () => (state.protocol && state.protocol.sex) || "m";
   const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
   const tsFromDate = (v) => new Date((v || todayISO()) + "T12:00:00").toISOString();
-  const relDays = (ts) => { const d = Math.floor((Date.now() - new Date(ts).getTime()) / 864e5); return d <= 0 ? "today" : d === 1 ? "yesterday" : `${d} days ago`; };
+  const midnightOf = (x) => { const d = new Date(x); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); };
+  const calDaysAgo = (ts) => Math.round((midnightOf(Date.now()) - midnightOf(ts)) / 864e5); // >=0 for past
+  const relDays = (ts) => { const d = calDaysAgo(ts); return d <= 0 ? "today" : d === 1 ? "yesterday" : `${d} days ago`; };
   const SEV_WORD = { 1: "mild", 2: "notable", 3: "severe" };
 
   function markerStatusFn(id) {
@@ -771,9 +786,10 @@
         <p class="hero-sub">Your daily view lives here once you've saved a protocol — suggested injection site, supplements, upcoming bloodwork, and one-tap logging.</p>
         <div class="start-grid" style="margin-top:8px">
           <button class="start-card feature" data-go="protocol"><span class="sc-ic">📋</span><b>Build my protocol</b><span>Two minutes, and Today comes to life.</span></button>
-          <button class="start-card" data-go="log"><span class="sc-ic">🩸</span><b>Log blood pressure</b><span>You can track BP and weight even without a cycle set up.</span></button>
+          <button class="start-card" data-log="bp"><span class="sc-ic">🩸</span><b>Log blood pressure</b><span>You can track BP and weight even without a cycle set up.</span></button>
         </div>`;
       wireGo(c);
+      $$("[data-log]", c).forEach((b) => b.addEventListener("click", () => { state.logType = b.dataset.log; setView("log"); }));
       return;
     }
     const p = state.protocol, tl = Brain.protocol.timeline(p, new Date());
@@ -800,13 +816,14 @@
     </div>`);
     if (!tl.planning && tl.next) {
       const overdue = tl.next.inDays <= 0;
+      const isBlood = ["baseline", "mid", "recovery", "post"].includes(tl.next.key);
       dueItems.push(`<div class="due-card${overdue ? " warn" : ""}">
-        <div class="due-ic">🩸</div>
+        <div class="due-ic">${isBlood ? "🩸" : "📅"}</div>
         <div class="due-body">
           <div class="due-title">${tl.next.label}</div>
           <div class="due-sub">${fmtDate(tl.next.iso)} · ${overdue ? "due now" : `in ${tl.next.inDays} day${tl.next.inDays === 1 ? "" : "s"}`}</div>
         </div>
-        <button class="btn-ghost due-act" data-go="labs">Panel</button>
+        ${isBlood ? `<button class="btn-ghost due-act" data-go="labs">Panel</button>` : ""}
       </div>`);
     }
     dueItems.push(`<div class="due-card${bpStale ? " warn" : ""}">
@@ -919,7 +936,7 @@
       <h2>Log</h2>
       <p class="hero-sub">A private record of what you've done and how your body's responding. Everything stays in this browser.</p>
       <div class="seg log-seg" role="group" aria-label="What to log">
-        ${LOG_TYPES.map((t) => `<button class="seg-btn ${t.id === type ? "on" : ""}" data-type="${t.id}">${t.label}</button>`).join("")}
+        ${LOG_TYPES.map((t) => `<button class="seg-btn ${t.id === type ? "on" : ""}" data-type="${t.id}" aria-pressed="${t.id === type}">${t.label}</button>`).join("")}
       </div>
       <form class="log-form" id="logForm" autocomplete="off">${logForm(type)}
         <div class="setup-actions"><button type="submit" class="btn-solid">Save entry</button></div>
@@ -939,7 +956,7 @@
       const ev = collectLog(type, c);
       if (!ev) return;
       Store.add(ev);
-      toast("Saved.");
+      toast(Store.ok() ? "Saved." : "Couldn't save — storage may be full or in private mode.");
       state.logType = type;
       renderLog(c);
     });
@@ -967,7 +984,7 @@
       return;
     }
     const cards = [];
-    cards.push(`<div class="chart-card"><div class="chart-head"><h4>Blood pressure</h4><span class="chart-legend"><i class="lg solid"></i>Systolic <i class="lg dash"></i>Diastolic</span></div><div class="chart-wrap"><canvas data-chart="bp"></canvas><div class="chart-tip" data-tip="bp"></div></div></div>`);
+    if (bpPts.length) cards.push(`<div class="chart-card"><div class="chart-head"><h4>Blood pressure</h4><span class="chart-legend"><i class="lg solid"></i>Systolic <i class="lg dash"></i>Diastolic</span></div><div class="chart-wrap"><canvas data-chart="bp"></canvas><div class="chart-tip" data-tip="bp"></div></div></div>`);
     if (Store.metricSeries("weight").length) cards.push(`<div class="chart-card"><div class="chart-head"><h4>Weight</h4></div><div class="chart-wrap"><canvas data-chart="weight"></canvas><div class="chart-tip" data-tip="weight"></div></div></div>`);
     if (Store.metricSeries("bp", "hr").length) cards.push(`<div class="chart-card"><div class="chart-head"><h4>Resting heart rate</h4></div><div class="chart-wrap"><canvas data-chart="hr"></canvas><div class="chart-tip" data-tip="hr"></div></div></div>`);
 
@@ -997,6 +1014,8 @@
   }
   function drawAllCharts(c) {
     const sex = protocolSex();
+    const trend = (pts) => pts.length < 2 ? "" : (pts[pts.length - 1].v > pts[0].v ? ", rising" : pts[pts.length - 1].v < pts[0].v ? ", falling" : ", steady");
+    const setAria = (canvas, label) => { canvas.setAttribute("role", "img"); canvas.setAttribute("aria-label", label); };
     $$("[data-chart]", c).forEach((canvas) => {
       const key = canvas.dataset.chart;
       const tip = $(`[data-tip="${key}"]`, canvas.closest(".chart-wrap"));
@@ -1011,16 +1030,25 @@
             { points: dia, label: "Dia", dash: true, status: markerStatusFn("bp_diastolic") },
           ],
         });
+        const ls = sys[sys.length - 1], ld = dia[dia.length - 1];
+        setAria(canvas, `Blood pressure over ${sys.length} reading${sys.length === 1 ? "" : "s"}${ls && ld ? `, latest ${ls.v} over ${ld.v}` : ""}${trend(sys)}.`);
         if (map) Chart.attachHover(canvas, map, tip, (s, p) => `<b>${s.label}</b> ${p.v}<br><span>${Chart.fmtDay(p.t)}</span>`);
       } else if (key === "weight") {
-        map = Chart.draw(canvas, { series: [{ points: Store.metricSeries("weight"), label: "kg" }] });
-        if (map) Chart.attachHover(canvas, map, tip, (s, p) => `<b>${p.v}</b> ${p.ev.unit || ""}<br><span>${Chart.fmtDay(p.t)}</span>`);
+        const w = Store.metricSeries("weight");
+        map = Chart.draw(canvas, { series: [{ points: w, label: "kg" }] });
+        setAria(canvas, `Weight over ${w.length} reading${w.length === 1 ? "" : "s"}${w.length ? `, latest ${w[w.length - 1].v} ${w[w.length - 1].ev.unit || ""}` : ""}${trend(w)}.`);
+        if (map) Chart.attachHover(canvas, map, tip, (s, p) => `<b>${p.v}</b> ${mdEscape(String(p.ev.unit || ""))}<br><span>${Chart.fmtDay(p.t)}</span>`);
       } else if (key === "hr") {
-        map = Chart.draw(canvas, { series: [{ points: Store.metricSeries("bp", "hr"), label: "bpm", status: markerStatusFn("resting_hr") }] });
+        const h = Store.metricSeries("bp", "hr");
+        map = Chart.draw(canvas, { series: [{ points: h, label: "bpm", status: markerStatusFn("resting_hr") }] });
+        setAria(canvas, `Resting heart rate over ${h.length} reading${h.length === 1 ? "" : "s"}${h.length ? `, latest ${h[h.length - 1].v} bpm` : ""}${trend(h)}.`);
         if (map) Chart.attachHover(canvas, map, tip, (s, p) => `<b>${p.v}</b> bpm<br><span>${Chart.fmtDay(p.t)}</span>`);
       } else if (key.startsWith("marker:")) {
         const id = key.slice(7), m = Brain.markers.byId(id), range = Brain.markers.range(m, sex);
-        map = Chart.draw(canvas, { bands: range ? [{ lo: range[0], hi: range[1] }] : [], series: [{ points: Store.markerSeries(id), status: markerStatusFn(id) }] });
+        const ser = Store.markerSeries(id), latest = ser[ser.length - 1];
+        const ev = latest ? Brain.markers.evaluate(id, latest.v, sex) : null;
+        map = Chart.draw(canvas, { bands: range ? [{ lo: range[0], hi: range[1] }] : [], series: [{ points: ser, status: markerStatusFn(id) }] });
+        setAria(canvas, `${m.name} over ${ser.length} reading${ser.length === 1 ? "" : "s"}${latest ? `, latest ${latest.v} ${m.unit}${ev && ev.status !== "ok" ? ` (${ev.status})` : " (in range)"}` : ""}${trend(ser)}.`);
         if (map) Chart.attachHover(canvas, map, tip, (s, p) => `<b>${p.v}</b> ${m.unit}<br><span>${Chart.fmtDay(p.t)}</span>`);
       }
     });
@@ -1051,7 +1079,7 @@
   function renderSites(c) {
     const { last, count } = Store.lastInjectionBySite();
     const rest = {};
-    SITES.forEach((s) => { rest[s.id] = last[s.id] ? Math.floor((Date.now() - last[s.id].t) / 864e5) : null; });
+    SITES.forEach((s) => { rest[s.id] = last[s.id] ? Math.max(0, calDaysAgo(last[s.id].t)) : null; });
     const suggestion = Store.suggestSite(true);
     const rows = SITES.map((s) => {
       const d = rest[s.id];
@@ -1074,7 +1102,11 @@
       <h3>Rotation</h3>
       <div class="site-list">${rows}</div>`;
     $$("[data-log]", c).forEach((b) => b.addEventListener("click", () => { state.logType = "injection"; setView("log"); }));
-    $$("[data-site]", c).forEach((g) => g.addEventListener("click", () => { state.logType = "injection"; state.presetSite = g.dataset.site; setView("log"); }));
+    const pickSite = (site) => { state.logType = "injection"; state.presetSite = site; setView("log"); };
+    $$("[data-site]", c).forEach((g) => {
+      g.addEventListener("click", () => pickSite(g.dataset.site));
+      g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pickSite(g.dataset.site); } });
+    });
   }
 
   /* ---- Doctor visit summary (print) — honest longitudinal record ---- */
@@ -1088,7 +1120,7 @@
     const p = state.protocol;
     const compRows = p ? p.items.map((it) => {
       const co = PT.byId[it.id];
-      return `<tr><td><b>${co ? co.name : it.id}</b></td><td>${it.dose ? mdEscape(it.dose) : "—"}</td><td>${it.ester ? ((Brain.protocol.ESTERS.find((e) => e.id === it.ester) || {}).label || it.ester) : "—"}</td></tr>`;
+      return `<tr><td><b>${co ? co.name : mdEscape(String(it.id))}</b></td><td>${it.dose ? mdEscape(it.dose) : "—"}</td><td>${it.ester ? ((Brain.protocol.ESTERS.find((e) => e.id === it.ester) || {}).label || mdEscape(String(it.ester))) : "—"}</td></tr>`;
     }).join("") : "";
     const lastInj = Store.lastOfType("injection");
     const bp = Store.metricSeries("bp", "systolic"), dia = Store.metricSeries("bp", "diastolic"), wt = Store.metricSeries("weight");
@@ -1567,7 +1599,7 @@
     document.documentElement.classList.toggle("light", light);
     $("#themeBtn").textContent = light ? "☀️" : "🌙";
     localStorage.setItem(KEY.theme, light ? "light" : "dark");
-    if (CHART_VIEWS.has(state.view)) setView(state.view); // canvas needs a repaint for new theme colors
+    if (CHART_VIEWS.has(state.view)) drawAllCharts($("#content")); // repaint canvases in-place for the new theme
   }
 
   function initSettings() {
@@ -1638,7 +1670,7 @@
     window.addEventListener("resize", () => {
       if (!CHART_VIEWS.has(state.view)) return;
       clearTimeout(rz);
-      rz = setTimeout(() => setView(state.view), 160);
+      rz = setTimeout(() => drawAllCharts($("#content")), 160); // redraw in place, keep scroll
     });
 
     renderLibrary();
