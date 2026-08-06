@@ -536,7 +536,39 @@ const Brain = (() => {
 
   const protocol = { ESTERS, esterDays, defaultEster, isSuppressive, timeline };
 
-  return { findCompound, buildPlan, answerLocal, answerClaude, protocol };
+  /* --- blood-marker evaluation against reference ranges (pure) ------------ */
+  const RANK = { ok: 0, watch: 1, low: 2, high: 2, critical: 3 };
+  function markerById(id) { return (PT.markers || []).find((m) => m.id === id) || null; }
+  function markerRange(m, sex) {
+    if (!m) return null;
+    if (sex === "f" && m.rangeF && m.rangeF.length === 2) return m.rangeF;
+    if (m.rangeM && m.rangeM.length === 2) return m.rangeM;
+    return m.rangeF && m.rangeF.length === 2 ? m.rangeF : null;
+  }
+  function evaluateMarker(id, value, sex) {
+    const m = markerById(id);
+    const v = +value;
+    if (!m || value === "" || value == null || isNaN(v)) return null;
+    let hit = null;
+    (m.flags || []).forEach((f) => {
+      if (f.sex && f.sex !== "any" && f.sex !== sex) return;
+      const ok = f.when === "gt" ? v > f.value : f.when === "gte" ? v >= f.value
+        : f.when === "lt" ? v < f.value : f.when === "lte" ? v <= f.value : false;
+      if (ok && (!hit || RANK[f.level] > RANK[hit.level])) hit = f;
+    });
+    const range = markerRange(m, sex);
+    const inRange = range ? v >= range[0] && v <= range[1] : null;
+    const status = hit ? hit.level : inRange === false ? "watch" : "ok";
+    return { marker: m, value: v, range, inRange, flag: hit, status };
+  }
+  function evaluatePanel(values, sex) {
+    return Object.keys(values || {})
+      .map((id) => evaluateMarker(id, values[id], sex))
+      .filter(Boolean);
+  }
+  const markers = { byId: markerById, range: markerRange, evaluate: evaluateMarker, evaluatePanel };
+
+  return { findCompound, buildPlan, answerLocal, answerClaude, protocol, markers };
 })();
 
 if (typeof module !== "undefined" && module.exports) module.exports = Brain;

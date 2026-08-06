@@ -42,8 +42,13 @@
       <aside class="sidebar">
         <nav class="nav" id="nav">
           <button class="nav-item active" data-view="home">🏠 <span>Overview</span></button>
+          <button class="nav-item feature" data-view="today">📅 <span>Today</span></button>
           <button class="nav-item feature" data-view="protocol">📋 <span>My protocol</span></button>
           <button class="nav-item alarm" data-view="emergency">🚨 <span>Emergency signs</span></button>
+          <div class="nav-label">Track</div>
+          <button class="nav-item" data-view="log">📓 <span>Log</span></button>
+          <button class="nav-item" data-view="trends">📈 <span>Trends</span></button>
+          <button class="nav-item" data-view="sites">🎯 <span>Injection sites</span></button>
           <div class="nav-label">Plan</div>
           <button class="nav-item" data-view="stack">🧬 <span>Stack planner</span></button>
           <button class="nav-item" data-view="counters">🛡️ <span>Side effects &amp; counters</span></button>
@@ -53,8 +58,9 @@
           <button class="nav-item" data-view="injection">💉 <span>Injection safety</span></button>
           <button class="nav-item" data-view="pct">🔁 <span>Coming off &amp; PCT</span></button>
           <button class="nav-item" data-view="women">♀ <span>Women &amp; virilization</span></button>
-          <div class="nav-label">Ask</div>
+          <div class="nav-label">More</div>
           <button class="nav-item" data-view="chat">💬 <span>Ask PepTalk</span></button>
+          <button class="nav-item" data-view="data">🗄️ <span>Data &amp; backup</span></button>
         </nav>
 
         <div class="lib-head">
@@ -101,6 +107,7 @@
 
   <script src="data.js"></script>
   <script src="brain.js"></script>
+  <script src="tracker.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

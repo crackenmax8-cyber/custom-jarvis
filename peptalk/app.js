@@ -91,6 +91,11 @@
     const c = $("#content");
     if (v === "home") renderHome(c);
     else if (v === "protocol") renderProtocol(c);
+    else if (v === "today") renderToday(c);
+    else if (v === "log") renderLog(c);
+    else if (v === "trends") renderTrends(c);
+    else if (v === "sites") renderSites(c);
+    else if (v === "data") renderData(c);
     else if (v === "stack") renderStack(c);
     else if (v === "supplements") renderSupplements(c);
     else if (v === "labs") renderLabs(c);
@@ -701,6 +706,426 @@
     setTimeout(done, 1500);
   }
 
+  /* ======================= TRACKER (Today / Log / Trends / Sites / Data) === */
+  const protocolSex = () => (state.protocol && state.protocol.sex) || "m";
+  const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+  const tsFromDate = (v) => new Date((v || todayISO()) + "T12:00:00").toISOString();
+  const relDays = (ts) => { const d = Math.floor((Date.now() - new Date(ts).getTime()) / 864e5); return d <= 0 ? "today" : d === 1 ? "yesterday" : `${d} days ago`; };
+  const SEV_WORD = { 1: "mild", 2: "notable", 3: "severe" };
+
+  function markerStatusFn(id) {
+    const sex = protocolSex();
+    return (v) => { const r = Brain.markers.evaluate(id, v, sex); return r ? r.status : "ok"; };
+  }
+  function statusChip(id, value) {
+    const r = Brain.markers.evaluate(id, value, protocolSex());
+    if (!r) return "";
+    const tone = r.status === "ok" ? "good" : r.status === "watch" ? "watch" : "bad";
+    const label = r.status === "ok" ? "in range" : r.status;
+    return `<span class="stat-chip ${tone}">${label}</span>`;
+  }
+
+  function eventSummary(e) {
+    if (e.type === "injection") {
+      const c = PT.byId[e.compound], s = SITE_BY_ID[e.site];
+      return { icon: "💉", title: `Injection${c ? ` — ${c.name}` : ""}`, detail: [s ? s.name : e.site, e.dose].filter(Boolean).join(" · ") };
+    }
+    if (e.type === "metric" && e.metric === "bp") {
+      const sys = Brain.markers.evaluate("bp_systolic", e.systolic, protocolSex());
+      const dia = Brain.markers.evaluate("bp_diastolic", e.diastolic, protocolSex());
+      const worst = [sys, dia].filter(Boolean).sort((a, b) => ({ ok: 0, watch: 1, high: 2, critical: 3 }[b.status] - { ok: 0, watch: 1, high: 2, critical: 3 }[a.status]))[0];
+      return { icon: "💓", title: `Blood pressure — ${e.systolic}/${e.diastolic}${e.hr ? ` · ${e.hr} bpm` : ""}`, detail: "", tone: worst && worst.status !== "ok" ? (worst.status === "watch" ? "watch" : "bad") : "" };
+    }
+    if (e.type === "metric" && e.metric === "weight") return { icon: "⚖️", title: `Weight — ${e.value} ${e.unit || ""}`.trim() };
+    if (e.type === "metric" && e.metric === "hr") return { icon: "❤️", title: `Resting HR — ${e.value} bpm` };
+    if (e.type === "labs") {
+      const vals = e.values || {}, n = Object.keys(vals).length;
+      const flagged = Brain.markers.evaluatePanel(vals, protocolSex()).filter((x) => x.status !== "ok").length;
+      return { icon: "🧪", title: `Bloodwork — ${n} marker${n === 1 ? "" : "s"}`, detail: flagged ? `${flagged} out of range` : "all in range", tone: flagged ? "bad" : "good" };
+    }
+    if (e.type === "side") { const k = PT.counterById[e.counter]; return { icon: "⚠️", title: `Side effect — ${k ? k.name : e.counter}`, detail: SEV_WORD[e.severity] || "" }; }
+    return { icon: "📝", title: "Note", detail: e.text || "" };
+  }
+
+  function eventRow(e, opts = {}) {
+    const s = eventSummary(e);
+    return `<div class="ev-row${s.tone ? " " + s.tone : ""}">
+      <span class="ev-ic">${s.icon}</span>
+      <div class="ev-body">
+        <div class="ev-title">${mdEscape(s.title)}</div>
+        ${s.detail ? `<div class="ev-detail">${mdEscape(s.detail)}</div>` : ""}
+        ${e.note ? `<div class="ev-note">“${mdEscape(e.note)}”</div>` : ""}
+      </div>
+      <div class="ev-meta">
+        <span class="ev-when">${relDays(e.ts)}</span>
+        ${opts.del ? `<button class="ev-del" data-del="${e.id}" aria-label="Delete entry" title="Delete">✕</button>` : ""}
+      </div>
+    </div>`;
+  }
+
+  /* ---- TODAY ---- */
+  function renderToday(c) {
+    if (!state.protocol) {
+      c.innerHTML = `
+        <h2>Today</h2>
+        <p class="hero-sub">Your daily view lives here once you've saved a protocol — suggested injection site, supplements, upcoming bloodwork, and one-tap logging.</p>
+        <div class="start-grid" style="margin-top:8px">
+          <button class="start-card feature" data-go="protocol"><span class="sc-ic">📋</span><b>Build my protocol</b><span>Two minutes, and Today comes to life.</span></button>
+          <button class="start-card" data-go="log"><span class="sc-ic">🩸</span><b>Log blood pressure</b><span>You can track BP and weight even without a cycle set up.</span></button>
+        </div>`;
+      wireGo(c);
+      return;
+    }
+    const p = state.protocol, tl = Brain.protocol.timeline(p, new Date());
+    const plan = Brain.buildPlan(protocolIds());
+    const { last } = Store.lastInjectionBySite();
+    const suggestion = Store.suggestSite(true);
+    const lastInj = Store.lastOfType("injection");
+    const lastBP = Store.lastOfType("metric", "bp");
+    const bpStale = !lastBP || (Date.now() - new Date(lastBP.ts).getTime()) / 864e5 > 7;
+
+    let phaseLine = tl.planning ? "Protocol saved — add dates for your timeline"
+      : tl.phase === "on" ? `Week ${tl.weekNum} of ${tl.weeks} · on cycle`
+      : tl.phase === "before" ? `Starts in ${tl.daysToStart} day${tl.daysToStart === 1 ? "" : "s"}`
+      : PHASE[tl.phase].label;
+
+    const dueItems = [];
+    dueItems.push(`<div class="due-card">
+      <div class="due-ic">💉</div>
+      <div class="due-body">
+        <div class="due-title">Injection</div>
+        <div class="due-sub">${lastInj ? `Last: ${relDays(lastInj.ts)}${lastInj.site && SITE_BY_ID[lastInj.site] ? ` at ${SITE_BY_ID[lastInj.site].short}` : ""}` : "No injections logged yet"} · suggested next: <b>${suggestion ? suggestion.site.name : "—"}</b>${suggestion && suggestion.days == null ? " (unused)" : suggestion && suggestion.days != null ? ` (${suggestion.days}d rested)` : ""}</div>
+      </div>
+      <button class="btn-solid due-act" data-log="injection">Log</button>
+    </div>`);
+    if (!tl.planning && tl.next) {
+      const overdue = tl.next.inDays <= 0;
+      dueItems.push(`<div class="due-card${overdue ? " warn" : ""}">
+        <div class="due-ic">🩸</div>
+        <div class="due-body">
+          <div class="due-title">${tl.next.label}</div>
+          <div class="due-sub">${fmtDate(tl.next.iso)} · ${overdue ? "due now" : `in ${tl.next.inDays} day${tl.next.inDays === 1 ? "" : "s"}`}</div>
+        </div>
+        <button class="btn-ghost due-act" data-go="labs">Panel</button>
+      </div>`);
+    }
+    dueItems.push(`<div class="due-card${bpStale ? " warn" : ""}">
+      <div class="due-ic">💓</div>
+      <div class="due-body">
+        <div class="due-title">Blood pressure</div>
+        <div class="due-sub">${lastBP ? `Last: ${lastBP.systolic}/${lastBP.diastolic} · ${relDays(lastBP.ts)}` : "Not logged yet"}${bpStale ? " — worth a fresh reading" : ""}</div>
+      </div>
+      <button class="btn-solid due-act" data-log="bp">Log</button>
+    </div>`);
+
+    const supp = plan.supplements.slice(0, 8).map((s) => `<label class="supp-check"><input type="checkbox"/><span>${PT.supplements[s.id].name}</span></label>`).join("");
+    const recent = Store.all().slice(0, 5).map((e) => eventRow(e)).join("") || `<p class="plan-empty">Nothing logged yet. Use the buttons above.</p>`;
+
+    c.innerHTML = `
+      <div class="detail-head"><div class="dh-main"><h2>Today</h2><p class="aka">${new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })} · ${phaseLine}</p></div></div>
+
+      <h3>Due &amp; suggested</h3>
+      <div class="due-list">${dueItems.join("")}</div>
+
+      <h3>Quick log</h3>
+      <div class="quicklog">
+        <button class="ql-btn" data-log="injection">💉 Injection</button>
+        <button class="ql-btn" data-log="bp">💓 Blood pressure</button>
+        <button class="ql-btn" data-log="weight">⚖️ Weight</button>
+        <button class="ql-btn" data-log="labs">🧪 Bloodwork</button>
+        <button class="ql-btn" data-log="side">⚠️ Side effect</button>
+        <button class="ql-btn" data-log="note">📝 Note</button>
+      </div>
+
+      <h3>Today's supplements</h3>
+      <div class="supp-checks">${supp}</div>
+      <p class="seg-note">A reminder list — ticks reset each visit; PepTalk doesn't need to store what you took.</p>
+
+      <h3>Recent activity</h3>
+      <div class="ev-list">${recent}</div>
+      <p style="margin-top:12px"><button class="link-btn" data-go="log">Open the full log →</button></p>`;
+
+    wireGo(c);
+    $$("[data-log]", c).forEach((b) => b.addEventListener("click", () => { state.logType = b.dataset.log; setView("log"); }));
+  }
+
+  /* ---- LOG ---- */
+  const LOG_TYPES = [
+    { id: "injection", label: "💉 Injection" },
+    { id: "bp", label: "💓 BP" },
+    { id: "weight", label: "⚖️ Weight" },
+    { id: "labs", label: "🧪 Bloodwork" },
+    { id: "side", label: "⚠️ Side" },
+    { id: "note", label: "📝 Note" },
+  ];
+  function logForm(type) {
+    const dateField = `<label class="fld">Date<input type="date" data-f="date" value="${todayISO()}" /></label>`;
+    const noteField = `<label class="fld grow">Note (optional)<input type="text" data-f="note" placeholder="anything worth remembering" /></label>`;
+    if (type === "injection") {
+      const comps = (state.protocol ? state.protocol.items.map((i) => i.id) : PT.compounds.map((c) => c.id));
+      return `
+        <label class="fld">Compound<select data-f="compound">${comps.map((id) => `<option value="${id}">${PT.byId[id] ? PT.byId[id].name : id}</option>`).join("")}</select></label>
+        <label class="fld">Site<select data-f="site">${SITES.map((s) => `<option value="${s.id}">${s.name}</option>`).join("")}</select></label>
+        <label class="fld">Dose<input type="text" data-f="dose" placeholder="e.g. 250 mg" /></label>
+        ${dateField}${noteField}`;
+    }
+    if (type === "bp") return `
+      <label class="fld sm">Systolic<input type="number" data-f="systolic" min="60" max="260" placeholder="120" /></label>
+      <label class="fld sm">Diastolic<input type="number" data-f="diastolic" min="30" max="160" placeholder="80" /></label>
+      <label class="fld sm">Heart rate<input type="number" data-f="hr" min="30" max="220" placeholder="opt" /></label>
+      ${dateField}${noteField}`;
+    if (type === "weight") return `
+      <label class="fld sm">Weight<input type="number" data-f="value" step="0.1" placeholder="84" /></label>
+      <label class="fld sm">Unit<select data-f="unit"><option value="kg">kg</option><option value="lb">lb</option></select></label>
+      ${dateField}${noteField}`;
+    if (type === "side") return `
+      <label class="fld">Which<select data-f="counter">${PT.counters.map((k) => `<option value="${k.id}">${k.icon} ${k.name}</option>`).join("")}</select></label>
+      <label class="fld sm">Severity<select data-f="severity"><option value="1">Mild</option><option value="2">Notable</option><option value="3">Severe</option></select></label>
+      ${dateField}${noteField}`;
+    if (type === "note") return `<label class="fld grow">Note<input type="text" data-f="text" placeholder="what's on your mind" /></label>${dateField}`;
+    if (type === "labs") {
+      const markers = (PT.markers || []).filter((m) => m.group !== "Vitals");
+      if (!markers.length) return `<p class="plan-empty">Blood-marker entry loads with the reference ranges.</p>${dateField}`;
+      const groups = [...new Set(markers.map((m) => m.group))];
+      const body = groups.map((g) => `
+        <div class="lab-group"><div class="lab-group-h">${g}</div><div class="lab-fields">
+          ${markers.filter((m) => m.group === g).map((m) => `<label class="fld lab-in"><span>${m.name} <em>${m.unit}</em></span><input type="number" step="any" data-lab="${m.id}" placeholder="—" /></label>`).join("")}
+        </div></div>`).join("");
+      return `${dateField}<div class="lab-entry">${body}</div>${noteField}`;
+    }
+    return "";
+  }
+  function collectLog(type, root) {
+    const g = (f) => { const el = $(`[data-f="${f}"]`, root); return el ? el.value.trim() : ""; };
+    const date = g("date") || todayISO();
+    const base = { ts: tsFromDate(date) };
+    if (g("note")) base.note = g("note");
+    if (type === "injection") { if (!g("compound") && !g("site")) return null; return Object.assign(base, { type: "injection", compound: g("compound"), site: g("site"), dose: g("dose") }); }
+    if (type === "bp") { if (!g("systolic") || !g("diastolic")) { toast("Enter systolic and diastolic."); return null; } return Object.assign(base, { type: "metric", metric: "bp", systolic: +g("systolic"), diastolic: +g("diastolic"), hr: g("hr") ? +g("hr") : undefined }); }
+    if (type === "weight") { if (!g("value")) { toast("Enter a weight."); return null; } return Object.assign(base, { type: "metric", metric: "weight", value: +g("value"), unit: g("unit") || "kg" }); }
+    if (type === "side") return Object.assign(base, { type: "side", counter: g("counter"), severity: +g("severity") || 1 });
+    if (type === "note") { if (!g("text")) { toast("Write something first."); return null; } return Object.assign(base, { type: "note", text: g("text") }); }
+    if (type === "labs") {
+      const values = {};
+      $$("[data-lab]", root).forEach((el) => { if (el.value.trim() !== "" && !isNaN(+el.value)) values[el.dataset.lab] = +el.value; });
+      if (!Object.keys(values).length) { toast("Enter at least one value."); return null; }
+      return Object.assign(base, { type: "labs", panelDate: g("date") || todayISO(), values });
+    }
+    return null;
+  }
+  function renderLog(c) {
+    const type = state.logType || "injection";
+    c.innerHTML = `
+      <h2>Log</h2>
+      <p class="hero-sub">A private record of what you've done and how your body's responding. Everything stays in this browser.</p>
+      <div class="seg log-seg" role="group" aria-label="What to log">
+        ${LOG_TYPES.map((t) => `<button class="seg-btn ${t.id === type ? "on" : ""}" data-type="${t.id}">${t.label}</button>`).join("")}
+      </div>
+      <form class="log-form" id="logForm" autocomplete="off">${logForm(type)}
+        <div class="setup-actions"><button type="submit" class="btn-solid">Save entry</button></div>
+      </form>
+      <h3>History</h3>
+      <div class="ev-list" id="evList">${Store.all().map((e) => eventRow(e, { del: true })).join("") || `<p class="plan-empty">Nothing logged yet.</p>`}</div>`;
+
+    // honor a site preselected from the map / today view
+    if (type === "injection" && state.presetSite) {
+      const sel = $('[data-f="site"]', c);
+      if (sel) sel.value = state.presetSite;
+      state.presetSite = null;
+    }
+    $$("[data-type]", c).forEach((b) => b.addEventListener("click", () => { state.logType = b.dataset.type; renderLog(c); }));
+    $("#logForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const ev = collectLog(type, c);
+      if (!ev) return;
+      Store.add(ev);
+      toast("Saved.");
+      state.logType = type;
+      renderLog(c);
+    });
+    bindEvDelete(c);
+  }
+  function bindEvDelete(c) {
+    $$("[data-del]", c).forEach((b) => b.addEventListener("click", () => {
+      Store.remove(b.dataset.del);
+      toast("Entry deleted.");
+      if (state.view === "log") renderLog(c);
+      else setView(state.view);
+    }));
+  }
+
+  /* ---- TRENDS ---- */
+  const chartCleanup = [];
+  function renderTrends(c) {
+    chartCleanup.length = 0;
+    const bpPts = Store.metricSeries("bp", "systolic");
+    const anyData = bpPts.length || Store.metricSeries("weight").length || Store.metricSeries("hr").length || Store.markersLogged().size;
+    if (!anyData) {
+      c.innerHTML = `<h2>Trends</h2><p class="hero-sub">Charts of your blood pressure, weight and blood markers over time — with reference ranges shaded and out-of-range readings flagged.</p>
+        <div class="plan-empty" style="margin-top:10px">No readings yet. <button class="link-btn" data-go="log">Log your first →</button></div>`;
+      wireGo(c);
+      return;
+    }
+    const cards = [];
+    cards.push(`<div class="chart-card"><div class="chart-head"><h4>Blood pressure</h4><span class="chart-legend"><i class="lg solid"></i>Systolic <i class="lg dash"></i>Diastolic</span></div><div class="chart-wrap"><canvas data-chart="bp"></canvas><div class="chart-tip" data-tip="bp"></div></div></div>`);
+    if (Store.metricSeries("weight").length) cards.push(`<div class="chart-card"><div class="chart-head"><h4>Weight</h4></div><div class="chart-wrap"><canvas data-chart="weight"></canvas><div class="chart-tip" data-tip="weight"></div></div></div>`);
+    if (Store.metricSeries("hr").length) cards.push(`<div class="chart-card"><div class="chart-head"><h4>Resting heart rate</h4></div><div class="chart-wrap"><canvas data-chart="hr"></canvas><div class="chart-tip" data-tip="hr"></div></div></div>`);
+
+    // blood markers
+    const logged = [...Store.markersLogged()];
+    const markerCards = (PT.markers || []).filter((m) => logged.includes(m.id) && m.group !== "Vitals").map((m) => {
+      const series = Store.markerSeries(m.id);
+      const latest = series[series.length - 1];
+      const r = latest ? Brain.markers.evaluate(m.id, latest.v, protocolSex()) : null;
+      const range = Brain.markers.range(m, protocolSex());
+      return `<div class="chart-card marker">
+        <div class="chart-head"><h4>${m.name} <em>${m.unit}</em></h4>${latest ? `<span class="chart-latest">${latest.v} ${statusChip(m.id, latest.v)}</span>` : ""}</div>
+        ${range ? `<div class="chart-range">Reference${protocolSex() === "f" ? " (female)" : ""}: ${range[0]}–${range[1]} ${m.unit}</div>` : ""}
+        <div class="chart-wrap"><canvas data-chart="marker:${m.id}"></canvas><div class="chart-tip" data-tip="marker:${m.id}"></div></div>
+        ${r && r.flag ? `<div class="chart-flag ${r.status === "watch" ? "watch" : "bad"}">${r.flag.msg}</div>` : ""}
+      </div>`;
+    }).join("");
+
+    c.innerHTML = `<h2>Trends</h2>
+      <p class="hero-sub">Reference ranges are shaded; readings outside them are flagged. Trends beat single snapshots — a number climbing week over week is the signal.</p>
+      <div class="chart-grid">${cards.join("")}</div>
+      ${markerCards ? `<h3>Blood markers</h3><div class="chart-grid">${markerCards}</div>` : `<p class="seg-note" style="margin-top:14px">Log a <button class="link-btn" data-go="log">bloodwork panel</button> to chart your markers against reference ranges.</p>`}`;
+
+    wireGo(c);
+    drawAllCharts(c);
+  }
+  function drawAllCharts(c) {
+    const sex = protocolSex();
+    $$("[data-chart]", c).forEach((canvas) => {
+      const key = canvas.dataset.chart;
+      const tip = $(`[data-tip="${key}"]`, canvas.closest(".chart-wrap"));
+      let map = null;
+      if (key === "bp") {
+        const sys = Store.metricSeries("bp", "systolic"), dia = Store.metricSeries("bp", "diastolic");
+        const sysRange = Brain.markers.range(Brain.markers.byId("bp_systolic"), sex);
+        map = Chart.draw(canvas, {
+          bands: sysRange ? [{ lo: sysRange[0], hi: sysRange[1] }] : [],
+          series: [
+            { points: sys, label: "Sys", status: markerStatusFn("bp_systolic") },
+            { points: dia, label: "Dia", dash: true, status: markerStatusFn("bp_diastolic") },
+          ],
+        });
+        if (map) Chart.attachHover(canvas, map, tip, (s, p) => `<b>${s.label}</b> ${p.v}<br><span>${Chart.fmtDay(p.t)}</span>`);
+      } else if (key === "weight") {
+        map = Chart.draw(canvas, { series: [{ points: Store.metricSeries("weight"), label: "kg" }] });
+        if (map) Chart.attachHover(canvas, map, tip, (s, p) => `<b>${p.v}</b> ${p.ev.unit || ""}<br><span>${Chart.fmtDay(p.t)}</span>`);
+      } else if (key === "hr") {
+        map = Chart.draw(canvas, { series: [{ points: Store.metricSeries("hr"), label: "bpm", status: markerStatusFn("resting_hr") }] });
+        if (map) Chart.attachHover(canvas, map, tip, (s, p) => `<b>${p.v}</b> bpm<br><span>${Chart.fmtDay(p.t)}</span>`);
+      } else if (key.startsWith("marker:")) {
+        const id = key.slice(7), m = Brain.markers.byId(id), range = Brain.markers.range(m, sex);
+        map = Chart.draw(canvas, { bands: range ? [{ lo: range[0], hi: range[1] }] : [], series: [{ points: Store.markerSeries(id), status: markerStatusFn(id) }] });
+        if (map) Chart.attachHover(canvas, map, tip, (s, p) => `<b>${p.v}</b> ${m.unit}<br><span>${Chart.fmtDay(p.t)}</span>`);
+      }
+    });
+  }
+
+  /* ---- INJECTION SITES ---- */
+  function bodySVG(viewName, restById) {
+    const sites = SITES.filter((s) => s.view === viewName);
+    // simple silhouette in a 100x170 viewBox
+    const body = `
+      <circle cx="50" cy="13" r="9"/>
+      <rect x="34" y="22" width="32" height="46" rx="13"/>
+      <rect x="20" y="24" width="14" height="40" rx="7"/>
+      <rect x="66" y="24" width="14" height="40" rx="7"/>
+      <rect x="37" y="64" width="12" height="70" rx="6"/>
+      <rect x="51" y="64" width="12" height="70" rx="6"/>`;
+    const dots = sites.map((s) => {
+      const d = restById[s.id];
+      const cls = d == null ? "unused" : d >= 7 ? "rested" : d >= 3 ? "recent" : "fresh";
+      return `<g class="site ${cls}" data-site="${s.id}" tabindex="0" role="button" aria-label="${s.name}, ${d == null ? "never used" : d + " days rested"}">
+        <circle cx="${s.x}" cy="${s.y}" r="5.5"/>
+        <title>${s.name} — ${d == null ? "unused" : d + "d rested"}</title>
+      </g>`;
+    }).join("");
+    return `<svg viewBox="0 0 100 145" class="body-svg" aria-hidden="false" role="group" aria-label="${viewName} injection sites">
+      <g class="body-fill">${body}</g>${dots}</svg>`;
+  }
+  function renderSites(c) {
+    const { last, count } = Store.lastInjectionBySite();
+    const rest = {};
+    SITES.forEach((s) => { rest[s.id] = last[s.id] ? Math.floor((Date.now() - last[s.id].t) / 864e5) : null; });
+    const suggestion = Store.suggestSite(true);
+    const rows = SITES.map((s) => {
+      const d = rest[s.id];
+      const cls = d == null ? "unused" : d >= 7 ? "rested" : d >= 3 ? "recent" : "fresh";
+      return `<div class="site-row"><span class="site-swatch ${cls}"></span><span class="site-name">${s.name}</span><span class="site-vol">${s.vol}</span><span class="site-when">${d == null ? "never used" : d === 0 ? "today" : d + "d ago"}${count[s.id] ? ` · ${count[s.id]}×` : ""}</span></div>`;
+    }).join("");
+    c.innerHTML = `<h2>Injection sites</h2>
+      <p class="hero-sub">Rotating sites is how you avoid scar tissue and abscesses. Green is rested, red was hit recently. Log each shot and PepTalk keeps the map current.</p>
+      ${suggestion ? `<div class="depletes-note"><b>Suggested next:</b> ${suggestion.site.name}${suggestion.days == null ? " — never used" : ` — rested ${suggestion.days} day${suggestion.days === 1 ? "" : "s"}`}. <button class="link-btn" data-log="injection">Log an injection →</button></div>` : ""}
+      <div class="sites-wrap">
+        <div class="body-col"><div class="body-label">Front</div>${bodySVG("front", rest)}</div>
+        <div class="body-col"><div class="body-label">Back</div>${bodySVG("back", rest)}</div>
+        <div class="site-legend">
+          <span><i class="site-swatch unused"></i>Unused</span>
+          <span><i class="site-swatch rested"></i>Rested (7d+)</span>
+          <span><i class="site-swatch recent"></i>Recent (3–6d)</span>
+          <span><i class="site-swatch fresh"></i>Just hit (&lt;3d)</span>
+        </div>
+      </div>
+      <h3>Rotation</h3>
+      <div class="site-list">${rows}</div>`;
+    $$("[data-log]", c).forEach((b) => b.addEventListener("click", () => { state.logType = "injection"; setView("log"); }));
+    $$("[data-site]", c).forEach((g) => g.addEventListener("click", () => { state.logType = "injection"; state.presetSite = g.dataset.site; setView("log"); }));
+  }
+
+  /* ---- DATA & BACKUP ---- */
+  function renderData(c) {
+    const n = Store.all().length;
+    c.innerHTML = `<h2>Data &amp; backup</h2>
+      <p class="hero-sub">Everything PepTalk stores lives only in this browser — nothing is uploaded. Clearing your browser data wipes it, so export a backup if it matters.</p>
+      <div class="depletes-note">You currently have <b>${n} logged ${n === 1 ? "entry" : "entries"}</b>${state.protocol ? " and a saved protocol" : ""}.</div>
+
+      <h3>Export</h3>
+      <p class="seg-note">Downloads a JSON file with your protocol and log. Keep it somewhere safe.</p>
+      <div class="setup-actions"><button class="btn-solid" id="exportBtn">⬇ Download backup</button><button class="btn-ghost" id="copyBtn">Copy to clipboard</button></div>
+
+      <h3>Import</h3>
+      <p class="seg-note">Paste a backup or choose a file. This replaces what's currently stored.</p>
+      <textarea id="importText" class="import-area" placeholder='{"app":"peptalk",...}'></textarea>
+      <div class="setup-actions"><input type="file" id="importFile" accept="application/json,.json" /><button class="btn-solid" id="importBtn">Restore</button></div>
+
+      <h3>Danger zone</h3>
+      <div class="setup-actions"><button class="btn-ghost danger" id="wipeBtn">Delete all my data</button></div>`;
+
+    $("#exportBtn").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(Store.exportBundle(), null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob), a = document.createElement("a");
+      a.href = url; a.download = `peptalk-backup-${todayISO()}.json`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast("Backup downloaded.");
+    });
+    $("#copyBtn").addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(JSON.stringify(Store.exportBundle())); toast("Copied to clipboard."); }
+      catch (e) { $("#importText").value = JSON.stringify(Store.exportBundle(), null, 2); toast("Clipboard blocked — shown below to copy."); }
+    });
+    const doImport = (text) => {
+      let obj; try { obj = JSON.parse(text); } catch (e) { toast("That isn't valid JSON."); return; }
+      if (!confirm("Restore this backup? It replaces your current protocol and log.")) return;
+      const res = Store.importBundle(obj);
+      if (!res.ok) { toast(res.error); return; }
+      state.protocol = loadProtocol();
+      toast("Backup restored.");
+      setView("today");
+    };
+    $("#importBtn").addEventListener("click", () => { const t = $("#importText").value.trim(); if (!t) { toast("Paste a backup or pick a file first."); return; } doImport(t); });
+    $("#importFile").addEventListener("change", (e) => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => doImport(String(r.result)); r.readAsText(f); });
+    $("#wipeBtn").addEventListener("click", () => {
+      if (!confirm("Delete your protocol and every logged entry? This can't be undone.")) return;
+      Store.clearAll(); state.protocol = null;
+      toast("All data deleted.");
+      setView("home");
+    });
+  }
+
   /* ======================= SUPPLEMENTS ================================= */
   function renderSupplements(c) {
     c.innerHTML = `
@@ -1077,10 +1502,12 @@
   }
 
   /* ======================= SETTINGS / THEME ============================ */
+  const CHART_VIEWS = new Set(["trends"]);
   function applyTheme(light) {
     document.documentElement.classList.toggle("light", light);
     $("#themeBtn").textContent = light ? "☀️" : "🌙";
     localStorage.setItem(KEY.theme, light ? "light" : "dark");
+    if (CHART_VIEWS.has(state.view)) setView(state.view); // canvas needs a repaint for new theme colors
   }
 
   function initSettings() {
@@ -1146,8 +1573,17 @@
       }
     });
 
+    // redraw charts on resize (debounced) so canvases stay crisp
+    let rz;
+    window.addEventListener("resize", () => {
+      if (!CHART_VIEWS.has(state.view)) return;
+      clearTimeout(rz);
+      rz = setTimeout(() => setView(state.view), 160);
+    });
+
     renderLibrary();
-    setView("home");
+    // active users land on Today; newcomers on the Overview
+    setView(state.protocol ? "today" : "home");
   }
 
   document.addEventListener("DOMContentLoaded", init);
