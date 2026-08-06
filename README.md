@@ -103,8 +103,10 @@ Usage status thresholds: **< 70%** nominal · **70–90%** elevated · **≥ 90%
   compounds it lays out the supportive **supplements**, the **nutrients you run
   low on**, and the **bloodwork** to monitor — then a **stack planner** merges
   everything you're running into one consolidated support & lab plan with
-  combined-risk flags. Educational only, **not medical advice**; the same
-  offline-brain-plus-optional-Claude pattern. See
+  combined-risk flags. Also covers **emergency warning signs** (one click from
+  anywhere), **injection safety**, **coming off & PCT**, **women & virilization**,
+  and prints a **lab request sheet** for a doctor. Educational only, **not medical
+  advice**; the same offline-brain-plus-optional-Claude pattern. See
   [`peptalk/README.md`](peptalk/README.md).
 
 ---

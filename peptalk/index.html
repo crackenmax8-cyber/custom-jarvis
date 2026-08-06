@@ -31,6 +31,7 @@
         </div>
       </div>
       <div class="header-actions">
+        <button class="emergency-btn" id="emergencyBtn" title="Emergency warning signs">🚨 <span>Emergency signs</span></button>
         <button class="icon-btn" id="themeBtn" title="Switch theme" aria-label="Switch between light and dark theme">🌙</button>
         <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Open settings">⚙</button>
       </div>
@@ -41,9 +42,16 @@
       <aside class="sidebar">
         <nav class="nav" id="nav">
           <button class="nav-item active" data-view="home">🏠 <span>Overview</span></button>
+          <button class="nav-item alarm" data-view="emergency">🚨 <span>Emergency signs</span></button>
+          <div class="nav-label">Plan</div>
           <button class="nav-item" data-view="stack">🧬 <span>Stack planner</span></button>
-          <button class="nav-item" data-view="supplements">💊 <span>Supplements</span></button>
           <button class="nav-item" data-view="labs">🩸 <span>Bloodwork</span></button>
+          <button class="nav-item" data-view="supplements">💊 <span>Supplements</span></button>
+          <div class="nav-label">Practice</div>
+          <button class="nav-item" data-view="injection">💉 <span>Injection safety</span></button>
+          <button class="nav-item" data-view="pct">🔁 <span>Coming off &amp; PCT</span></button>
+          <button class="nav-item" data-view="women">♀ <span>Women &amp; virilization</span></button>
+          <div class="nav-label">Ask</div>
           <button class="nav-item" data-view="chat">💬 <span>Ask PepTalk</span></button>
         </nav>
 

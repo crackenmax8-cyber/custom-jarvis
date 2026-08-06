@@ -794,6 +794,220 @@ PT.compounds = [
   },
 ];
 
+/* ============================================================================
+   EMERGENCY — the "this symptom means get help now" list.
+   level: 'emergency' (call an ambulance) | 'urgent' (same day) | 'soon'
+   ========================================================================== */
+PT.emergencyIntro =
+  "Tell the medical staff exactly what you have taken — every compound, dose and when. " +
+  "They are there to treat you, not to judge or report you, and withholding it can get " +
+  "you the wrong treatment. If you can't say it out loud, write it down and hand it over.";
+
+PT.emergency = [
+  {
+    level: "emergency", title: "Heart attack",
+    signs: "Chest pain or pressure (may spread to arm, jaw, back), shortness of breath, cold sweat, nausea, feeling of doom.",
+    why: "AAS raise LDL/ApoB, blood pressure, clotting and heart-muscle thickness — heart attacks happen in young, fit users.",
+    act: "Call emergency services now. Chew aspirin if you're not allergic and it's to hand. Do not drive yourself.",
+  },
+  {
+    level: "emergency", title: "Stroke",
+    signs: "Face drooping, arm weakness, slurred or confused speech, sudden vision loss, sudden worst-ever headache, sudden numbness on one side.",
+    why: "High hematocrit thickens the blood; combined with high blood pressure this is a real clot/bleed risk.",
+    act: "Call emergency services now and note the time symptoms started — treatment is time-critical.",
+  },
+  {
+    level: "emergency", title: "Pulmonary embolism (clot in the lung)",
+    signs: "Sudden breathlessness, sharp chest pain that's worse when breathing in, coughing blood, racing heart, light-headedness.",
+    why: "Thick blood from a high hematocrit is the classic driver, especially on testosterone or boldenone.",
+    act: "Call emergency services now.",
+  },
+  {
+    level: "emergency", title: "DVT (clot in the leg)",
+    signs: "One calf or leg swollen, warm, red and painful — often aching or cramping that won't settle.",
+    why: "Raised hematocrit and dehydration. A leg clot can travel to the lungs.",
+    act: "Get emergency care. Do not rub or massage the leg — that can dislodge the clot.",
+  },
+  {
+    level: "emergency", title: "Severe hypoglycemia (insulin)",
+    signs: "Shaking, sweating, confusion, slurred speech, aggression, seizure, loss of consciousness.",
+    why: "The single most lethal risk in this space. It can progress from 'a bit off' to unconscious very fast.",
+    act: "If awake and able to swallow: fast sugar now — glucose tabs, juice, full-sugar soft drink — then a longer-acting carb. If drowsy or unconscious: call emergency services, put them in the recovery position, and put NOTHING in their mouth.",
+  },
+  {
+    level: "emergency", title: "Anaphylaxis / severe reaction after injecting",
+    signs: "Swelling of lips, tongue or throat, difficulty breathing, widespread hives, sudden collapse.",
+    why: "Reaction to the compound, the carrier oil, or a contaminant.",
+    act: "Call emergency services. Use an adrenaline auto-injector if one is available.",
+  },
+  {
+    level: "urgent", title: "Liver injury",
+    signs: "Yellowing of the eyes or skin, very dark urine, pale stools, pain under the right ribs, deep itching, unusual fatigue.",
+    why: "Oral 17aa steroids — Superdrol, Anadrol, Dianabol and others — are genuinely hepatotoxic.",
+    act: "Stop the oral and get seen the same day. Ask for liver function tests.",
+  },
+  {
+    level: "urgent", title: "Pancreatitis (GLP-1s)",
+    signs: "Severe, constant upper abdominal pain that bores through to the back, usually with vomiting, and not relieved by position.",
+    why: "A rare but serious risk of semaglutide and tirzepatide.",
+    act: "Stop the drug and get emergency assessment.",
+  },
+  {
+    level: "urgent", title: "Injection-site infection or abscess",
+    signs: "Spreading redness, heat, a hard or fluid-filled lump, severe or worsening pain, fever, red streaks tracking away from the site, pus.",
+    why: "Non-sterile technique, reused equipment or contaminated product. This is the most common reason users end up in hospital.",
+    act: "See a doctor today — it usually needs antibiotics, and an abscess needs proper drainage. Do NOT squeeze, cut or drain it yourself.",
+  },
+  {
+    level: "urgent", title: "Hypertensive crisis",
+    signs: "Very high blood pressure with headache, visual changes, chest pain, breathlessness, or nosebleeds that won't stop.",
+    why: "Anadrol, trenbolone and heavy aromatization can drive blood pressure to dangerous levels.",
+    act: "Seek urgent medical care — don't wait to 'see if it settles'.",
+  },
+  {
+    level: "urgent", title: "Priapism (erection lasting over 4 hours)",
+    signs: "A painful erection that won't go down, unrelated to arousal.",
+    why: "A urological emergency — after a few hours it causes permanent tissue damage.",
+    act: "Go to an emergency department. Do not wait it out from embarrassment.",
+  },
+  {
+    level: "urgent", title: "Mental health crisis",
+    signs: "Thoughts of suicide or self-harm, severe depression, uncontrollable rage, paranoia, not sleeping for days.",
+    why: "Trenbolone is notorious for this, and the crash coming off a cycle or during PCT is a genuinely high-risk window.",
+    act: "If you are thinking about acting on it, treat it as an emergency and get help now. Tell someone you trust today. This is a side effect, not a character flaw — and it lifts.",
+  },
+  {
+    level: "soon", title: "Kidney strain",
+    signs: "Much less urine than usual, persistent swelling in the ankles or face, foamy urine, ongoing flank pain.",
+    why: "High blood pressure, high hematocrit, dehydration and very high protein all load the kidneys — trenbolone especially.",
+    act: "Stop and get kidney function checked (eGFR, creatinine, cystatin C).",
+  },
+  {
+    level: "soon", title: "Gynecomastia starting",
+    signs: "Tender, itchy or sore nipples, a firm lump under the areola.",
+    why: "Estrogen from aromatization, or prolactin from 19-nors.",
+    act: "Get estradiol and prolactin tested and speak to a doctor early. Once the lump becomes established tissue, only surgery removes it.",
+  },
+  {
+    level: "soon", title: "Persistent vomiting or dehydration",
+    signs: "Can't keep fluids down, dizziness on standing, very dark urine, no urine for many hours.",
+    why: "Common on GLP-1s, and dangerous when combined with anything raising hematocrit.",
+    act: "Stop, rehydrate with electrolytes, and see a doctor if it doesn't settle quickly.",
+  },
+];
+
+/* ============================================================================
+   INJECTION SAFETY
+   ========================================================================== */
+PT.injection = {
+  intro:
+    "Most avoidable harm in this space isn't exotic — it's an abscess from a dirty injection, " +
+    "or hepatitis from shared equipment. Sterile technique is not optional, and clean needles " +
+    "are free and confidential at needle & syringe programmes in most countries.",
+  rules: [
+    { icon: "🚫", title: "Never share anything",
+      body: "Not needles, not barrels, not vials, not swabs. Sharing transmits hepatitis B, hepatitis C and HIV. A multi-use vial that someone else's needle has entered is no longer yours to use." },
+    { icon: "1️⃣", title: "One needle, one use",
+      body: "Needles blunt on the first pass through a rubber stopper. Reusing one hurts more, tears tissue and drives infection. Draw with one needle, swap to a fresh one to inject." },
+    { icon: "🧼", title: "Clean everything, in order",
+      body: "Wash hands. Swab the vial stopper and let it dry. Swab the injection site and let it dry — alcohol only works as it evaporates, and injecting through wet alcohol stings and irritates." },
+    { icon: "🔄", title: "Rotate sites",
+      body: "Repeatedly hitting the same spot builds scar tissue, which makes future injections painful and poorly absorbed. Keep a simple rotation and never inject into a lump, scar, bruise or inflamed area." },
+    { icon: "🗑️", title: "Sharps go in a sharps bin",
+      body: "Never in household rubbish. Pharmacies and needle exchanges take them, usually free and without questions." },
+    { icon: "🐢", title: "Inject slowly",
+      body: "Slow, steady pressure hurts less and disperses better. If you hit sudden electric pain, radiating tingling or you can't push, stop and withdraw — you may be on a nerve." },
+  ],
+  sites: [
+    { name: "Ventrogluteal (side of the hip)", note: "Widely considered the safest and most reliable IM site — thick muscle, well away from the sciatic nerve and major vessels.", vol: "up to ~3 ml" },
+    { name: "Vastus lateralis (outer thigh)", note: "Easy to reach and self-inject, good for beginners. Can be sore for a day or two.", vol: "up to ~3 ml" },
+    { name: "Deltoid (shoulder)", note: "Convenient but a small muscle — small volumes only, and easy to go too deep or too high into the joint.", vol: "up to ~1 ml" },
+    { name: "Dorsogluteal (upper outer buttock)", note: "The traditional site, but it carries real sciatic nerve risk if placed wrong. Ventrogluteal is generally preferred now.", vol: "up to ~3 ml" },
+    { name: "SubQ (abdomen, love handles)", note: "For most peptides, GLP-1s and some low-volume protocols. Short, fine needle into a pinched fold of fat.", vol: "small volumes" },
+  ],
+  peptides: [
+    "Reconstitute with bacteriostatic water (it contains a preservative), not plain sterile water, if you'll use the vial more than once.",
+    "Aim the stream down the inside wall of the vial — don't blast it into the powder.",
+    "Swirl or roll gently to dissolve. Never shake: it can shear and destroy the peptide.",
+    "Store reconstituted peptides in the fridge, protected from light, and respect how long they stay stable.",
+    "Label every vial with what it is, the concentration and the date you mixed it. Mis-dosing from an unlabelled vial is a real and common error.",
+  ],
+  watch:
+    "Some redness and soreness for a day or two is normal. Spreading redness, heat, a hard or growing lump, severe pain, red streaks or a fever is not — that's a possible abscess or cellulitis and needs a doctor the same day.",
+};
+
+/* ============================================================================
+   COMING OFF — suppression, PCT, and the decision nobody plans for
+   ========================================================================== */
+PT.pct = {
+  intro:
+    "Every anabolic steroid shuts down your own testosterone production. That is not a side " +
+    "effect you can supplement your way out of — it's the deal. The question is only whether " +
+    "you restart your own production or accept replacing it for life, and that is a decision " +
+    "to make deliberately before your first cycle, not afterwards.",
+  reality: [
+    { title: "What suppression actually is",
+      body: "External androgens switch off the signal (LH and FSH) from your brain to your testicles. Production stops, the testicles shrink, and sperm production falls — often to zero. For most people this reverses; for some it doesn't, and 'some' is not a small number." },
+    { title: "The crash is real",
+      body: "When you stop, external hormone falls away before your own production returns. That gap brings fatigue, no libido, depression, strength and size loss, and low motivation. It's the highest-risk window for mental health on the whole cycle — plan support for it." },
+    { title: "The odds get worse the harder you go",
+      body: "Longer cycles, higher doses, more compounds, 19-nors, and older age all reduce the chance of a full recovery. A first short cycle at a modest dose recovers far more reliably than years of stacking." },
+    { title: "'Blast and cruise' is a life sentence",
+      body: "Never coming off means lifelong dependence on injections, lifelong cardiovascular risk, and almost certainly permanent infertility. People drift into it because recovery felt hard — make it a choice you actually made, with a doctor." },
+  ],
+  protocol: [
+    { step: "Wait for the ester to clear",
+      body: "PCT started too early is wasted. Short esters (propionate, acetate) clear in days; long ones (enanthate, cypionate) take a couple of weeks; nandrolone decanoate and boldenone undecylenate take considerably longer." },
+    { step: "SERMs are the backbone",
+      body: "Tamoxifen and clomiphene restart the LH/FSH signal. These are real prescription medicines with real side effects — clomiphene can cause visual disturbance and mood effects, tamoxifen carries a clotting risk. Get them, and the dosing, from a doctor rather than a forum." },
+    { step: "hCG has a place, but timing matters",
+      body: "hCG mimics LH and is generally used before or alongside the restart, not as the whole plan — it can suppress your own signal further if run badly. This is exactly the kind of thing worth a doctor's input." },
+    { step: "Don't crush estrogen during recovery",
+      body: "Aromatase inhibitors through PCT are a common mistake. You need some estrogen for mood, joints, libido, bone and lipids — flattening it makes recovery feel far worse." },
+    { step: "Confirm it with bloods, not vibes",
+      body: "Around 4–8 weeks after finishing PCT, test LH, FSH and total testosterone. Feeling 'okay' is not evidence of recovery. If levels are still on the floor, see an endocrinologist rather than starting another cycle to mask it." },
+  ],
+  fertility:
+    "If you want children now or later: bank sperm before you start if you can, tell your doctor what you've used, and know that hCG/hMG and SERMs can often restore sperm production — but it can take many months, and occasionally it doesn't come back. Fertility is the consequence people most often assume won't apply to them.",
+  trt:
+    "If recovery genuinely fails, medically supervised TRT is a legitimate outcome — but it should be a diagnosis made on repeat bloodwork by a doctor, not a self-declared excuse to stay on. Get properly tested before accepting it.",
+};
+
+/* ============================================================================
+   WOMEN — a different risk profile, and some of it permanent
+   ========================================================================== */
+PT.women = {
+  intro:
+    "Anabolic steroids affect women differently, and the headline difference is that several " +
+    "of the effects are permanent. Virilization doesn't reverse just because you stop — " +
+    "stopping only prevents it getting worse. Doses that are 'low' for a man are not low for a woman.",
+  permanent: [
+    "Voice deepening or hoarseness — often the first irreversible sign, and it does not come back.",
+    "Clitoral enlargement.",
+    "Facial and body hair growth (hirsutism).",
+    "Male-pattern scalp hair loss, which may not regrow.",
+    "Changes to jaw and facial structure with long-term use.",
+  ],
+  reversible: [
+    "Acne and oily skin.",
+    "Menstrual irregularity or periods stopping (usually returns, but not always quickly).",
+    "Mood changes, irritability, raised libido.",
+    "Fluid retention.",
+  ],
+  rules: [
+    { icon: "🛑", title: "First sign means stop — immediately",
+      body: "A scratchy or deepening voice, new facial hair, or clitoral changes are your cue to stop that day. 'Pushing through to the end of the cycle' is how reversible becomes permanent. Record your voice weekly so you notice a change early rather than after other people do." },
+    { icon: "⚖️", title: "Doses are far lower",
+      body: "Women who use report a small fraction of typical male doses, and the compounds most often used are the milder ones (oxandrolone, methenolone). Testosterone, trenbolone, Dianabol and Anadrol at male doses virilize quickly and severely." },
+    { icon: "🧪", title: "Counterfeits are a virilization risk",
+      body: "Oxandrolone is one of the most faked compounds on the market and is frequently substituted with something far more androgenic. A capsule sold as 'the mild one' causing rapid virilization usually means it isn't what it says." },
+    { icon: "🤰", title: "Pregnancy is an absolute stop",
+      body: "Androgens can virilize a female fetus. Do not use if pregnant, trying to conceive, or breastfeeding — and note that cycles frequently disrupt the menstrual cycle, so 'I'd know' is not reliable." },
+    { icon: "🩸", title: "Monitor the same things, plus the ones specific to you",
+      body: "Lipids and liver as usual, plus menstrual changes, and remember that oral contraceptives and hormonal coils interact with all of this. A doctor who knows the full picture is worth a great deal here." },
+  ],
+};
+
 /* Convenience lookups ------------------------------------------------------ */
 PT.byId = {};
 PT.compounds.forEach((c) => (PT.byId[c.id] = c));

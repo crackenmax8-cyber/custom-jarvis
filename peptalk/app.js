@@ -74,6 +74,10 @@
     else if (v === "supplements") renderSupplements(c);
     else if (v === "labs") renderLabs(c);
     else if (v === "chat") renderChat(c);
+    else if (v === "emergency") renderEmergency(c);
+    else if (v === "injection") renderInjection(c);
+    else if (v === "pct") renderPct(c);
+    else if (v === "women") renderWomen(c);
     else if (v === "compound") renderCompound(c);
     c.scrollTop = 0;
     c.focus({ preventScroll: true });
@@ -114,11 +118,36 @@
       </div>
 
       <h3>Get started</h3>
-      <p style="font-size:.86rem">Pick a compound from the <strong>Library</strong> on the left for its full profile, or open the
-      <button class="link-btn" data-go="stack">Stack planner</button> to combine compounds into one consolidated support &amp; bloodwork plan.</p>
+      <div class="start-grid">
+        <button class="start-card alarm" data-go="emergency">
+          <span class="sc-ic">🚨</span><b>Emergency signs</b>
+          <span>The symptoms that mean stop and get help now. Read this one before you need it.</span>
+        </button>
+        <button class="start-card" data-go="stack">
+          <span class="sc-ic">🧬</span><b>Stack planner</b>
+          <span>Tick what you're running for one consolidated supplement &amp; bloodwork plan.</span>
+        </button>
+        <button class="start-card" data-go="labs">
+          <span class="sc-ic">🩸</span><b>Bloodwork</b>
+          <span>What to test and when — and a request sheet you can print for a doctor.</span>
+        </button>
+        <button class="start-card" data-go="injection">
+          <span class="sc-ic">💉</span><b>Injection safety</b>
+          <span>Sterile technique, sites and volumes — where most avoidable harm actually happens.</span>
+        </button>
+        <button class="start-card" data-go="pct">
+          <span class="sc-ic">🔁</span><b>Coming off &amp; PCT</b>
+          <span>Suppression, recovery, fertility, and the decision to make before you start.</span>
+        </button>
+        <button class="start-card" data-go="women">
+          <span class="sc-ic">♀</span><b>Women &amp; virilization</b>
+          <span>A different risk profile — and which effects don't reverse.</span>
+        </button>
+      </div>
+      <p style="font-size:.86rem;margin-top:14px">Or pick any compound from the <strong>Library</strong> on the left for its full profile.</p>
     `;
     wireChips(c);
-    $$("[data-go]", c).forEach((b) => b.addEventListener("click", () => setView(b.dataset.go)));
+    wireGo(c);
   }
 
   /* ======================= COMPOUND DETAIL ============================== */
@@ -288,11 +317,145 @@
     `;
   }
 
+  /* ======================= EMERGENCY ================================== */
+  const EMG_META = {
+    emergency: { label: "Call an ambulance now", icon: "🚑" },
+    urgent: { label: "Get seen today", icon: "⏱️" },
+    soon: { label: "Stop and see a doctor", icon: "📋" },
+  };
+  function renderEmergency(c) {
+    const groups = ["emergency", "urgent", "soon"].map((lvl) => {
+      const items = PT.emergency.filter((e) => e.level === lvl);
+      return `
+        <h3 class="emg-head ${lvl}">${EMG_META[lvl].icon} ${EMG_META[lvl].label}</h3>
+        <div class="emg-list">
+          ${items.map((e) => `
+            <div class="emg-card ${lvl}">
+              <div class="emg-title">${e.title}</div>
+              <p class="emg-signs"><b>Signs:</b> ${e.signs}</p>
+              <p class="emg-why">${e.why}</p>
+              <p class="emg-act"><b>Do this:</b> ${e.act}</p>
+            </div>`).join("")}
+        </div>`;
+    }).join("");
+    c.innerHTML = `
+      <h2>Emergency warning signs</h2>
+      <p class="hero-sub">Know these before you need them. If something here matches what's happening, act on it — the most common fatal mistake is waiting to see whether it settles.</p>
+      <div class="tell-them"><span class="tt-ic">🗣️</span><p>${PT.emergencyIntro}</p></div>
+      ${groups}
+      <p style="font-size:.8rem;color:var(--text-faint);margin-top:20px">
+        This list is not exhaustive. Anything sudden, severe or frightening deserves medical attention regardless of whether it appears here.
+      </p>`;
+  }
+
+  /* ======================= INJECTION SAFETY ========================== */
+  function renderInjection(c) {
+    const I = PT.injection;
+    c.innerHTML = `
+      <h2>Injection safety</h2>
+      <p class="hero-sub">${I.intro}</p>
+
+      <h3>The rules that prevent most of the damage</h3>
+      <div class="principle-grid">
+        ${I.rules.map((r) => `
+          <div class="principle"><div class="p-ic">${r.icon}</div><h4>${r.title}</h4><p>${r.body}</p></div>`).join("")}
+      </div>
+
+      <h3>Sites &amp; volumes</h3>
+      <div class="lab-list">
+        ${I.sites.map((s) => `
+          <div class="lab-row">
+            <div class="lab-name">${s.name}</div>
+            <div class="lab-body">
+              <span class="lab-markers">${s.vol}</span>
+              <p class="lab-why">${s.note}</p>
+            </div>
+          </div>`).join("")}
+      </div>
+
+      <h3>Mixing peptides</h3>
+      <ol class="step-list">${I.peptides.map((p) => `<li>${p}</li>`).join("")}</ol>
+
+      <h3>When a sore site becomes a problem</h3>
+      <ul class="warn-list"><li>${I.watch}</li></ul>
+      <p style="font-size:.85rem;margin-top:12px">See <button class="link-btn" data-go="emergency">Emergency signs</button> for what an infection looks like when it's turned serious.</p>`;
+    wireGo(c);
+  }
+
+  /* ======================= COMING OFF / PCT ========================== */
+  function renderPct(c) {
+    const P = PT.pct;
+    c.innerHTML = `
+      <h2>Coming off &amp; PCT</h2>
+      <p class="hero-sub">${P.intro}</p>
+
+      <h3>What you're actually dealing with</h3>
+      <div class="principle-grid">
+        ${P.reality.map((r) => `
+          <div class="principle"><h4>${r.title}</h4><p>${r.body}</p></div>`).join("")}
+      </div>
+
+      <h3>How a recovery is usually structured</h3>
+      <ol class="step-list numbered">
+        ${P.protocol.map((s) => `<li><b>${s.step}.</b> ${s.body}</li>`).join("")}
+      </ol>
+
+      <h3>Fertility</h3>
+      <div class="depletes-note">${P.fertility}</div>
+
+      <h3>If recovery fails</h3>
+      <div class="depletes-note">${P.trt}</div>
+
+      <ul class="warn-list" style="margin-top:18px">
+        <li>PCT drugs are prescription medicines with real side effects — dosing them off a forum post is its own risk. A doctor is genuinely better here.</li>
+        <li>The weeks after a cycle are a high-risk window for depression. If it gets dark, that's the hormones talking and it does lift — but tell someone, and see <button class="link-btn" data-go="emergency">Emergency signs</button> if you're struggling badly.</li>
+      </ul>`;
+    wireGo(c);
+  }
+
+  /* ======================= WOMEN ===================================== */
+  function renderWomen(c) {
+    const W = PT.women;
+    c.innerHTML = `
+      <h2>Women &amp; virilization</h2>
+      <p class="hero-sub">${W.intro}</p>
+
+      <div class="two-col">
+        <div class="col-card permanent">
+          <h4>⛔ Permanent — does not reverse</h4>
+          <ul>${W.permanent.map((x) => `<li>${x}</li>`).join("")}</ul>
+        </div>
+        <div class="col-card reversible">
+          <h4>↩️ Usually reverses if you stop</h4>
+          <ul>${W.reversible.map((x) => `<li>${x}</li>`).join("")}</ul>
+        </div>
+      </div>
+
+      <h3>What actually keeps you safer</h3>
+      <div class="principle-grid">
+        ${W.rules.map((r) => `
+          <div class="principle"><div class="p-ic">${r.icon}</div><h4>${r.title}</h4><p>${r.body}</p></div>`).join("")}
+      </div>
+
+      <p style="font-size:.8rem;color:var(--text-faint);margin-top:20px">
+        Compound severity ratings elsewhere in PepTalk are written from a male-dosing perspective — for women, the androgenic compounds are meaningfully riskier than those labels suggest.
+      </p>`;
+  }
+
   /* ======================= LABS ======================================= */
   function renderLabs(c) {
+    const stackLabs = state.stack.size ? Brain.buildPlan([...state.stack]).labs : null;
     c.innerHTML = `
       <h2>Bloodwork &amp; monitoring</h2>
       <p class="hero-sub">The panel that turns invisible damage into something you can see and act on. Run a <strong>baseline before</strong> you start, monitor <strong>on-cycle</strong>, and re-check <strong>after</strong>. This is the most important thing on the whole site.</p>
+      <div class="print-row">
+        <button class="btn-solid" id="printLabs">🖨️ Print request sheet</button>
+        <span class="print-note">${
+          stackLabs
+            ? `Prints the ${stackLabs.length} panels your stack needs — hand it to a doctor or lab.`
+            : `Prints the full list. Pick compounds in the <b>Stack planner</b> first and this narrows to just what you need.`
+        }</span>
+      </div>
       <div class="lab-list" style="margin-top:14px">
         ${Object.values(PT.labs).map((L) => `
           <div class="lab-row">
@@ -305,6 +468,44 @@
           </div>`).join("")}
       </div>
     `;
+    $("#printLabs").addEventListener("click", printLabSheet);
+  }
+
+  /* Printable request sheet — narrows to the current stack when there is one */
+  function printLabSheet() {
+    const plan = state.stack.size ? Brain.buildPlan([...state.stack]) : null;
+    const ids = plan ? plan.labs.map((l) => l.id) : Object.keys(PT.labs);
+    const forNames = plan ? plan.chosen.map((c) => c.name).join(", ") : null;
+    const rows = ids.map((id) => {
+      const L = PT.labs[id];
+      return `<tr><td class="chk">☐</td><td><b>${L.name}</b><div class="mk">${L.markers}</div></td><td class="wh">${L.when}</td></tr>`;
+    }).join("");
+    let sheet = $("#printSheet");
+    if (!sheet) {
+      sheet = document.createElement("div");
+      sheet.id = "printSheet";
+      document.body.appendChild(sheet);
+    }
+    sheet.innerHTML = `
+      <h1>Blood test request sheet</h1>
+      <p class="sub">Prepared with PepTalk — an educational harm-reduction reference. This is not a
+      prescription or a doctor's order. Please discuss it with a clinician.</p>
+      ${forNames ? `<p class="sub"><b>Relevant to:</b> ${forNames}</p>` : `<p class="sub">General baseline and on-cycle panel.</p>`}
+      <table>
+        <thead><tr><th></th><th>Panel &amp; markers</th><th>When</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p class="foot">Baseline before starting · monitor on-cycle · re-check after. Being straightforward
+      with your clinician about what you are taking is what makes these results useful.</p>
+      <div class="sig"><span>Date: ______________</span><span>Name: ____________________________</span></div>`;
+    document.body.classList.add("printing");
+    const done = () => {
+      document.body.classList.remove("printing");
+      window.removeEventListener("afterprint", done);
+    };
+    window.addEventListener("afterprint", done);
+    window.print();
+    setTimeout(done, 1500);
   }
 
   /* ======================= CHAT ======================================== */
@@ -387,6 +588,11 @@
       b.addEventListener("click", () => ask(b.dataset.q))
     );
   }
+  function wireGo(root) {
+    $$("[data-go]", root).forEach((b) =>
+      b.addEventListener("click", () => setView(b.dataset.go))
+    );
+  }
   function toggleStack(id) {
     if (state.stack.has(id)) state.stack.delete(id);
     else state.stack.add(id);
@@ -451,6 +657,7 @@
     $$(".nav-item").forEach((n) =>
       n.addEventListener("click", () => setView(n.dataset.view))
     );
+    $("#emergencyBtn").addEventListener("click", () => setView("emergency"));
     $("#libSearch").addEventListener("input", (e) => renderLibrary(e.target.value));
     $("#composer").addEventListener("submit", (e) => {
       e.preventDefault();

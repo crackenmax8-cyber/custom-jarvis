@@ -169,6 +169,75 @@ const Brain = (() => {
   function answerLocal(input) {
     const t = norm(input);
 
+    // urgent symptoms — these jump the queue ahead of everything else
+    const RED = [
+      { rx: /chest pain|chest press|heart attack|pain in my arm/, name: "possible heart attack" },
+      { rx: /stroke|face droop|slurred|numb on one side|worst headache/, name: "possible stroke" },
+      { rx: /cough(ing)? blood|can'?t breathe|short of breath|breathless/, name: "possible clot in the lung" },
+      // swelling is the hallmark — don't fire on ordinary post-training leg pain
+      { rx: /(swollen|swelling)[\w\s]{0,14}(calf|leg|ankle)|(calf|leg|ankle)[\w\s]{0,14}(swollen|swelling)|\bdvt\b|blood clot/,
+        name: "possible DVT" },
+      { rx: /jaundice|yellow (eyes|skin)|dark urine/, name: "possible liver injury" },
+      { rx: /abscess|pus|red streak|infected (site|injection)|lump.*(hot|red)/, name: "possible injection-site infection" },
+      { rx: /suicid|kill myself|self.?harm|want to die/, name: "a mental health crisis" },
+      { rx: /erection.*(hours|won'?t go)|priapism/, name: "priapism" },
+      { rx: /passed out|unconscious|seizure|hypo(glycemi|glycaemi)/, name: "a hypoglycemic emergency" },
+    ];
+    const red = RED.find((r) => r.rx.test(t));
+    if (red) {
+      return {
+        text:
+          `That sounds like it could be **${red.name}** — this is not something to research, it's something to act on.\n\n` +
+          `**Get medical help now.** Call emergency services if it is sudden, severe or getting worse.\n\n` +
+          `Tell them exactly what you have taken, including doses. They are there to treat you, not to judge or report you — and withholding it can get you the wrong treatment.\n\n` +
+          `Open **Emergency signs** in the sidebar for the full list and what to do.`,
+        emergency: true,
+      };
+    }
+
+    // topic sections
+    if (/inject|needle|syringe|abscess|site|sterile|reconstitut|bac ?water|subq|intramuscular/.test(t)) {
+      return {
+        text:
+          "**Injection safety** — the short version:\n\n" +
+          "• Never share needles, barrels or vials — that's how hepatitis and HIV spread.\n" +
+          "• One needle, one use. Draw with one, swap to a fresh one to inject.\n" +
+          "• Swab the vial top and the skin, and let the alcohol dry before you go in.\n" +
+          "• Rotate sites; never inject into a lump, scar or inflamed area.\n" +
+          "• Ventrogluteal (side of hip) is generally considered the safest IM site.\n" +
+          "• Sharps into a sharps bin — pharmacies and needle exchanges take them free.\n\n" +
+          "Spreading redness, heat, a hard lump, fever or red streaks means a possible abscess — see a doctor the same day. Open **Injection safety** in the sidebar for sites, volumes and peptide mixing.",
+      };
+    }
+    if (/\bpct\b|post ?cycle|come off|coming off|shut ?down|suppress|recover|nolvadex|tamoxifen|clomid|clomiphene|hcg|fertility|sperm|blast and cruise/.test(t)) {
+      return {
+        text:
+          "**Coming off** — the honest version:\n\n" +
+          "Every AAS shuts down your own testosterone. You either restart your production or you replace it for life, and that's a decision worth making before the first cycle rather than after.\n\n" +
+          "• Wait for the ester to clear before starting PCT — too early is wasted.\n" +
+          "• SERMs (tamoxifen, clomiphene) restart the signal. They're real prescription drugs with real side effects — get them and the dosing from a doctor.\n" +
+          "• Don't crush estrogen through recovery; it makes it feel far worse.\n" +
+          "• Confirm recovery with bloods (LH, FSH, total testosterone) ~4–8 weeks after, not by feel.\n" +
+          "• The crash is the highest-risk window for your mental health. Plan support for it.\n\n" +
+          "Open **Coming off & PCT** in the sidebar for the full picture, including fertility.",
+      };
+    }
+    if (/\b(wom[ae]n|females?|girls?|virilis\w*|viriliz\w*|she|her)\b/.test(t)) {
+      const named = findCompound(t);
+      return {
+        text:
+          (named
+            ? `On **${named.name}** specifically — its card in the library is written from a male-dosing perspective, so read it alongside this.\n\n`
+            : "") +
+          "**For women**, the risk profile is different — and several effects are **permanent**: voice deepening, clitoral enlargement, facial/body hair, and possibly scalp hair loss. Acne, cycle disruption and mood usually reverse.\n\n" +
+          "• The first sign — especially any voice change — means stop that day. Pushing through is how reversible becomes permanent.\n" +
+          "• Doses are a small fraction of male doses, and testosterone/tren/Dianabol/Anadrol virilize fast.\n" +
+          "• Oxandrolone is heavily counterfeited, and a fake is a virilization risk in itself.\n" +
+          "• Absolute stop if pregnant or trying to conceive.\n\n" +
+          "Open **Women & virilization** in the sidebar for the full breakdown.",
+      };
+    }
+
     // greetings / help
     if (/^(hi|hey|hello|yo|sup|help|what can you do)\b/.test(t)) {
       return {

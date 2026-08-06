@@ -19,13 +19,30 @@ something you can actually manage.
 
 ## What it does
 
+- 🚨 **Emergency warning signs** — 15 red-flag presentations sorted by what to do
+  *right now*: call an ambulance (heart attack, stroke, pulmonary embolism, DVT,
+  severe hypoglycemia, anaphylaxis), get seen today (liver injury, pancreatitis,
+  abscess, hypertensive crisis, priapism, mental-health crisis), or stop and see
+  a doctor. Reachable in one click from any screen, and the Ask box routes
+  red-flag symptoms straight here instead of answering the literal question.
+- 💉 **Injection safety** — sterile technique, one-needle-one-use, sites and
+  volumes (ventrogluteal, vastus lateralis, delt, dorsogluteal, SubQ), rotation,
+  sharps disposal, peptide reconstitution, and what a site infection looks like.
+- 🔁 **Coming off & PCT** — what suppression actually is, why the crash is the
+  highest-risk window for mental health, how a recovery is structured, fertility,
+  and why "blast and cruise" is a decision rather than a default.
+- ♀ **Women & virilization** — which effects are **permanent** (voice, clitoral
+  enlargement, hirsutism, scalp hair) versus reversible, why the first sign means
+  stop that day, and why counterfeits are themselves a virilization risk.
 - 📚 **Compound library** — 22 common compounds grouped by class (injectable &
   oral steroids; growth-hormone, recovery, metabolic/GLP-1 and other peptides),
   each with a severity rating shown as a **label, never color alone**.
 - 💊 **"What to take"** — for every compound: the supportive supplements and the
   nutrients you can run low on, each with *why*, a typical range, and the catch.
 - 🩸 **Bloodwork to monitor** — the specific panels that matter for each compound
-  (lipids/ApoB, CBC/hematocrit, liver, kidney, hormones, glucose, and more).
+  (lipids/ApoB, CBC/hematocrit, liver, kidney, hormones, glucose, and more), plus
+  a **printable request sheet** you can hand to a doctor or lab — it narrows to
+  just the panels your selected stack needs.
 - 🧬 **Stack planner** — tick everything you're running and PepTalk merges it into
   **one consolidated plan**: a de-duplicated support stack (tagged with which
   compound each item is for), the full bloodwork checklist, every warning, and
