@@ -99,15 +99,16 @@ Usage status thresholds: **< 70%** nominal · **70–90%** elevated · **≥ 90%
   Claude hookup, optional spoken replies. See [`dj/README.md`](dj/README.md).
 
 - 💊 **[PepTalk — use safer, or don't use](peptalk/)** — a calm, non-judgmental
-  **harm-reduction reference** for anabolic steroids and peptides. Its centrepiece
-  is **My Protocol**: save what you're running with a start date and get a
-  personal dashboard — your cycle phase ("Week 5 of 12"), an **ester-aware
-  timeline** with baseline/mid-cycle/last-dose/PCT dates, a rolled-up support
-  stack, bloodwork, and a watch-list, printable as a one-pager for a doctor. Plus
-  a 22-compound library, a **side-effect → countermeasure** index (free / OTC /
-  prescription), a **stack planner**, **emergency warning signs** (one click from
-  anywhere), **injection safety**, **coming off & PCT**, and **women &
-  virilization**. Educational only, **not medical advice**; offline brain with an
+  **harm-reduction app** for anabolic steroids and peptides, both a reference and
+  a living tracker. Save a protocol and get a **Today** dashboard, an **ester-aware
+  cycle timeline**, and a **bloodwork tracker** that charts your real labs against
+  **sex- and cycle-aware reference ranges** (it stays calm on the markers that run
+  high on cycle by design, and flags the genuinely dangerous ones loud). Log your
+  injections on a **rotation-aware site map**, track **blood pressure/weight/marker
+  trends**, and print a **visit summary** for a doctor. Plus a 22-compound library,
+  a **side-effect → countermeasure** index (free / OTC / prescription), a **stack
+  planner**, **emergency warning signs**, **injection safety**, **PCT**, and
+  **women & virilization**. Offline, localStorage-only, **not medical advice**;
   optional Claude hookup. See [`peptalk/README.md`](peptalk/README.md).
 
 ---

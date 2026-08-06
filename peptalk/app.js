@@ -959,7 +959,7 @@
   function renderTrends(c) {
     chartCleanup.length = 0;
     const bpPts = Store.metricSeries("bp", "systolic");
-    const anyData = bpPts.length || Store.metricSeries("weight").length || Store.metricSeries("hr").length || Store.markersLogged().size;
+    const anyData = bpPts.length || Store.metricSeries("weight").length || Store.metricSeries("bp", "hr").length || Store.markersLogged().size;
     if (!anyData) {
       c.innerHTML = `<h2>Trends</h2><p class="hero-sub">Charts of your blood pressure, weight and blood markers over time — with reference ranges shaded and out-of-range readings flagged.</p>
         <div class="plan-empty" style="margin-top:10px">No readings yet. <button class="link-btn" data-go="log">Log your first →</button></div>`;
@@ -969,7 +969,7 @@
     const cards = [];
     cards.push(`<div class="chart-card"><div class="chart-head"><h4>Blood pressure</h4><span class="chart-legend"><i class="lg solid"></i>Systolic <i class="lg dash"></i>Diastolic</span></div><div class="chart-wrap"><canvas data-chart="bp"></canvas><div class="chart-tip" data-tip="bp"></div></div></div>`);
     if (Store.metricSeries("weight").length) cards.push(`<div class="chart-card"><div class="chart-head"><h4>Weight</h4></div><div class="chart-wrap"><canvas data-chart="weight"></canvas><div class="chart-tip" data-tip="weight"></div></div></div>`);
-    if (Store.metricSeries("hr").length) cards.push(`<div class="chart-card"><div class="chart-head"><h4>Resting heart rate</h4></div><div class="chart-wrap"><canvas data-chart="hr"></canvas><div class="chart-tip" data-tip="hr"></div></div></div>`);
+    if (Store.metricSeries("bp", "hr").length) cards.push(`<div class="chart-card"><div class="chart-head"><h4>Resting heart rate</h4></div><div class="chart-wrap"><canvas data-chart="hr"></canvas><div class="chart-tip" data-tip="hr"></div></div></div>`);
 
     // blood markers
     const logged = [...Store.markersLogged()];
@@ -981,6 +981,7 @@
       return `<div class="chart-card marker">
         <div class="chart-head"><h4>${m.name} <em>${m.unit}</em></h4>${latest ? `<span class="chart-latest">${latest.v} ${statusChip(m.id, latest.v)}</span>` : ""}</div>
         ${range ? `<div class="chart-range">Reference${protocolSex() === "f" ? " (female)" : ""}: ${range[0]}–${range[1]} ${m.unit}</div>` : ""}
+        ${m.expect ? `<div class="chart-expect">↕ ${m.expect}</div>` : ""}
         <div class="chart-wrap"><canvas data-chart="marker:${m.id}"></canvas><div class="chart-tip" data-tip="marker:${m.id}"></div></div>
         ${r && r.flag ? `<div class="chart-flag ${r.status === "watch" ? "watch" : "bad"}">${r.flag.msg}</div>` : ""}
       </div>`;
@@ -1015,7 +1016,7 @@
         map = Chart.draw(canvas, { series: [{ points: Store.metricSeries("weight"), label: "kg" }] });
         if (map) Chart.attachHover(canvas, map, tip, (s, p) => `<b>${p.v}</b> ${p.ev.unit || ""}<br><span>${Chart.fmtDay(p.t)}</span>`);
       } else if (key === "hr") {
-        map = Chart.draw(canvas, { series: [{ points: Store.metricSeries("hr"), label: "bpm", status: markerStatusFn("resting_hr") }] });
+        map = Chart.draw(canvas, { series: [{ points: Store.metricSeries("bp", "hr"), label: "bpm", status: markerStatusFn("resting_hr") }] });
         if (map) Chart.attachHover(canvas, map, tip, (s, p) => `<b>${p.v}</b> bpm<br><span>${Chart.fmtDay(p.t)}</span>`);
       } else if (key.startsWith("marker:")) {
         const id = key.slice(7), m = Brain.markers.byId(id), range = Brain.markers.range(m, sex);
@@ -1076,12 +1077,70 @@
     $$("[data-site]", c).forEach((g) => g.addEventListener("click", () => { state.logType = "injection"; state.presetSite = g.dataset.site; setView("log"); }));
   }
 
+  /* ---- Doctor visit summary (print) — honest longitudinal record ---- */
+  function trendArrow(series) {
+    if (series.length < 2) return "";
+    const d = series[series.length - 1].v - series[0].v;
+    return d > 0 ? " ↑" : d < 0 ? " ↓" : " →";
+  }
+  function printVisitSummary() {
+    const sex = protocolSex();
+    const p = state.protocol;
+    const compRows = p ? p.items.map((it) => {
+      const co = PT.byId[it.id];
+      return `<tr><td><b>${co ? co.name : it.id}</b></td><td>${it.dose ? mdEscape(it.dose) : "—"}</td><td>${it.ester ? ((Brain.protocol.ESTERS.find((e) => e.id === it.ester) || {}).label || it.ester) : "—"}</td></tr>`;
+    }).join("") : "";
+    const lastInj = Store.lastOfType("injection");
+    const bp = Store.metricSeries("bp", "systolic"), dia = Store.metricSeries("bp", "diastolic"), wt = Store.metricSeries("weight");
+    const lastBP = bp.length ? `${bp[bp.length - 1].v}/${dia.length ? dia[dia.length - 1].v : "?"} mmHg (${new Date(bp[bp.length - 1].t).toLocaleDateString()})${trendArrow(bp)}` : "—";
+    const lastWt = wt.length ? `${wt[wt.length - 1].v} ${wt[wt.length - 1].ev.unit || ""} ${trendArrow(wt)}` : "—";
+
+    // latest value per logged marker, flagged
+    const logged = [...Store.markersLogged()];
+    const markerRows = (PT.markers || []).filter((m) => logged.includes(m.id) && m.group !== "Vitals").map((m) => {
+      const s = Store.markerSeries(m.id), latest = s[s.length - 1];
+      if (!latest) return "";
+      const ev = Brain.markers.evaluate(m.id, latest.v, sex);
+      const range = Brain.markers.range(m, sex);
+      const flagged = ev && ev.status !== "ok";
+      return `<tr class="${flagged ? "flag" : ""}"><td>${m.name}</td><td>${latest.v} ${m.unit}${flagged ? " ⚑" : ""}</td><td>${range ? `${range[0]}–${range[1]}` : ""}</td><td>${new Date(latest.t).toLocaleDateString()}</td></tr>`;
+    }).filter(Boolean).join("");
+
+    const sides = Store.byType("side").slice(0, 8).map((e) => { const k = PT.counterById[e.counter]; return `<li>${k ? k.name : e.counter} (${SEV_WORD[e.severity] || ""})${e.note ? ` — ${mdEscape(e.note)}` : ""} · ${new Date(e.ts).toLocaleDateString()}</li>`; }).join("");
+
+    let sheet = $("#printSheet");
+    if (!sheet) { sheet = document.createElement("div"); sheet.id = "printSheet"; document.body.appendChild(sheet); }
+    sheet.innerHTML = `
+      <h1>Visit summary</h1>
+      <p class="sub">An honest record to share with a clinician, generated by PepTalk from a personal log. Not a medical document. Sex used for reference ranges: ${sex === "f" ? "female" : "male"}.</p>
+      ${compRows ? `<h2>Current compounds</h2><table><thead><tr><th>Compound</th><th>Dose (self-reported)</th><th>Ester</th></tr></thead><tbody>${compRows}</tbody></table>` : ""}
+      <h2>Recent vitals</h2>
+      <table><tbody>
+        <tr><td><b>Last injection</b></td><td>${lastInj ? `${new Date(lastInj.ts).toLocaleDateString()}${lastInj.site && SITE_BY_ID[lastInj.site] ? ` · ${SITE_BY_ID[lastInj.site].name}` : ""}${lastInj.compound && PT.byId[lastInj.compound] ? ` · ${PT.byId[lastInj.compound].name}` : ""}` : "—"}</td></tr>
+        <tr><td><b>Blood pressure</b></td><td>${lastBP}</td></tr>
+        <tr><td><b>Weight</b></td><td>${lastWt}</td></tr>
+      </tbody></table>
+      ${markerRows ? `<h2>Latest blood markers <span class="mk">(⚑ = outside expected)</span></h2><table><thead><tr><th>Marker</th><th>Value</th><th>Reference</th><th>Date</th></tr></thead><tbody>${markerRows}</tbody></table>` : ""}
+      ${sides ? `<h2>Logged side effects</h2><ul>${sides}</ul>` : ""}
+      <p class="foot">Please treat this person without judgement and be aware these substances can raise the risk of clots, high blood pressure and liver strain. Ask about last dose and compound if an emergency.</p>
+      <div class="sig"><span>Date: ______________</span><span>Name: ____________________________</span></div>`;
+    document.body.classList.add("printing");
+    const done = () => { document.body.classList.remove("printing"); window.removeEventListener("afterprint", done); };
+    window.addEventListener("afterprint", done);
+    window.print();
+    setTimeout(done, 1500);
+  }
+
   /* ---- DATA & BACKUP ---- */
   function renderData(c) {
     const n = Store.all().length;
     c.innerHTML = `<h2>Data &amp; backup</h2>
       <p class="hero-sub">Everything PepTalk stores lives only in this browser — nothing is uploaded. Clearing your browser data wipes it, so export a backup if it matters.</p>
       <div class="depletes-note">You currently have <b>${n} logged ${n === 1 ? "entry" : "entries"}</b>${state.protocol ? " and a saved protocol" : ""}.</div>
+
+      <h3>Share with a doctor</h3>
+      <p class="seg-note">A one-page visit summary — your compounds, recent vitals, latest blood markers (with out-of-range values flagged) and logged sides. The most useful thing a clinician never gets.</p>
+      <div class="setup-actions"><button class="btn-solid" id="visitBtn">🩺 Print visit summary</button></div>
 
       <h3>Export</h3>
       <p class="seg-note">Downloads a JSON file with your protocol and log. Keep it somewhere safe.</p>
@@ -1095,6 +1154,7 @@
       <h3>Danger zone</h3>
       <div class="setup-actions"><button class="btn-ghost danger" id="wipeBtn">Delete all my data</button></div>`;
 
+    $("#visitBtn").addEventListener("click", printVisitSummary);
     $("#exportBtn").addEventListener("click", () => {
       const blob = new Blob([JSON.stringify(Store.exportBundle(), null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob), a = document.createElement("a");

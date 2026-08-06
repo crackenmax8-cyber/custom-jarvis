@@ -1,11 +1,10 @@
 # PepTalk — use safer, or don't use 💊
 
-A calm, non-judgmental **harm-reduction reference** for people using — or
-considering — anabolic-androgenic steroids (AAS) and performance/therapeutic
-peptides. It answers one practical question: *what do you do to make this
-safer?* — the supportive **supplements**, the **nutrients you run low on**
-because of a compound, and the **bloodwork** that turns invisible damage into
-something you can actually manage.
+A calm, non-judgmental **harm-reduction app** for people using — or considering —
+anabolic-androgenic steroids (AAS) and performance/therapeutic peptides. It's
+both a **reference** (what to take, what to counter, what to watch for) and a
+**living tracker** (log your cycle, your blood pressure and your labs, and see
+what's drifting) — all offline, stored only in your browser.
 
 ![overview](preview.png)
 
@@ -14,10 +13,39 @@ something you can actually manage.
 > nothing in it endorses using these substances. They carry real, sometimes
 > permanent risks. Doses shown are *commonly-reported ranges from harm-reduction
 > communities* so you can gauge whether you're wildly off — **not prescriptions.**
-> Get baseline bloodwork, monitor on-cycle, and work with a licensed doctor.
-> **The safest cycle is the one you don't run.**
+> Reference ranges are context-aware (several markers run outside "normal" on
+> cycle by design) but they are not a diagnosis. Get baseline bloodwork, monitor
+> on-cycle, and work with a licensed doctor. **The safest cycle is the one you
+> don't run.**
 
-## What it does
+## Track your cycle (the app half)
+
+- 📅 **Today** — your daily driver once a protocol is saved: current cycle phase,
+  *due & suggested* (next injection with a rotation-aware site suggestion,
+  upcoming bloodwork, a blood-pressure nudge), one-tap quick-log, a supplements
+  reminder, and a recent-activity feed. Active users land here.
+- 📓 **Log** — record injections, blood pressure, weight, **bloodwork panels**,
+  side effects and notes; edit and delete; full history. All user text is escaped.
+- 📈 **Trends** — dependency-free canvas charts for blood pressure, weight, heart
+  rate and every blood marker, with **reference-range bands** and **out-of-range
+  readings flagged in red**. A number climbing week over week is the signal a
+  single snapshot hides.
+- 🩸 **Bloodwork results** — enter your real lab values and PepTalk compares them
+  to **sex-aware, cycle-aware reference ranges** (clinically compiled and
+  adversarially verified). Crucially, it *doesn't* alarm on the markers that are
+  supposed to run high on cycle — supraphysiological testosterone is a calm
+  "expected", while a hematocrit of 54% or a hypertensive-crisis BP is flagged
+  loud. That keeps the signal meaningful.
+- 🎯 **Injection sites** — a front/back body map coloured by days-since-use, a
+  "most-rested, inject here next" suggestion, and a rotation table — the practical
+  side of the abscess/scar-tissue advice.
+- 🩺 **Visit summary** — a one-page, print-and-hand-to-a-doctor record of your
+  compounds, recent vitals, latest labs (out-of-range values flagged) and logged
+  sides. The honest longitudinal record a clinician or ER never otherwise gets.
+- 🗄️ **Data & backup** — JSON export / import / clear, because localStorage is
+  fragile.
+
+## Know what to do (the reference half)
 
 - 📋 **My Protocol** — the part that makes it a tool rather than a reference. Save
   what you're actually running (compounds, doses, esters, a start date and
@@ -119,10 +147,11 @@ fully offline.
 | File | Purpose |
 |------|---------|
 | `index.html` | App shell — disclaimer bar, grouped nav, library, content area, composer |
-| `styles.css` | Clinical, calm design; dark + light themes; accessible severity labels; print + timeline styling |
-| `data.js` | Knowledge base — compounds, supplements, labs, countermeasures, emergency, injection, PCT, women |
-| `brain.js` | Compound/symptom routing, stack planner, ester-aware protocol timeline, optional Claude |
-| `app.js` | View router, My Protocol dashboard, stack builder, printable sheets, chat, theme |
+| `styles.css` | Clinical, calm design; dark + light themes; accessible labels; charts, timeline & print styling |
+| `data.js` | Knowledge base — compounds, supplements, labs, countermeasures, emergency, injection, PCT, women, and **blood-marker reference ranges** |
+| `brain.js` | Compound/symptom routing, stack planner, ester-aware protocol timeline, cycle-aware marker evaluation, optional Claude |
+| `tracker.js` | localStorage event store (log, export/import), canvas trend chart, injection-site geometry |
+| `app.js` | View router, Today/Log/Trends/Sites/Data + My Protocol dashboards, printable sheets, chat, theme |
 
 ---
 

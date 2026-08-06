@@ -558,7 +558,10 @@ const Brain = (() => {
     });
     const range = markerRange(m, sex);
     const inRange = range ? v >= range[0] && v <= range[1] : null;
-    const status = hit ? hit.level : inRange === false ? "watch" : "ok";
+    // Flag-driven only: on cycle, several markers sit outside the normal
+    // population range by design, so being out-of-band is NOT itself an alarm.
+    // Only an explicit actionable threshold raises the status above "ok".
+    const status = hit ? hit.level : "ok";
     return { marker: m, value: v, range, inRange, flag: hit, status };
   }
   function evaluatePanel(values, sex) {
