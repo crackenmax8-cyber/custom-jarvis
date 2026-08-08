@@ -37,6 +37,8 @@
     protocol: loadProtocol(),
     protocolEditing: false,
     draft: null,
+    builderQ: "",
+    builderGroup: "All",
   };
 
   const fmtDate = (iso) => {
@@ -51,6 +53,7 @@
   function mdEscape(s) {
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
+  const attrEscape = (s) => mdEscape(s).replace(/"/g, "&quot;"); // for use inside "" attributes
   function mdInline(s) {
     return mdEscape(s)
       .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
@@ -111,6 +114,7 @@
     else if (v === "sites") renderSites(c);
     else if (v === "data") renderData(c);
     else if (v === "stack") renderStack(c);
+    else if (v === "builder") renderBuilder(c);
     else if (v === "supplements") renderSupplements(c);
     else if (v === "labs") renderLabs(c);
     else if (v === "chat") renderChat(c);
@@ -177,9 +181,9 @@
           <span class="sc-ic">${icon("shield")}</span><b>Side effects &amp; counters</b>
           <span>Something's going wrong — here's what actually counters it, free, OTC or prescription.</span>
         </button>
-        <button class="start-card" data-go="stack">
-          <span class="sc-ic">${icon("stack")}</span><b>Stack planner</b>
-          <span>Tick what you're running for one consolidated supplement &amp; bloodwork plan.</span>
+        <button class="start-card" data-go="builder">
+          <span class="sc-ic">${icon("stack-add")}</span><b>Create your stack</b>
+          <span>Pick what you're running — the support vitamins, nutrients and bloodwork assemble automatically.</span>
         </button>
         <button class="start-card" data-go="labs">
           <span class="sc-ic">${icon("drop")}</span><b>Bloodwork</b>
@@ -221,7 +225,7 @@
             <span class="tag">Route: ${d.route}</span>
           </div>
         </div>
-        <button class="btn-solid" id="stackToggle">${inStack ? "✓ In your stack" : "+ Add to stack"}</button>
+        <button class="btn-solid" id="stackToggle">${inStack ? "✓ In your stack" : "+ Add to your stack"}</button>
       </div>
 
       <p class="summary">${d.summary}</p>
@@ -294,30 +298,151 @@
     );
   }
 
-  /* ======================= STACK PLANNER =============================== */
-  function renderStack(c) {
-    const picks = PT.compounds
-      .map(
-        (co) => `<label class="pick ${state.stack.has(co.id) ? "on" : ""}">
-          <input type="checkbox" data-id="${co.id}" ${state.stack.has(co.id) ? "checked" : ""}/>
-          <span class="pk-name">${co.name}</span>
-        </label>`
-      )
-      .join("");
-    const plan = Brain.buildPlan([...state.stack]);
+  /* ======================= CREATE YOUR STACK (builder) ================== */
+  // Pick compounds; the support plan — vitamins, nutrients, labs, warnings —
+  // assembles itself live in the rail as you go.
+  function renderBuilder(c) {
+    const groups = ["All", ...PT.groups];
     c.innerHTML = `
-      <h2>Stack planner</h2>
-      <p class="hero-sub">Select what you're running and PepTalk merges it into one consolidated plan — every supportive supplement, the full bloodwork list, and the warnings that matter when compounds combine.</p>
-      <div class="stack-pick">${picks}</div>
-      ${state.stack.size ? `<div class="stack-actions">
-        <button class="btn-solid" id="saveAsProto">📋 Save as my protocol</button>
+      <h2>Create your stack</h2>
+      <p class="hero-sub">Tap what you're running or considering. As you pick, PepTalk assembles the support automatically — the vitamins and nutrients each compound calls for, the bloodwork to run, and the warnings that only show up when compounds combine.</p>
+      <div class="builder-tools">
+        <input type="search" id="builderSearch" class="builder-search" placeholder="Search compounds…" aria-label="Search compounds" autocomplete="off" value="${attrEscape(state.builderQ || "")}"/>
+        <div class="builder-groups" role="group" aria-label="Filter by type">
+          ${groups.map((g) => `<button class="bg-chip${(state.builderGroup || "All") === g ? " on" : ""}" data-group="${g}" aria-pressed="${(state.builderGroup || "All") === g}">${g}</button>`).join("")}
+        </div>
+      </div>
+      <div class="builder-layout">
+        <div id="builderGrid" class="builder-grid"></div>
+        <aside class="builder-rail" id="builderRail" aria-label="Your stack so far"></aside>
+      </div>`;
+
+    const paintGrid = () => {
+      const q = (state.builderQ || "").toLowerCase().trim();
+      const grp = state.builderGroup || "All";
+      const match = (co) =>
+        (grp === "All" || co.group === grp) &&
+        (!q || [co.name, co.aka, co.klass, co.group].join(" ").toLowerCase().includes(q));
+      let html = "", shown = 0;
+      PT.groups.forEach((g) => {
+        const items = PT.compounds.filter((co) => co.group === g && match(co));
+        if (!items.length) return;
+        html += `<div class="bg-group-label">${g}</div><div class="pick-grid">`;
+        items.forEach((co) => {
+          shown++;
+          const on = state.stack.has(co.id);
+          html += `<button class="pick-card${on ? " on" : ""}" data-id="${co.id}" aria-pressed="${on}">
+            <span class="pc-check" aria-hidden="true">${icon("check")}</span>
+            <span class="pc-name">${co.name}</span>
+            <span class="pc-aka">${co.aka}</span>
+            <span class="pc-meta"><span class="sev-dot ${co.severity}" aria-hidden="true"></span>${co.severity} risk · ${co.klass}</span>
+          </button>`;
+        });
+        html += `</div>`;
+      });
+      $("#builderGrid").innerHTML = shown ? html
+        : `<p class="builder-empty">No compounds match “${mdEscape(state.builderQ || "")}”.</p>`;
+      $$(".pick-card", c).forEach((b) =>
+        b.addEventListener("click", () => {
+          toggleStack(b.dataset.id);
+          const on = state.stack.has(b.dataset.id);
+          b.classList.toggle("on", on);
+          b.setAttribute("aria-pressed", on);
+          paintRail();
+        })
+      );
+    };
+
+    const paintRail = () => {
+      const rail = $("#builderRail");
+      const plan = state.stack.size ? Brain.buildPlan([...state.stack]) : null;
+      if (!plan) {
+        rail.innerHTML = `<div class="rail-eyebrow">Auto support</div>
+          <p class="rail-empty">Nothing picked yet. Choose a compound and its support vitamins, nutrients and bloodwork appear here — merged and de-duplicated as your stack grows.</p>`;
+        return;
+      }
+      const supp = plan.supplements.map((s) => {
+        const n = s.forCompounds.length;
+        return `<li><span>${PT.supplements[s.id].name}</span>${n > 1 ? `<span class="rs-x" title="asked for by ${n} compounds">×${n}</span>` : ""}</li>`;
+      }).join("");
+      const flags = plan.flags.slice(0, 2).map((f) =>
+        `<div class="rail-flag ${f.level}">${icon("alert")} <span>${f.text}</span></div>`).join("");
+      rail.innerHTML = `
+        <div class="rail-eyebrow">Auto support</div>
+        <div class="rail-sum" role="status">${plan.chosen.length} compound${plan.chosen.length === 1 ? "" : "s"} · ${plan.supplements.length} supplement${plan.supplements.length === 1 ? "" : "s"} · ${plan.labs.length} lab panel${plan.labs.length === 1 ? "" : "s"}</div>
+        <div class="rail-sec">
+          <div class="rail-k">Vitamins &amp; nutrients</div>
+          <ul class="rail-supp">${supp}</ul>
+        </div>
+        ${flags ? `<div class="rail-sec"><div class="rail-k">Read this first</div>${flags}
+          ${plan.flags.length > 2 ? `<div class="rail-more">+ ${plan.flags.length - 2} more on your stack page</div>` : ""}</div>` : ""}
+        <button class="btn-solid rail-cta" data-go="stack">Open your stack →</button>`;
+      wireGo(rail);
+    };
+
+    paintGrid();
+    paintRail();
+    $("#builderSearch").addEventListener("input", (e) => {
+      state.builderQ = e.target.value;
+      paintGrid();
+    });
+    $$(".bg-chip", c).forEach((b) =>
+      b.addEventListener("click", () => {
+        state.builderGroup = b.dataset.group;
+        $$(".bg-chip", c).forEach((x) => {
+          const on = x === b;
+          x.classList.toggle("on", on);
+          x.setAttribute("aria-pressed", on);
+        });
+        paintGrid();
+      })
+    );
+  }
+
+  /* ======================= YOUR STACK ================================== */
+  function renderStack(c) {
+    const plan = state.stack.size ? Brain.buildPlan([...state.stack]) : null;
+    if (!plan) {
+      c.innerHTML = `
+        <h2>Your stack</h2>
+        <p class="hero-sub">Nothing here yet. Pick what you're running and PepTalk assembles the rest automatically — supportive vitamins and nutrients, the bloodwork list, and the warnings that matter when compounds combine.</p>
+        <div class="start-grid" style="margin-top:8px">
+          <button class="start-card feature" data-go="builder">
+            <span class="sc-ic">${icon("stack-add")}</span><b>Create your stack</b>
+            <span>Tap compounds — support builds itself as you pick.</span>
+          </button>
+        </div>`;
+      wireGo(c);
+      return;
+    }
+    const cards = plan.chosen.map((co) => `
+      <div class="stack-card">
+        <button class="stk-remove" data-rm="${co.id}" aria-label="Remove ${co.name} from your stack">×</button>
+        <button class="stk-main" data-open="${co.id}" title="Open ${co.name}">
+          <b>${co.name}</b>
+          <span class="stk-aka">${co.aka}</span>
+        </button>
+        <div class="stk-sev">${sevPill(co.severity)}</div>
+      </div>`).join("");
+    c.innerHTML = `
+      <div class="detail-head today-head">
+        <div class="dh-main">
+          <h2>Your stack</h2>
+          <p class="aka">${plan.chosen.length} compound${plan.chosen.length === 1 ? "" : "s"} · support assembled automatically</p>
+        </div>
+        <button class="btn-ghost" id="editStack">${icon("stack-add")} Add / edit</button>
+      </div>
+      <div class="stack-cards">${cards}</div>
+      <div class="stack-actions">
+        <button class="btn-solid" id="saveAsProto">Save as my protocol</button>
         <button class="btn-ghost" id="clearStack">Clear all</button>
-      </div>` : ""}
-      <div id="planOut">${plan ? renderPlan(plan) : `<div class="plan-empty">Select one or more compounds above to build your support &amp; bloodwork plan.</div>`}</div>
-    `;
-    $$(".pick input", c).forEach((cb) =>
-      cb.addEventListener("change", () => {
-        toggleStack(cb.dataset.id);
+      </div>
+      ${renderPlan(plan)}`;
+    $("#editStack").addEventListener("click", () => setView("builder"));
+    $$("[data-open]", c).forEach((b) => b.addEventListener("click", () => openCompound(b.dataset.open)));
+    $$("[data-rm]", c).forEach((b) =>
+      b.addEventListener("click", () => {
+        toggleStack(b.dataset.rm);
         renderStack(c);
       })
     );
@@ -328,15 +453,14 @@
         if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
       })
     );
-    const cl = $("#clearStack");
-    if (cl) cl.addEventListener("click", () => {
+    $("#clearStack").addEventListener("click", () => {
       state.stack.clear();
       persistStack();
+      updateStackBadge();
       renderStack(c);
       renderLibrary($("#libSearch").value);
     });
-    const sp = $("#saveAsProto");
-    if (sp) sp.addEventListener("click", () => openProtocolSetup([...state.stack]));
+    $("#saveAsProto").addEventListener("click", () => openProtocolSetup([...state.stack]));
   }
 
   function renderPlan(plan) {
@@ -371,12 +495,15 @@
     const warns = plan.warnings
       .map((w) => `<li><strong>${w.compound}:</strong> ${w.text}</li>`)
       .join("");
+    const gaps = plan.chosen
+      .map((co) => `<div class="gap-row"><b>${co.name}</b><p>${co.depletes}</p></div>`)
+      .join("");
     return `
-      <h3>Selected — ${plan.chosen.length} compound${plan.chosen.length > 1 ? "s" : ""}</h3>
-      <div class="meta-row">${plan.chosen.map((c) => `<span class="tag">${c.name} ${sevPillMini(c.severity)}</span>`).join("")}</div>
       ${flags ? `<h3>Read this first</h3>${flags}` : ""}
-      <h3>Your consolidated support stack</h3>
+      <h3>Automatic support — vitamins &amp; nutrients</h3>
       <div class="support-grid">${supp}</div>
+      <h3>What this stack runs low on</h3>
+      <div class="gap-list">${gaps}</div>
       ${plan.counters.length ? `
       <h3>Side effects this stack can bring — and what counters each</h3>
       <div class="ctr-mini-grid">
@@ -400,9 +527,6 @@
       </p>
     `;
   }
-  const sevPillMini = (sev) =>
-    `<span style="color:var(--sev-${sev});font-weight:700;font-size:.68rem">•${sev}</span>`;
-
   /* ======================= MY PROTOCOL ================================= */
   const PHASE = {
     before:   { label: "Not started yet", tone: "soon" },
@@ -1583,7 +1707,7 @@
         <span class="print-note">${
           stackLabs
             ? `Prints the ${stackLabs.length} panels your stack needs — hand it to a doctor or lab.`
-            : `Prints the full list. Pick compounds in the <b>Stack planner</b> first and this narrows to just what you need.`
+            : `Prints the full list. <b>Create your stack</b> first and this narrows to just what you need.`
         }</span>
       </div>
       <div class="lab-list" style="margin-top:14px">
@@ -1727,7 +1851,14 @@
     if (state.stack.has(id)) state.stack.delete(id);
     else state.stack.add(id);
     persistStack();
+    updateStackBadge();
     renderLibrary($("#libSearch").value);
+  }
+  function updateStackBadge() {
+    const b = $("#stackCount");
+    if (!b) return;
+    b.hidden = !state.stack.size;
+    b.textContent = state.stack.size;
   }
   function persistStack() {
     localStorage.setItem(KEY.stack, JSON.stringify([...state.stack]));
@@ -1822,6 +1953,11 @@
     });
 
     renderLibrary();
+    // drop stack ids that no longer exist in the library (stale localStorage)
+    let stackDirty = false;
+    [...state.stack].forEach((id) => { if (!PT.byId[id]) { state.stack.delete(id); stackDirty = true; } });
+    if (stackDirty) persistStack();
+    updateStackBadge();
     // active users land on Today; newcomers on the Overview
     setView(state.protocol ? "today" : "home");
   }

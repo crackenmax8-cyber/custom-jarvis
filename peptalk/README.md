@@ -56,7 +56,7 @@ what's drifting) — all offline, stored only in your browser.
   thing people most often get wrong). It rolls up your support stack, the labs to
   run, and a watch-list of what to counter, and prints a **one-page summary for a
   doctor**. Stored only in your browser; peptide-only protocols correctly skip
-  PCT. Bridged from the Stack planner via "Save as my protocol".
+  PCT. Bridged from Your stack via "Save as my protocol".
 - 🚨 **Emergency warning signs** — 15 red-flag presentations sorted by what to do
   *right now*: call an ambulance (heart attack, stroke, pulmonary embolism, DVT,
   severe hypoglycemia, anaphylaxis), get seen today (liver injury, pancreatitis,
@@ -83,19 +83,24 @@ what's drifting) — all offline, stored only in your browser.
   explicit risk warnings. Plus a *"don't do this"* block per entry — including
   the mistakes that cause more harm than the original problem, like blind AI
   dosing or expecting finasteride to save your hair on trenbolone. Wired both
-  ways: every compound card lists the counters relevant to it, and the stack
-  planner rolls them up for everything you're running.
+  ways: every compound card lists the counters relevant to it, and your stack
+  rolls them up for everything you're running.
 - 💊 **"What to take"** — for every compound: the supportive supplements and the
   nutrients you can run low on, each with *why*, a typical range, and the catch.
 - 🩸 **Bloodwork to monitor** — the specific panels that matter for each compound
   (lipids/ApoB, CBC/hematocrit, liver, kidney, hormones, glucose, and more), plus
   a **printable request sheet** you can hand to a doctor or lab — it narrows to
   just the panels your selected stack needs.
-- 🧬 **Stack planner** — tick everything you're running and PepTalk merges it into
-  **one consolidated plan**: a de-duplicated support stack (tagged with which
-  compound each item is for), the full bloodwork checklist, every warning, and
-  **combined-risk flags** (e.g. *"two oral 17aa compounds — doubling liver
-  toxicity"*).
+- 🧬 **Create your stack** — a selection page of compound cards (searchable,
+  filterable by type). As you pick, a live **auto-support rail** assembles the
+  vitamins and nutrients your choices call for, de-duplicated with ×N counts,
+  plus lab-panel totals and the first combined-risk flags.
+- 🧬 **Your stack** — the saved stack as a dashboard: your compounds (open /
+  remove each), **automatic support — vitamins & nutrients** (tagged with which
+  compound each item is for), a **"what this stack runs low on"** nutrient-depletion
+  section, the side effects the stack can bring, the full bloodwork checklist,
+  every warning, and **combined-risk flags** (e.g. *"two oral 17aa compounds —
+  doubling liver toxicity"*). One tap saves it as your protocol.
 - 💬 **Ask PepTalk** — a local Q&A brain answers questions offline
   (*"what vitamins on tren?"*, *"labs before a cycle?"*, *"how do I protect my
   liver?"*, *"tell me about semaglutide"*). Add an API key for open-ended Claude
