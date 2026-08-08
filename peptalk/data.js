@@ -1090,7 +1090,7 @@ PT.counterIntro =
 
 PT.counters = [
   {
-    id: "estrogen", name: "High estrogen / gyno", icon: "🌸",
+    id: "estrogen", name: "High estrogen / gyno", icon: "venus",
     compounds: ["testosterone", "dianabol", "anadrol", "nandrolone"],
     what: "Aromatizing compounds convert testosterone into estradiol. Too much brings bloat, high blood pressure, mood swings and breast tissue growth — and once gyno becomes established fibrous tissue, only surgery removes it.",
     first: [
@@ -1113,7 +1113,7 @@ PT.counters = [
     ],
   },
   {
-    id: "lowE2", name: "Estrogen crushed too low", icon: "🥀",
+    id: "lowE2", name: "Estrogen crushed too low", icon: "down",
     compounds: ["testosterone", "masteron", "winstrol", "anavar"],
     what: "Usually self-inflicted with an aromatase inhibitor. Estrogen is not the enemy — you need it for joints, mood, libido, bone and lipids. Low estrogen feels worse than slightly high estrogen, and does more long-term damage.",
     first: [
@@ -1131,7 +1131,7 @@ PT.counters = [
     ],
   },
   {
-    id: "prolactin", name: "High prolactin", icon: "🧪",
+    id: "prolactin", name: "High prolactin", icon: "flask",
     compounds: ["nandrolone", "trenbolone"],
     what: "19-nor compounds raise prolactin, which brings sexual dysfunction, low mood, and occasionally nipple discharge.",
     first: [
@@ -1150,7 +1150,7 @@ PT.counters = [
     ],
   },
   {
-    id: "hematocrit", name: "Thick blood (high hematocrit)", icon: "🩸",
+    id: "hematocrit", name: "Thick blood (high hematocrit)", icon: "drop",
     compounds: ["testosterone", "boldenone", "trenbolone"],
     what: "More red cells means thicker blood, which raises the risk of clots, stroke and heart attack. It's silent — you find it on a blood test, not by feel.",
     first: [
@@ -1172,7 +1172,7 @@ PT.counters = [
     red: "Chest pain, sudden breathlessness, one-sided leg swelling or stroke symptoms — that's an emergency, not a bloodwork problem.",
   },
   {
-    id: "bp", name: "High blood pressure", icon: "💓",
+    id: "bp", name: "High blood pressure", icon: "gauge",
     compounds: ["anadrol", "trenbolone", "dianabol", "testosterone", "boldenone"],
     what: "The most consistently damaging and most ignored side effect. It's symptomless until it isn't, and it quietly damages heart, kidneys, eyes and brain.",
     first: [
@@ -1197,7 +1197,7 @@ PT.counters = [
     red: "Very high readings with headache, chest pain, visual change or breathlessness — get urgent care.",
   },
   {
-    id: "lipids", name: "Wrecked cholesterol", icon: "🫀",
+    id: "lipids", name: "Wrecked cholesterol", icon: "heart",
     compounds: ["winstrol", "superdrol", "anadrol", "dianabol", "turinabol", "anavar", "masteron", "trenbolone"],
     what: "AAS flatten HDL and push LDL/ApoB up — orals worst of all. This is the mechanism behind the long-term heart risk, and it moves within weeks.",
     first: [
@@ -1217,7 +1217,7 @@ PT.counters = [
     ],
   },
   {
-    id: "liver", name: "Liver stress", icon: "🫁",
+    id: "liver", name: "Liver stress", icon: "liver",
     compounds: ["dianabol", "anadrol", "winstrol", "anavar", "superdrol", "turinabol"],
     what: "17-alpha-alkylated orals back up bile flow and stress liver cells. Superdrol and Anadrol are the worst offenders, with documented cases of real liver injury.",
     first: [
@@ -1240,7 +1240,7 @@ PT.counters = [
     red: "Yellow eyes or skin, very dark urine, pale stools, pain under the right ribs — stop and get seen the same day.",
   },
   {
-    id: "hairloss", name: "Hair loss", icon: "💈",
+    id: "hairloss", name: "Hair loss", icon: "scissors",
     compounds: ["masteron", "winstrol", "anavar", "testosterone", "trenbolone", "primobolan"],
     what: "Androgens accelerate male-pattern baldness in people genetically prone to it. What's lost is generally gone — prevention massively beats rescue here.",
     first: [
@@ -1261,7 +1261,7 @@ PT.counters = [
     ],
   },
   {
-    id: "acne", name: "Acne & oily skin", icon: "🧼",
+    id: "acne", name: "Acne & oily skin", icon: "spots",
     compounds: ["testosterone", "trenbolone", "dianabol", "anadrol"],
     what: "Androgens drive sebum production. Usually manageable — but cystic acne scars permanently, so acting early matters.",
     first: [
@@ -1282,7 +1282,7 @@ PT.counters = [
     ],
   },
   {
-    id: "cramps", name: "Muscle cramps", icon: "⚡",
+    id: "cramps", name: "Muscle cramps", icon: "bolt",
     compounds: ["trenbolone", "winstrol", "anadrol"],
     what: "Brutal, sudden cramping — classically on trenbolone and stanozolol, and worse if you're dieting or sweating heavily.",
     first: [
@@ -1298,7 +1298,7 @@ PT.counters = [
     avoid: ["Assuming it's purely dehydration — these compounds cause it directly too."],
   },
   {
-    id: "joints", name: "Dry, painful joints", icon: "🦴",
+    id: "joints", name: "Dry, painful joints", icon: "bone",
     compounds: ["winstrol", "masteron", "anavar", "trenbolone"],
     what: "Drying compounds and low estrogen leave joints and tendons feeling grating and unlubricated — and meaningfully raise tear risk while you feel strongest.",
     first: [
@@ -1314,7 +1314,7 @@ PT.counters = [
     avoid: ["Painkillers so you can train through it — that's how a niggle becomes a rupture."],
   },
   {
-    id: "sleep", name: "Insomnia & night sweats", icon: "🌙",
+    id: "sleep", name: "Insomnia & night sweats", icon: "moon",
     compounds: ["trenbolone", "mk677", "boldenone"],
     what: "Trenbolone is notorious for wrecking sleep and soaking the sheets. Chronic sleep loss then makes blood pressure, mood, insulin sensitivity and recovery all worse — it compounds.",
     first: [
@@ -1336,7 +1336,7 @@ PT.counters = [
     ],
   },
   {
-    id: "libido", name: "Sexual dysfunction", icon: "💔",
+    id: "libido", name: "Sexual dysfunction", icon: "heart-crack",
     compounds: ["nandrolone", "trenbolone", "masteron", "testosterone"],
     what: "\"Deca dick\" and its relatives. Almost always one of four things: estradiol too low, estradiol too high, prolactin high, or not enough androgen/DHT alongside a 19-nor.",
     first: [
@@ -1351,7 +1351,7 @@ PT.counters = [
     avoid: ["Stacking three fixes at once so you learn nothing about the cause."],
   },
   {
-    id: "glucose", name: "Blood sugar & insulin resistance", icon: "🍬",
+    id: "glucose", name: "Blood sugar & insulin resistance", icon: "sugar",
     compounds: ["hgh", "mk677", "insulin", "ipamorelin"],
     what: "Growth hormone and MK-677 push blood glucose up and insulin sensitivity down. Left unchecked over years this is a genuine diabetes risk.",
     first: [
@@ -1369,7 +1369,7 @@ PT.counters = [
     red: "On insulin: confusion, seizure or unconsciousness is a life-threatening emergency, not a monitoring issue.",
   },
   {
-    id: "atrophy", name: "Testicular atrophy & shutdown", icon: "🔻",
+    id: "atrophy", name: "Testicular atrophy & shutdown", icon: "tri-down",
     compounds: ["testosterone", "nandrolone", "trenbolone", "boldenone", "dianabol", "anadrol", "winstrol", "anavar", "masteron", "primobolan", "superdrol", "turinabol"],
     what: "Expected on every AAS — external androgen switches off the signal to your testicles, so they shrink and sperm production falls, often to zero.",
     first: [
@@ -1386,7 +1386,7 @@ PT.counters = [
     ],
   },
   {
-    id: "appetite", name: "Appetite loss & nausea", icon: "🤢",
+    id: "appetite", name: "Appetite loss & nausea", icon: "ban",
     compounds: ["anadrol", "superdrol", "semaglutide", "tirzepatide", "melanotan2", "trenbolone"],
     what: "Two very different causes: harsh orals that make food unappealing, and GLP-1s that are supposed to. Either way the risk is the same — losing muscle and falling short on micronutrients.",
     first: [
@@ -1404,7 +1404,7 @@ PT.counters = [
     red: "Severe unrelenting abdominal pain boring through to the back means possible pancreatitis — urgent.",
   },
   {
-    id: "pip", name: "Injection pain (PIP)", icon: "💉",
+    id: "pip", name: "Injection pain (PIP)", icon: "syringe",
     compounds: ["testosterone", "nandrolone", "trenbolone", "masteron", "primobolan", "boldenone", "winstrol"],
     what: "Post-injection pain. Ordinary soreness for a day or two is normal; severe, repeated PIP usually points at the oil, the concentration or the technique rather than at you.",
     first: [
@@ -1418,7 +1418,7 @@ PT.counters = [
     red: "Spreading redness, heat, a hard or growing lump, fever or red streaks — that's a possible abscess and needs a doctor today.",
   },
   {
-    id: "kidney", name: "Kidney strain", icon: "🫘",
+    id: "kidney", name: "Kidney strain", icon: "kidney",
     compounds: ["trenbolone", "testosterone", "boldenone", "anadrol"],
     what: "High blood pressure, thick blood, dehydration and very high protein all load the kidneys. Trenbolone has a particular reputation for it.",
     first: [
@@ -1438,7 +1438,7 @@ PT.counters = [
     red: "Passing very little urine, swelling in the ankles or face, or ongoing flank pain — get checked.",
   },
   {
-    id: "mood", name: "Mood, aggression & anxiety", icon: "🧠",
+    id: "mood", name: "Mood, aggression & anxiety", icon: "brain",
     compounds: ["trenbolone", "boldenone", "anadrol", "nandrolone"],
     what: "Irritability, anxiety, low mood, rage. Trenbolone is the worst offender and boldenone is known for anxiety — and the crash coming off is its own high-risk window.",
     first: [
@@ -1457,7 +1457,7 @@ PT.counters = [
     red: "Thoughts of suicide or self-harm — treat that as an emergency and get help today.",
   },
   {
-    id: "water", name: "Water retention & bloat", icon: "💧",
+    id: "water", name: "Water retention & bloat", icon: "waves",
     compounds: ["dianabol", "anadrol", "testosterone", "hgh", "mk677"],
     what: "Mostly estrogen-driven on aromatizing compounds, and dose-related on GH and MK-677. Cosmetically annoying, but it also drives up blood pressure, which is the part that matters.",
     first: [

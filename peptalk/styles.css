@@ -114,6 +114,7 @@ body {
 .ev-row.watch .ev-ic { color: var(--amber); }
 .ev-row.bad .ev-ic { color: var(--danger); }
 .ql-btn .ic { width: 16px; height: 16px; color: var(--accent); }
+.chip .ic { width: 14px; height: 14px; color: var(--text-dim); }
 .seg-btn .ic { width: 15px; height: 15px; }
 .disclaimer p { margin: 0; font-size: 0.82rem; color: var(--text); }
 .disclaimer strong { color: var(--amber); }
@@ -436,10 +437,12 @@ body {
 /* nutrient gaps */
 .gap-list { display: flex; flex-direction: column; gap: 8px; }
 .gap-row {
+  display: grid; grid-template-columns: 150px 1fr; gap: 2px 16px; align-items: start;
   padding: 10px 14px; border-radius: var(--radius); font-size: 0.83rem;
   background: var(--panel-2); border: 1px solid var(--line-soft);
 }
-.gap-row b { display: block; margin-bottom: 2px; font-size: 0.8rem; }
+.gap-row b { font-size: 0.86rem; }
+@media (max-width: 560px) { .gap-row { grid-template-columns: 1fr; } }
 .gap-row p { margin: 0; color: var(--text-dim); line-height: 1.5; }
 /* nav count badge */
 .nav-count {
@@ -463,7 +466,7 @@ body {
 .for-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
 .for-tag {
   font-size: 0.68rem; padding: 2px 8px; border-radius: 999px;
-  background: var(--bg-2); border: 1px solid var(--line); color: var(--text-faint);
+  background: var(--bg-2); border: 1px solid var(--line); color: var(--text-dim);
 }
 
 /* Chat */
@@ -594,7 +597,8 @@ body {
   scroll-margin-top: 12px;
 }
 .ctr-head { display: flex; align-items: center; gap: 9px; }
-.ctr-head .ctr-ic { font-size: 1.15rem; }
+.ctr-head .ctr-ic { display: inline-flex; color: var(--accent); }
+.ctr-head .ctr-ic .ic { width: 20px; height: 20px; }
 .ctr-head h4 { margin: 0; font-size: 1rem; }
 .ctr-what { font-size: 0.85rem; color: var(--text-dim); margin: 8px 0 10px; }
 .ctr-cols {
@@ -648,7 +652,8 @@ body {
   border-left: 3px solid var(--sev-high); color: var(--text); font: inherit; transition: 0.13s;
 }
 .ctr-mini:hover { border-color: var(--accent); border-left-color: var(--accent); transform: translateY(-1px); }
-.ctr-mini .cm-ic { font-size: 1.05rem; }
+.ctr-mini .cm-ic { display: inline-flex; color: var(--text-dim); }
+.ctr-mini .cm-ic .ic { width: 17px; height: 17px; }
 .ctr-mini .cm-name { font-weight: 700; font-size: 0.86rem; }
 .ctr-mini .cm-first { font-size: 0.77rem; color: var(--text-dim); }
 

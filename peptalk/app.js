@@ -24,15 +24,27 @@
   function loadProtocol() {
     try {
       const p = JSON.parse(localStorage.getItem(KEY.protocol) || "null");
-      if (p && Array.isArray(p.items) && p.items.length) return p;
+      if (p && Array.isArray(p.items) && p.items.length) {
+        // ids can arrive from an imported backup or a library rename — keep
+        // only ones that resolve, so no render path ever sees an unknown id
+        p.items = p.items.filter((it) => it && PT.byId[it.id]);
+        if (p.items.length) return p;
+      }
     } catch (e) { /* corrupt — ignore */ }
     return null;
+  }
+  function loadStack() {
+    try {
+      const a = JSON.parse(localStorage.getItem(KEY.stack) || "[]");
+      if (Array.isArray(a)) return new Set(a.filter((id) => typeof id === "string"));
+    } catch (e) { /* corrupt — ignore */ }
+    return new Set();
   }
 
   const state = {
     view: "home",
     compound: null,
-    stack: new Set(JSON.parse(localStorage.getItem(KEY.stack) || "[]")),
+    stack: loadStack(),
     chat: [],
     protocol: loadProtocol(),
     protocolEditing: false,
@@ -256,7 +268,7 @@
         ${PT.countersByCompound[d.id].map((kid) => {
           const k = PT.counterById[kid];
           return `<button class="ctr-mini" data-counter="${kid}">
-            <span class="cm-ic">${k.icon}</span>
+            <span class="cm-ic">${icon(k.icon)}</span>
             <span class="cm-name">${k.name}</span>
             <span class="cm-first">${k.first[0]}</span>
           </button>`;
@@ -309,14 +321,28 @@
       <div class="builder-tools">
         <input type="search" id="builderSearch" class="builder-search" placeholder="Search compounds…" aria-label="Search compounds" autocomplete="off" value="${attrEscape(state.builderQ || "")}"/>
         <div class="builder-groups" role="group" aria-label="Filter by type">
-          ${groups.map((g) => `<button class="bg-chip${(state.builderGroup || "All") === g ? " on" : ""}" data-group="${g}" aria-pressed="${(state.builderGroup || "All") === g}">${g}</button>`).join("")}
+          ${groups.map((g) => `<button class="bg-chip${(state.builderGroup || "All") === g ? " on" : ""}" data-group="${g}" aria-pressed="${(state.builderGroup || "All") === g}">${g === "Growth hormone axis" ? "GH axis" : g}</button>`).join("")}
         </div>
       </div>
+      <div class="sr-only" role="status" id="builderCount"></div>
       <div class="builder-layout">
         <div id="builderGrid" class="builder-grid"></div>
-        <aside class="builder-rail" id="builderRail" aria-label="Your stack so far"></aside>
+        <aside class="builder-rail" id="builderRail" aria-label="Your stack so far">
+          <div class="rail-eyebrow">Auto support</div>
+          <div class="rail-sum" id="railSum" role="status"></div>
+          <div id="railBody"></div>
+        </aside>
       </div>`;
 
+    // debounced so per-keystroke repaints coalesce into one announcement
+    let annT;
+    const announceCount = (shown) => {
+      clearTimeout(annT);
+      annT = setTimeout(() => {
+        const el = $("#builderCount");
+        if (el) el.textContent = shown ? `${shown} compound${shown === 1 ? "" : "s"} shown` : "No compounds match";
+      }, 350);
+    };
     const paintGrid = () => {
       const q = (state.builderQ || "").toLowerCase().trim();
       const grp = state.builderGroup || "All";
@@ -342,6 +368,7 @@
       });
       $("#builderGrid").innerHTML = shown ? html
         : `<p class="builder-empty">No compounds match “${mdEscape(state.builderQ || "")}”.</p>`;
+      announceCount(shown);
       $$(".pick-card", c).forEach((b) =>
         b.addEventListener("click", () => {
           toggleStack(b.dataset.id);
@@ -354,22 +381,24 @@
     };
 
     const paintRail = () => {
-      const rail = $("#builderRail");
+      // #railSum is a persistent role="status" node updated via textContent only,
+      // so screen readers actually announce each change; the rest re-renders freely.
+      const sum = $("#railSum"), body = $("#railBody");
       const plan = state.stack.size ? Brain.buildPlan([...state.stack]) : null;
       if (!plan) {
-        rail.innerHTML = `<div class="rail-eyebrow">Auto support</div>
-          <p class="rail-empty">Nothing picked yet. Choose a compound and its support vitamins, nutrients and bloodwork appear here — merged and de-duplicated as your stack grows.</p>`;
+        sum.textContent = "";
+        body.innerHTML = `<p class="rail-empty">Nothing picked yet. Choose a compound and its support vitamins, nutrients and bloodwork appear here — merged and de-duplicated as your stack grows.</p>`;
         return;
       }
+      const pl = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+      sum.textContent = `${pl(plan.chosen.length, "compound")} · ${pl(plan.supplements.length, "supplement")} · ${pl(plan.labs.length, "lab panel")}${plan.flags.length ? ` · ${pl(plan.flags.length, "warning")}` : ""}`;
       const supp = plan.supplements.map((s) => {
         const n = s.forCompounds.length;
         return `<li><span>${PT.supplements[s.id].name}</span>${n > 1 ? `<span class="rs-x" title="asked for by ${n} compounds">×${n}</span>` : ""}</li>`;
       }).join("");
       const flags = plan.flags.slice(0, 2).map((f) =>
         `<div class="rail-flag ${f.level}">${icon("alert")} <span>${f.text}</span></div>`).join("");
-      rail.innerHTML = `
-        <div class="rail-eyebrow">Auto support</div>
-        <div class="rail-sum" role="status">${plan.chosen.length} compound${plan.chosen.length === 1 ? "" : "s"} · ${plan.supplements.length} supplement${plan.supplements.length === 1 ? "" : "s"} · ${plan.labs.length} lab panel${plan.labs.length === 1 ? "" : "s"}</div>
+      body.innerHTML = `
         <div class="rail-sec">
           <div class="rail-k">Vitamins &amp; nutrients</div>
           <ul class="rail-supp">${supp}</ul>
@@ -377,7 +406,7 @@
         ${flags ? `<div class="rail-sec"><div class="rail-k">Read this first</div>${flags}
           ${plan.flags.length > 2 ? `<div class="rail-more">+ ${plan.flags.length - 2} more on your stack page</div>` : ""}</div>` : ""}
         <button class="btn-solid rail-cta" data-go="stack">Open your stack →</button>`;
-      wireGo(rail);
+      wireGo(body);
     };
 
     paintGrid();
@@ -440,10 +469,22 @@
       ${renderPlan(plan)}`;
     $("#editStack").addEventListener("click", () => setView("builder"));
     $$("[data-open]", c).forEach((b) => b.addEventListener("click", () => openCompound(b.dataset.open)));
+    // re-render destroys the focused button — restore focus to the same slot
+    // (or the heading when the stack empties) so keyboard/SR users keep their place
+    const focusHeading = () => {
+      const h = c.querySelector("h2");
+      if (h) { h.setAttribute("tabindex", "-1"); h.focus(); }
+    };
     $$("[data-rm]", c).forEach((b) =>
       b.addEventListener("click", () => {
+        const idx = $$(".stk-remove", c).indexOf(b);
+        const co = PT.byId[b.dataset.rm];
         toggleStack(b.dataset.rm);
+        toast(`${co ? co.name : "Compound"} removed from your stack`);
         renderStack(c);
+        const nb = $$(".stk-remove", c);
+        if (nb.length) nb[Math.min(idx, nb.length - 1)].focus();
+        else focusHeading();
       })
     );
     $$("[data-counter]", c).forEach((b) =>
@@ -457,8 +498,10 @@
       state.stack.clear();
       persistStack();
       updateStackBadge();
+      toast("Stack cleared");
       renderStack(c);
       renderLibrary($("#libSearch").value);
+      focusHeading();
     });
     $("#saveAsProto").addEventListener("click", () => openProtocolSetup([...state.stack]));
   }
@@ -510,7 +553,7 @@
         ${plan.counters.map((x) => {
           const k = PT.counterById[x.id];
           return `<button class="ctr-mini" data-counter="${x.id}">
-            <span class="cm-ic">${k.icon}</span>
+            <span class="cm-ic">${icon(k.icon)}</span>
             <span class="cm-name">${k.name}</span>
             <span class="cm-first">${k.first[0]}</span>
             <span class="for-tags">${x.forCompounds.map((n) => `<span class="for-tag">${n}</span>`).join("")}</span>
@@ -612,7 +655,7 @@
     }).join("");
     const counters = plan.counters.length ? plan.counters.map((x) => {
       const k = PT.counterById[x.id];
-      return `<button class="ctr-mini" data-counter="${x.id}"><span class="cm-ic">${k.icon}</span><span class="cm-name">${k.name}</span><span class="cm-first">${k.first[0]}</span></button>`;
+      return `<button class="ctr-mini" data-counter="${x.id}"><span class="cm-ic">${icon(k.icon)}</span><span class="cm-name">${k.name}</span><span class="cm-first">${k.first[0]}</span></button>`;
     }).join("") : "";
     const flags = plan.flags.map((f) => `<div class="flag ${f.level}"><span class="flag-ic">${f.level === "severe" ? "⛔" : "⚠️"}</span><span>${f.text}</span></div>`).join("");
 
@@ -1062,7 +1105,7 @@
     if (type === "injection") {
       const comps = (state.protocol ? state.protocol.items.map((i) => i.id) : PT.compounds.map((c) => c.id));
       return `
-        <label class="fld">Compound<select data-f="compound">${comps.map((id) => `<option value="${id}">${PT.byId[id] ? PT.byId[id].name : id}</option>`).join("")}</select></label>
+        <label class="fld">Compound<select data-f="compound">${comps.map((id) => `<option value="${attrEscape(String(id))}">${PT.byId[id] ? PT.byId[id].name : mdEscape(String(id))}</option>`).join("")}</select></label>
         <label class="fld">Site<select data-f="site">${SITES.map((s) => `<option value="${s.id}">${s.name}</option>`).join("")}</select></label>
         <label class="fld">Dose<input type="text" data-f="dose" placeholder="e.g. 250 mg" /></label>
         ${dateField}${noteField}`;
@@ -1077,7 +1120,7 @@
       <label class="fld sm">Unit<select data-f="unit"><option value="kg">kg</option><option value="lb">lb</option></select></label>
       ${dateField}${noteField}`;
     if (type === "side") return `
-      <label class="fld">Which<select data-f="counter">${PT.counters.map((k) => `<option value="${k.id}">${k.icon} ${k.name}</option>`).join("")}</select></label>
+      <label class="fld">Which<select data-f="counter">${PT.counters.map((k) => `<option value="${k.id}">${k.name}</option>`).join("")}</select></label>
       <label class="fld sm">Severity<select data-f="severity"><option value="1">Mild</option><option value="2">Notable</option><option value="3">Severe</option></select></label>
       ${dateField}${noteField}`;
     if (type === "note") return `<label class="fld grow">Note<input type="text" data-f="text" placeholder="what's on your mind" /></label>${dateField}`;
@@ -1522,7 +1565,7 @@
       .join("");
     return `
       <div class="ctr-card" id="ctr-${k.id}">
-        <div class="ctr-head"><span class="ctr-ic">${k.icon}</span><h4>${k.name}</h4></div>
+        <div class="ctr-head"><span class="ctr-ic">${icon(k.icon)}</span><h4>${k.name}</h4></div>
         <p class="ctr-what">${k.what}</p>
         ${opts.hideCauses ? "" : `<div class="for-tags">${causedBy}</div>`}
         <div class="ctr-cols">
@@ -1552,7 +1595,7 @@
       <h2>Side effects &amp; what counters them</h2>
       <p class="hero-sub">${PT.counterIntro}</p>
       <div class="chips" style="margin:14px 0 4px">
-        ${PT.counters.map((k) => `<button class="chip" data-jump="ctr-${k.id}">${k.icon} ${k.name}</button>`).join("")}
+        ${PT.counters.map((k) => `<button class="chip" data-jump="ctr-${k.id}">${icon(k.icon)} ${k.name}</button>`).join("")}
       </div>
       ${PT.counters.map((k) => counterCard(k)).join("")}
       <p style="font-size:.8rem;color:var(--text-faint);margin-top:20px">
@@ -1775,7 +1818,8 @@
     wireChips(c);
     const log = $("#chatLog");
     if (!state.chat.length) {
-      pushMsg("bot", Brain.answerLocal("help").text, false);
+      // seed state only — the forEach below renders it (pushMsg would append too)
+      state.chat.push({ role: "bot", text: Brain.answerLocal("help").text });
     }
     state.chat.forEach((m) => appendMsg(log, m.role, m.text));
     log.scrollTop = log.scrollHeight;
@@ -1857,8 +1901,11 @@
   function updateStackBadge() {
     const b = $("#stackCount");
     if (!b) return;
-    b.hidden = !state.stack.size;
-    b.textContent = state.stack.size;
+    const n = state.stack.size;
+    b.hidden = !n;
+    b.textContent = n;
+    const btn = b.closest(".nav-item"); // badge is aria-hidden; the button carries the count
+    if (btn) btn.setAttribute("aria-label", n ? `Your stack, ${n} compound${n === 1 ? "" : "s"}` : "Your stack");
   }
   function persistStack() {
     localStorage.setItem(KEY.stack, JSON.stringify([...state.stack]));
