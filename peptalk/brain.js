@@ -135,9 +135,7 @@ const Brain = (() => {
 
     // Flags that change the whole plan
     const flags = [];
-    // YK-11 is sold as a SARM but is 17-alpha methylated, so it carries the same
-    // liver load as an oral steroid and belongs in the oral-stacking count.
-    const is17aa = (c) => c.group === "Oral (17aa)" || c.id === "yk11";
+    const is17aa = (c) => c.group === "Oral (17aa)";
     const hasOral = chosen.some(is17aa);
     const oralCount = chosen.filter(is17aa).length;
     const hasSevere = chosen.some((c) => c.severity === "severe");

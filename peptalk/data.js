@@ -880,7 +880,7 @@ PT.compounds = [
     ],
   },
   {
-    id: "ipamorelin", name: "Ipamorelin / CJC-1295", aka: "GHRP + GHRH peptides",
+    id: "ipamorelin", name: "Ipamorelin", aka: "GHRP, usually paired with a GHRH peptide such as CJC-1295",
     klass: "Peptide (GH secretagogues)", group: "Growth hormone axis", route: "Injection",
     severity: "moderate",
     summary: "Injectable peptides that prompt a more natural, pulsed release of your own growth hormone. Generally milder than straight HGH; Ipamorelin is favored for being relatively 'clean' on appetite and prolactin versus older GHRPs.",
@@ -977,6 +977,7 @@ PT.compounds = [
       "Hit your protein and keep lifting or you'll lose muscle with the fat.",
       "Severe, persistent stomach pain (radiating to the back) — stop and get medical help; think pancreatitis.",
       "Compounded/grey-market 'research' GLP-1 carries dosing-error and contamination risk — a top cause of harm with these.",
+      "A personal or family history of medullary thyroid cancer or MEN2 is a hard no for this whole drug class — it is a boxed contraindication on the licensed products.",
     ],
   },
   {
@@ -1003,6 +1004,7 @@ PT.compounds = [
     warnings: [
       "Same rules as semaglutide, more so — protein and lifting are how you keep muscle.",
       "Grey-market/compounded product carries real dosing and contamination risk.",
+      "A personal or family history of medullary thyroid cancer or MEN2 is a hard no for this whole drug class — it is a boxed contraindication on the licensed products.",
     ],
   },
 
@@ -1769,7 +1771,7 @@ PT.compounds.push(
       "Dose-dependent suppression — mild at low doses, meaningful at the doses people actually use.",
       "HDL reduction.",
       "Occasional liver enzyme elevation.",
-      "Trials in older patients showed muscle gains but no functional benefit, and development was discontinued.",
+      "Cancer-cachexia trials added lean mass but missed their physical-function endpoint, which is why it never reached approval — though development has continued for muscle preservation rather than stopping.",
     ],
     depletes: "Nothing distinctive — lipid support is the priority.",
     support: [
@@ -1787,9 +1789,9 @@ PT.compounds.push(
     id: "yk11", name: "YK-11", aka: "Myostine",
     klass: "SARM-like (steroidal)", group: "SARMs & research anabolics", route: "Oral",
     severity: "severe",
-    summary: "Sold as a myostatin inhibitor, but chemically it is a methylated steroid — which means it carries steroid liver toxicity while being marketed as something safer and newer.",
+    summary: "Sold as a myostatin inhibitor, but chemically it is a steroid — a 19-nortestosterone derivative carrying a 17,20-acetal, not a SARM and not the novel safer thing it is marketed as.",
     risks: [
-      "17-alpha methylated: genuinely hepatotoxic.",
+      "Not 17-alpha methylated, whatever sellers claim — but it is an unstudied oral steroid, users report liver enzyme rises, and there is no case literature either way. Treat the liver as an open question rather than a settled one.",
       "Essentially no human safety data at all — the myostatin claims come from cell-culture work.",
       "Reports of tendon and joint pain, plausibly from muscle strength outpacing connective tissue.",
       "Strong suppression.",
@@ -1803,7 +1805,7 @@ PT.compounds.push(
     ],
     labs: ["liver", "lipids", "hormones", "bp"],
     warnings: [
-      "Calling this a SARM is a marketing decision, not a chemical one. Treat it as a harsh oral steroid.",
+      "Calling this a SARM is a marketing decision, not a chemical one. Treat it as an unstudied oral steroid.",
       "There is no dose here that is supported by human data, because there is no human data.",
     ],
   },
@@ -1831,12 +1833,12 @@ PT.compounds.push(
     id: "s23", name: "S-23", aka: "SARM S-23",
     klass: "SARM", group: "SARMs & research anabolics", route: "Oral",
     severity: "severe",
-    summary: "The most suppressive SARM by a wide margin — it was investigated as a male contraceptive precisely because it reliably stops sperm production.",
+    summary: "Reported as the most suppressive of the SARMs, on animal data — it was investigated in rats as a male contraceptive because it reliably stopped sperm production.",
     risks: [
       "Near-complete suppression of testosterone and sperm production.",
       "Marked lipid deterioration.",
       "Aggression and mood changes commonly reported.",
-      "Essentially no human safety data outside the contraceptive research context.",
+      "No human data at all. The contraceptive research that gives it its reputation was done in rats.",
     ],
     depletes: "Lipids; no distinctive vitamin depletion.",
     support: [
@@ -1924,11 +1926,11 @@ PT.compounds.push(
     id: "exemestane", name: "Exemestane", aka: "Aromasin",
     klass: "Ancillary (aromatase inhibitor)", group: "Ancillaries & PCT", route: "Oral",
     severity: "moderate",
-    summary: "A steroidal aromatase inhibitor that binds the enzyme permanently rather than competitively — often preferred because it is harder to trigger a rebound and appears kinder to lipids than anastrozole.",
+    summary: "A steroidal aromatase inhibitor that binds the enzyme permanently rather than competitively — often preferred because stopping it does not produce the oestrogen rebound anastrozole can. It is not the kinder option for lipids: head-to-head it drops HDL further than anastrozole does.",
     risks: [
       "Same core hazard as any AI: driving estradiol too low.",
       "Joint pain, low libido and mood effects when over-suppressed.",
-      "Mild androgenic activity of its own.",
+      "Mildly androgenic in its own right, and it lowers HDL more than anastrozole — a worse trade when a cycle has already flattened it.",
     ],
     depletes: "As with any AI, low estradiol raises the importance of bone-supporting nutrients.",
     support: [
@@ -1938,7 +1940,7 @@ PT.compounds.push(
     ],
     labs: ["hormones", "lipids"],
     warnings: [
-      "Kinder to lipids than anastrozole is not the same as harmless — it is still an oestrogen-lowering drug.",
+      "If HDL is already on the floor, anastrozole is the better-behaved AI on lipids. Exemestane is not the safer one just because it is steroidal.",
       "Dose against bloodwork, not symptoms.",
     ],
   },
@@ -2063,7 +2065,7 @@ PT.compounds.push(
       "Sexual side effects — low libido, erectile difficulty, reduced ejaculate — in a minority of users.",
       "Persistent symptoms after stopping in a small subset, described as post-finasteride syndrome. Contested in mechanism, but reported consistently enough to take seriously.",
       "Mood effects including depression.",
-      "Useless against hair loss driven by compounds that are not DHT-derived, and it cannot block the strongly DHT-derived steroids at typical doses.",
+      "Useless against hair loss driven by compounds that are not DHT-derived — and actively counterproductive with nandrolone and other 19-nors, where 5-alpha reductase is what inactivates the drug in scalp and prostate. Block the enzyme and you leave more active androgen in the tissues you were trying to protect.",
     ],
     depletes: "No characteristic depletion.",
     support: [
@@ -2074,6 +2076,7 @@ PT.compounds.push(
     warnings: [
       "It roughly halves PSA readings. Tell any doctor checking your prostate that you take it, or a real problem can be masked.",
       "If mood or sexual function change meaningfully, stop and talk to a doctor rather than pushing on.",
+      "Do not add it to a nandrolone cycle for hair. It makes nandrolone more androgenic in scalp and prostate, not less.",
       "Topical formulations exist and expose you to less of the drug systemically — worth discussing if hair is the only goal.",
     ],
   },
@@ -2120,6 +2123,7 @@ PT.compounds.push(
     warnings: [
       "Never combine with nitrates or poppers. That combination causes dangerous, sometimes fatal, blood-pressure collapse.",
       "An erection lasting over four hours is a medical emergency — permanent damage starts within hours.",
+      "Prostate alpha-blockers — tamsulosin, doxazosin — stack with it and can drop blood pressure enough to put you on the floor. Be stable on one before adding the other, and start low.",
       "If erectile function is failing on cycle, get bloods. The cause is usually estradiol, prolactin or blood pressure, and this only masks it.",
     ],
   },
@@ -2149,6 +2153,7 @@ PT.compounds.push(
       "Chest pain, fainting or a heart rate that will not settle means stop and get seen.",
       "Cardiac hypertrophy is not something you feel happening. Long continuous use is the highest-risk pattern.",
       "Never combine with other strong stimulants, and be careful with caffeine while on it.",
+      "Clenbuterol and T3 together is not two moderate risks side by side. Thyroid hormone makes the heart more sensitive to beta-agonists, so the palpitations, arrhythmia risk and potassium problems all scale up together.",
     ],
   },
   {
@@ -2175,6 +2180,7 @@ PT.compounds.push(
       "Taper off rather than stopping abruptly, or you land in a hypothyroid hole for weeks.",
       "Get a full thyroid panel before starting. Suppressing a thyroid that was already struggling is a bad trade.",
       "Palpitations or an irregular heartbeat mean stop and get checked.",
+      "T3 with clenbuterol is the stack to be most careful about — thyroid hormone raises cardiac sensitivity to beta-agonists, so both drugs' heart effects compound rather than add.",
     ],
   },
   {
@@ -2188,6 +2194,7 @@ PT.compounds.push(
       "It accumulates over days, so a dose that was fine on day one can kill on day four.",
       "Cataracts, peripheral neuropathy and severe skin reactions.",
       "Deaths continue to be reported regularly, including in healthy young people using carefully.",
+      "You cannot know what is actually in the capsule. It is hand-capped powder, and with a margin this narrow a capsule holding double the stated dose is a lethal one rather than an unpleasant one.",
     ],
     depletes: "Massive fluid and electrolyte losses through sweating, and heavy oxidative stress.",
     support: [
@@ -2204,7 +2211,7 @@ PT.compounds.push(
     ],
   },
   {
-    id: "yohimbine", name: "Yohimbine", aka: "Yohimbe, alpha-yohimbine",
+    id: "yohimbine", name: "Yohimbine", aka: "Yohimbe; alpha-yohimbine (rauwolscine) is a related but separate, more potent alkaloid — the milligram figures are not interchangeable",
     klass: "Alpha-2 antagonist", group: "Fat loss & thyroid", route: "Oral",
     severity: "moderate",
     summary: "Blocks the receptors that hold back fat release from stubborn areas, usually taken fasted before training. Effective in that narrow role and unpleasantly stimulating for many people.",
@@ -2274,6 +2281,7 @@ PT.compounds.push(
     warnings: [
       "It targets visceral fat specifically — it is not a general weight-loss drug.",
       "Check fasting glucose and HbA1c before and during; the glucose effect is the best-documented downside.",
+      "Active cancer is a contraindication for anything that raises GH and IGF-1 — that is on tesamorelin's own label, and it applies across this class.",
     ],
   },
   {
@@ -2295,6 +2303,7 @@ PT.compounds.push(
     warnings: [
       "If IGF-1 does not move, it is not working — and paying for it anyway is the most common outcome here.",
       "It relies on a working pituitary; it cannot do anything if that is the limiting factor.",
+      "Active cancer is a contraindication for anything that raises GH and IGF-1 — that is on tesamorelin's own label, and it applies across this class.",
     ],
   },
   {
@@ -2318,6 +2327,7 @@ PT.compounds.push(
     warnings: [
       "If libido drops or you get nipple sensitivity, check prolactin — that is the mechanism here.",
       "Cortisol elevation works against the point of the exercise; keep doses modest rather than maximal.",
+      "Active cancer is a contraindication for anything that raises GH and IGF-1 — that is on tesamorelin's own label, and it applies across this class.",
     ],
   },
   {
@@ -2371,6 +2381,8 @@ PT.compounds.push(
       "Titrate slowly. Nearly all of the severe gastrointestinal effects come from going up too fast.",
       "Severe, persistent abdominal pain radiating to the back can mean pancreatitis — that is an emergency.",
       "Resistance training and high protein are not optional here; without them a large share of what you lose is muscle.",
+      "If you also use insulin, doses that were right last week are not right once appetite collapses. This combination is where the severe hypoglycaemia happens — reduce insulin deliberately, not reactively.",
+      "A personal or family history of medullary thyroid cancer or MEN2 is a hard no for this whole drug class.",
     ],
   },
 
@@ -2442,16 +2454,16 @@ PT.compounds.push(
       "Evidence for injected use is far weaker than for topical.",
       "Grey-market purity concerns as with all research peptides.",
     ],
-    depletes: "Extra copper suppresses zinc absorption over time, which matters because zinc supports androgen function.",
+    depletes: "The copper load from typical injected doses is small next to what you eat daily, and nobody has quantified accumulation from long-term use. The interaction that is well documented runs the other way: chronic high-dose zinc is what causes copper deficiency.",
     support: [
-      { id: "zinc", note: "Counterweight to copper loading — take it separated by a few hours." },
+      { id: "zinc", note: "Keep zinc at a normal dose. It cannot offset copper that was injected rather than eaten, and megadosing it causes a copper deficiency of its own." },
       { id: "vitc", note: "Supports collagen synthesis, which is the point of using it." },
       { id: "protein", note: "Collagen and repair need the raw material." },
     ],
     labs: ["cbc", "liver"],
     warnings: [
       "For skin and hair, topical has both the better evidence and the lower risk.",
-      "Do not run it continuously for months at high doses — copper is not something you want to accumulate.",
+      "Do not run it continuously for months at high doses. Accumulation is unquantified, which is a reason for restraint rather than reassurance.",
     ],
   }
 );
