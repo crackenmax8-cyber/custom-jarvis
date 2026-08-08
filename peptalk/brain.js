@@ -498,7 +498,8 @@ const Brain = (() => {
       daysToStart = daysBetween(today, start);
     } else if (today <= end) {
       phase = "on";
-      weekNum = Math.floor(daysBetween(start, today) / 7) + 1;
+      // clamp: on the inclusive last day this would read weeks+1 ("13 of 12")
+      weekNum = Math.min(weeks, Math.floor(daysBetween(start, today) / 7) + 1);
     } else if (hasPCT && today < pctStart) {
       phase = "clearing";
     } else if (hasPCT && recovery && today < recovery) {

@@ -778,7 +778,65 @@
     </div>`;
   }
 
-  /* ---- TODAY ---- */
+  /* ---- TODAY: the hero "vitals readout" ---- */
+  function bpWorst(bp) {
+    const rank = { ok: 0, watch: 1, low: 1, high: 2, critical: 3 };
+    const s = Brain.markers.evaluate("bp_systolic", bp.systolic, protocolSex());
+    const d = Brain.markers.evaluate("bp_diastolic", bp.diastolic, protocolSex());
+    return [s, d].filter(Boolean).sort((a, b) => rank[b.status] - rank[a.status])[0] || null;
+  }
+  function todayReadout(tl, lastBP) {
+    const roTone = tl.planning ? "" : (tl.phase === "clearing" || tl.phase === "pct") ? "warn" : tl.phase === "done" ? "good" : "";
+    let head, phaseWord;
+    if (tl.planning) {
+      head = `<div class="ro-week ro-word"><b>Ready</b></div>`; phaseWord = "Add dates for your timeline";
+    } else if (tl.phase === "on") {
+      head = `<div class="ro-week"><b>${String(tl.weekNum).padStart(2, "0")}</b><span class="ro-week-of">/ ${tl.weeks}</span><span class="ro-week-unit">weeks</span></div>`;
+      phaseWord = "On cycle";
+    } else if (tl.phase === "before") {
+      head = `<div class="ro-week"><b>${tl.daysToStart}</b><span class="ro-week-unit">day${tl.daysToStart === 1 ? "" : "s"} to&nbsp;start</span></div>`;
+      phaseWord = "Not started yet";
+    } else {
+      head = `<div class="ro-week ro-word"><b>${PHASE[tl.phase].label}</b></div>`;
+      phaseWord = tl.phase === "done" ? "Cycle complete" : tl.phase === "pct" ? "Recovery window" : "Esters clearing";
+    }
+
+    // The signature: the cycle drawn as its own pharmacokinetic serum curve.
+    let curve = "", precise = "";
+    if (!tl.planning && tl.weeks) {
+      const md = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const start = tl.dates.start, now = new Date();
+      const todayDay = Math.round((md(now) - md(start)) / 864e5);
+      const dosingEnd = tl.weeks * 7;                         // last-dose day
+      const clr = Math.max(tl.clearance || 0, 6);             // clearance tail (days)
+      const clearedOn = new Date(md(start).getTime() + (dosingEnd + clr) * 864e5);
+      const shortD = (d) => d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      const dayNum = Math.min(todayDay + 1, dosingEnd);       // never past the last dose
+      if (tl.phase === "on") precise = `<div class="ro-precise">Day ${dayNum} of ${dosingEnd}</div>`;
+      const posText = tl.phase === "on" ? `week ${tl.weekNum} of ${tl.weeks}, day ${dayNum} of ${dosingEnd} — ` : "";
+      curve = `<div class="ro-curve-wrap">
+        <span class="ro-curve-eyebrow">Serum level</span>
+        <canvas class="ro-curve" data-curve="1" data-weeks="${dosingEnd}" data-clear="${clr}" data-today="${todayDay}" role="img" aria-label="Projected serum level across the ${tl.weeks}-week cycle — ${posText}${phaseWord.toLowerCase()}, clearing around ${shortD(clearedOn)}."></canvas>
+        <div class="ro-curve-cap"><span>${shortD(start)}</span><span>${shortD(clearedOn)}</span></div>
+      </div>`;
+    }
+
+    const glance = [];
+    if (lastBP) {
+      const r = bpWorst(lastBP);
+      const chip = r ? `<span class="stat-chip ${r.status === "ok" ? "good" : r.status === "watch" ? "watch" : "bad"}">${r.status === "ok" ? "ok" : r.status}</span>` : "";
+      glance.push(`<div class="ro-metric"><span class="ro-metric-k">Blood pressure</span><span class="ro-metric-val">${lastBP.systolic}/${lastBP.diastolic} ${chip}</span></div>`);
+    }
+    if (!tl.planning && tl.next) {
+      glance.push(`<div class="ro-metric"><span class="ro-metric-k">Next up</span><span class="ro-metric-val">${tl.next.label} · ${tl.next.inDays <= 0 ? "now" : tl.next.inDays + "d"}</span></div>`);
+    }
+    return `<div class="readout ${roTone}${tl.planning ? " planning" : ""}">
+      <div class="ro-main"><span class="ro-eyebrow">Cycle</span>${head}${precise}<div class="ro-phase"><span class="ro-dot"></span>${phaseWord}</div></div>
+      ${curve}
+      ${glance.length ? `<div class="ro-glance">${glance.join("")}</div>` : ""}
+    </div>`;
+  }
+
   function renderToday(c) {
     if (!state.protocol) {
       c.innerHTML = `
@@ -799,11 +857,6 @@
     const lastInj = Store.lastOfType("injection");
     const lastBP = Store.lastOfType("metric", "bp");
     const bpStale = !lastBP || (Date.now() - new Date(lastBP.ts).getTime()) / 864e5 > 7;
-
-    let phaseLine = tl.planning ? "Protocol saved — add dates for your timeline"
-      : tl.phase === "on" ? `Week ${tl.weekNum} of ${tl.weeks} · on cycle`
-      : tl.phase === "before" ? `Starts in ${tl.daysToStart} day${tl.daysToStart === 1 ? "" : "s"}`
-      : PHASE[tl.phase].label;
 
     const dueItems = [];
     dueItems.push(`<div class="due-card">
@@ -839,7 +892,9 @@
     const recent = Store.all().slice(0, 5).map((e) => eventRow(e)).join("") || `<p class="plan-empty">Nothing logged yet. Use the buttons above.</p>`;
 
     c.innerHTML = `
-      <div class="detail-head"><div class="dh-main"><h2>Today</h2><p class="aka">${new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })} · ${phaseLine}</p></div></div>
+      <div class="detail-head today-head"><div class="dh-main"><h2>Today</h2><p class="aka">${new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}</p></div></div>
+
+      ${todayReadout(tl, lastBP)}
 
       <h3>Due &amp; suggested</h3>
       <div class="due-list">${dueItems.join("")}</div>
@@ -864,6 +919,7 @@
 
     wireGo(c);
     $$("[data-log]", c).forEach((b) => b.addEventListener("click", () => { state.logType = b.dataset.log; setView("log"); }));
+    drawReadoutCurve(c);
   }
 
   /* ---- LOG ---- */
@@ -1052,6 +1108,97 @@
         if (map) Chart.attachHover(canvas, map, tip, (s, p) => `<b>${p.v}</b> ${m.unit}<br><span>${Chart.fmtDay(p.t)}</span>`);
       }
     });
+    drawReadoutCurve(c);
+  }
+
+  /* The Today hero's serum-level trace — a real one-compartment PK curve:
+     level builds toward steady state while dosing, then clears after the last
+     dose. Thin flat periwinkle line, faint fill, a settled "today" node. */
+  function drawReadoutCurve(c) {
+    const canvas = $("[data-curve]", c || $("#content"));
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const cssVar = (n) => (getComputedStyle(document.documentElement).getPropertyValue(n).trim() || "#888");
+    const withAlpha = (hex, a) => {
+      const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex);
+      return m ? `rgba(${parseInt(m[1], 16)},${parseInt(m[2], 16)},${parseInt(m[3], 16)},${a})` : hex;
+    };
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const W = Math.max(120, Math.round(rect.width || 240));
+    const H = 68;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.height = H + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+
+    const dosingEnd = Math.max(1, +canvas.dataset.weeks || 84);  // last-dose day
+    const clr = Math.max(1, +canvas.dataset.clear || 6);         // clearance tail
+    const todayDay = +canvas.dataset.today;
+    const tHalf = Math.max(0.5, clr / 4.5);                      // ~4.5 half-lives to clear
+    const k = Math.LN2 / tHalf;
+    const domain = dosingEnd + clr;
+
+    const pad = { l: 3, r: 3, t: 11, b: 9 };
+    const plotW = W - pad.l - pad.r, plotH = H - pad.t - pad.b;
+    const Lpeak = 1 - Math.exp(-k * dosingEnd);
+    const yMax = Math.max(Lpeak, 1e-4);
+    const level = (d) => d <= 0 ? 0 : d <= dosingEnd ? 1 - Math.exp(-k * d) : Lpeak * Math.exp(-k * (d - dosingEnd));
+    const X = (d) => pad.l + (d / domain) * plotW;
+    const Y = (L) => pad.t + (1 - L / yMax) * plotH;
+
+    const accent = cssVar("--accent"), lineC = cssVar("--line"), panel = cssVar("--panel-2");
+    const y0 = Math.round(Y(0)) + 0.5;
+
+    // baseline
+    ctx.strokeStyle = lineC; ctx.globalAlpha = 0.8; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad.l, y0); ctx.lineTo(W - pad.r, y0); ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // last-dose graticule
+    const xEnd = X(dosingEnd);
+    ctx.strokeStyle = lineC; ctx.setLineDash([2, 3]); ctx.globalAlpha = 0.9; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(Math.round(xEnd) + 0.5, pad.t - 5); ctx.lineTo(Math.round(xEnd) + 0.5, H - pad.b); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+
+    // sample the curve
+    const step = Math.max(0.5, domain / 240);
+    const solid = [], decay = [];
+    for (let d = 0; d <= dosingEnd + 1e-6; d += step) solid.push([X(d), Y(level(d))]);
+    solid.push([xEnd, Y(Lpeak)]);
+    for (let d = dosingEnd; d <= domain + 1e-6; d += step) decay.push([X(d), Y(level(d))]);
+    decay.push([X(domain), Y(level(domain))]);
+
+    // faint flat fill under the on-cycle build (no gradient — instruments don't glow)
+    ctx.beginPath();
+    ctx.moveTo(solid[0][0], y0);
+    solid.forEach(([x, y]) => ctx.lineTo(x, y));
+    ctx.lineTo(xEnd, y0); ctx.closePath();
+    ctx.fillStyle = withAlpha(accent, 0.08); ctx.fill();
+
+    // the trace
+    ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.strokeStyle = accent; ctx.lineWidth = 1.75;
+    ctx.beginPath(); solid.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke();
+    ctx.setLineDash([4, 3]); ctx.globalAlpha = 0.85;
+    ctx.beginPath(); decay.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+
+    // the "you are here" node — settles once, no pulse
+    const td = Math.max(0, Math.min(domain, todayDay));
+    const cx = X(td), cy = Y(level(td));
+    ctx.strokeStyle = withAlpha(accent, 0.5); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(Math.round(cx) + 0.5, cy); ctx.lineTo(Math.round(cx) + 0.5, H - pad.b); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy, 3.4, 0, Math.PI * 2);
+    ctx.fillStyle = accent; ctx.fill();
+    ctx.lineWidth = 1.6; ctx.strokeStyle = panel; ctx.stroke();
+
+    // label the node so the signature reads on its own (clamped inside the canvas)
+    ctx.font = '600 8px ui-monospace, "SF Mono", Menlo, monospace';
+    ctx.fillStyle = accent;
+    const NOW = "NOW", lw = ctx.measureText(NOW).width;
+    const lx = Math.max(pad.l, Math.min(cx - lw / 2, W - pad.r - lw));
+    const ly = cy > pad.t + 12 ? cy - 7 : cy + 12;   // above the node, or below if it sits high
+    ctx.fillText(NOW, lx, ly);
   }
 
   /* ---- INJECTION SITES ---- */
@@ -1594,7 +1741,7 @@
   }
 
   /* ======================= SETTINGS / THEME ============================ */
-  const CHART_VIEWS = new Set(["trends"]);
+  const CHART_VIEWS = new Set(["trends", "today"]);
   function applyTheme(light) {
     document.documentElement.classList.toggle("light", light);
     $("#themeBtn").textContent = light ? "☀️" : "🌙";
