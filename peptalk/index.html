@@ -108,12 +108,14 @@
           <button class="nav-item" data-view="data"><svg class="ic"><use href="#ic-data"/></svg> <span>Data &amp; backup</span></button>
         </nav>
 
-        <div class="lib-head">
-          <span class="lib-title">Library</span>
-          <span class="lib-count" id="libCount"></span>
+        <div class="lib-wrap">
+          <div class="lib-head">
+            <span class="lib-title">Library</span>
+            <span class="lib-count" id="libCount"></span>
+          </div>
+          <input type="search" id="libSearch" class="lib-search" placeholder="Search compounds…" aria-label="Search compounds" autocomplete="off" />
+          <div class="lib-list" id="libList" role="list"></div>
         </div>
-        <input type="search" id="libSearch" class="lib-search" placeholder="Search compounds…" aria-label="Search compounds" autocomplete="off" />
-        <div class="lib-list" id="libList" role="list"></div>
       </aside>
 
       <!-- ===== Main content ===== -->

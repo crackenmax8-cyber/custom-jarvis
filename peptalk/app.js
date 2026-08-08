@@ -114,8 +114,40 @@
   }
 
   /* ======================= VIEW ROUTER ================================== */
-  function setView(v) {
+  // Views are addressable (#/trends, #/compound/testosterone) so the browser
+  // back button walks your history instead of leaving the app.
+  const VIEWS = new Set(["home", "protocol", "today", "log", "trends", "sites", "data", "stack",
+    "builder", "supplements", "labs", "chat", "counters", "emergency", "injection", "pct", "women", "compound"]);
+  let routing = false; // set while we drive the hash ourselves, so hashchange doesn't re-render
+
+  function routeOf(v, id) {
+    return v === "compound" && id ? `#/compound/${encodeURIComponent(id)}` : `#/${v}`;
+  }
+  function parseRoute() {
+    const m = /^#\/([a-z]+)(?:\/(.+))?$/.exec(location.hash || "");
+    if (!m || !VIEWS.has(m[1])) return null;
+    const id = m[2] ? decodeURIComponent(m[2]) : null;
+    if (m[1] === "compound" && !PT.byId[id]) return null;
+    return { view: m[1], id };
+  }
+  function syncHash(v, id) {
+    const want = routeOf(v, id);
+    if (location.hash === want) return;
+    routing = true;
+    try { location.hash = want; } catch (e) { /* hash blocked — routing is a bonus, not a requirement */ }
+    setTimeout(() => { routing = false; }, 0);
+  }
+  function applyRoute() {
+    if (routing) return;
+    const r = parseRoute();
+    if (!r) return setView("home", { push: false });
+    if (r.view === "compound") { state.compound = r.id; setView("compound", { push: false }); renderLibrary($("#libSearch").value); }
+    else setView(r.view, { push: false });
+  }
+
+  function setView(v, opts) {
     state.view = v;
+    if (!opts || opts.push !== false) syncHash(v, v === "compound" ? state.compound : null);
     $$(".nav-item").forEach((n) => n.classList.toggle("active", n.dataset.view === v));
     const c = $("#content");
     if (v === "home") renderHome(c);
@@ -158,30 +190,33 @@
       "Tell me about semaglutide",
       "What raises hematocrit?",
     ];
+    // each topic keeps a stable hue so the app reads as a place, not a wall of grey
+    const TONE = ["t-teal", "t-sky", "t-moss", "t-iris", "t-sand", "t-clay", "t-plum", "t-rose", "t-iris"];
+    const principle = (p, i) => `
+      <div class="principle ${TONE[i % TONE.length]}"><div class="p-ic">${icon(p.icon)}</div><h4>${p.title}</h4><p>${p.body}</p></div>`;
     c.innerHTML = `
-      <h2>Use safer, or don't use.</h2>
-      <p class="hero-sub">PepTalk gathers what people report doing to reduce the harm of anabolic steroids and peptides — the supportive supplements, the nutrients you can run low on, and the bloodwork that turns invisible damage into something you can actually manage. It is <strong>not medical advice</strong>, and the safest cycle is the one you don't run.</p>
+      <section class="hero">
+        <div class="hero-strip" aria-hidden="true">
+          <i style="background:var(--c-iris)"></i><i style="background:var(--c-teal)"></i><i style="background:var(--c-moss)"></i><i style="background:var(--c-sand)"></i><i style="background:var(--c-clay)"></i>
+        </div>
+        <h2>Use safer, or don't use.</h2>
+        <p class="hero-sub">PepTalk gathers what people report doing to reduce the harm of anabolic steroids and peptides — the supportive supplements, the nutrients you can run low on, and the bloodwork that turns invisible damage into something you can actually manage. It is <strong>not medical advice</strong>, and the safest cycle is the one you don't run.</p>
+      </section>
 
       ${homeProtocolCard()}
 
       <h3>Ask anything</h3>
-      <div class="chips">${chips.map((q) => `<button class="chip" data-q="${q.replace(/"/g, "&quot;")}">${q}</button>`).join("")}</div>
+      <div class="chips">${chips.map((q) => `<button class="chip" data-q="${attrEscape(q)}">${q}</button>`).join("")}</div>
 
       <h3>Three things that matter more than any pill</h3>
-      <div class="principle-grid">
-        ${PT.principles.slice(0, 3).map(hero => `
-          <div class="principle"><div class="p-ic">${icon(hero.icon)}</div><h4>${hero.title}</h4><p>${hero.body}</p></div>`).join("")}
-      </div>
+      <div class="principle-grid">${PT.principles.slice(0, 3).map(principle).join("")}</div>
 
       <h3>All harm-reduction principles</h3>
-      <div class="principle-grid">
-        ${PT.principles.slice(3).map(p => `
-          <div class="principle"><div class="p-ic">${icon(p.icon)}</div><h4>${p.title}</h4><p>${p.body}</p></div>`).join("")}
-      </div>
+      <div class="principle-grid">${PT.principles.slice(3).map((p, i) => principle(p, i + 3)).join("")}</div>
 
       <h3>Get started</h3>
       <div class="start-grid">
-        ${state.protocol ? "" : `<button class="start-card feature" data-go="protocol">
+        ${state.protocol ? "" : `<button class="start-card feature t-iris" data-go="protocol">
           <span class="sc-ic">${icon("protocol")}</span><b>Build my protocol</b>
           <span>Save what you're running with dates — get your personal timeline, labs and watch-list.</span>
         </button>`}
@@ -189,27 +224,27 @@
           <span class="sc-ic">${icon("alert")}</span><b>Emergency signs</b>
           <span>The symptoms that mean stop and get help now. Read this one before you need it.</span>
         </button>
-        <button class="start-card" data-go="counters">
+        <button class="start-card t-clay" data-go="counters">
           <span class="sc-ic">${icon("shield")}</span><b>Side effects &amp; counters</b>
           <span>Something's going wrong — here's what actually counters it, free, OTC or prescription.</span>
         </button>
-        <button class="start-card" data-go="builder">
+        <button class="start-card t-teal" data-go="builder">
           <span class="sc-ic">${icon("stack-add")}</span><b>Create your stack</b>
           <span>Pick what you're running — the support vitamins, nutrients and bloodwork assemble automatically.</span>
         </button>
-        <button class="start-card" data-go="labs">
+        <button class="start-card t-rose" data-go="labs">
           <span class="sc-ic">${icon("drop")}</span><b>Bloodwork</b>
           <span>What to test and when — and a request sheet you can print for a doctor.</span>
         </button>
-        <button class="start-card" data-go="injection">
+        <button class="start-card t-sky" data-go="injection">
           <span class="sc-ic">${icon("syringe")}</span><b>Injection safety</b>
           <span>Sterile technique, sites and volumes — where most avoidable harm actually happens.</span>
         </button>
-        <button class="start-card" data-go="pct">
+        <button class="start-card t-moss" data-go="pct">
           <span class="sc-ic">${icon("cycle")}</span><b>Coming off &amp; PCT</b>
           <span>Suppression, recovery, fertility, and the decision to make before you start.</span>
         </button>
-        <button class="start-card" data-go="women">
+        <button class="start-card t-plum" data-go="women">
           <span class="sc-ic">${icon("venus")}</span><b>Women &amp; virilization</b>
           <span>A different risk profile — and which effects don't reverse.</span>
         </button>
@@ -2030,14 +2065,19 @@
       rz = setTimeout(() => drawAllCharts($("#content")), 160); // redraw in place, keep scroll
     });
 
+    // browser back/forward walks the view history instead of leaving the app
+    window.addEventListener("hashchange", applyRoute);
+
     renderLibrary();
     // drop stack ids that no longer exist in the library (stale localStorage)
     let stackDirty = false;
     [...state.stack].forEach((id) => { if (!PT.byId[id]) { state.stack.delete(id); stackDirty = true; } });
     if (stackDirty) persistStack();
     updateStackBadge();
-    // active users land on Today; newcomers on the Overview
-    setView(state.protocol ? "today" : "home");
+    // a shared/bookmarked link wins; otherwise active users land on Today, newcomers on the Overview
+    const start = parseRoute();
+    if (start) applyRoute();
+    else setView(state.protocol ? "today" : "home");
   }
 
   document.addEventListener("DOMContentLoaded", init);

@@ -36,6 +36,10 @@
   --mono: "SF Mono", ui-monospace, "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
   --display: "SF Pro Display", var(--sans);
+  /* Categorical hues — topic identity only (soft icon tiles, section marks).
+     Never status: severity/flags keep --danger/--amber/--sev-* exclusively. */
+  --c-iris: #8d97ff; --c-teal: #45c4c0; --c-moss: #63c48c; --c-sky: #62aef2;
+  --c-clay: #f0906d; --c-rose: #e58fb8; --c-sand: #d8a663; --c-plum: #b28ce8;
 }
 :root.light {
   --bg: #eef1f5;         /* cool blue-grey ground (never cream) */
@@ -63,6 +67,9 @@
   --e2: 0 22px 48px -20px rgba(30,50,80,.20), 0 5px 14px -7px rgba(30,50,80,.10);
   --hairline: rgba(255,255,255,.85);
   --accent-wash: rgba(75,83,217,.08);
+  /* deeper, less luminous in light theme so tinted tiles stay legible on white */
+  --c-iris: #5560d8; --c-teal: #12908c; --c-moss: #23935c; --c-sky: #2f7fc4;
+  --c-clay: #cf6242; --c-rose: #bf5b8c; --c-sand: #a97828; --c-plum: #7f52c0;
 }
 
 * { box-sizing: border-box; }
@@ -75,11 +82,14 @@ body {
   -webkit-font-smoothing: antialiased;
   line-height: 1.5;
 }
+/* A soft dawn behind the instrument — several hues, none of them loud. */
 .bg-glow {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background:
-    radial-gradient(60% 50% at 15% -5%, color-mix(in srgb, var(--accent) 15%, transparent), transparent 60%),
-    radial-gradient(50% 45% at 100% 0%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 55%);
+    radial-gradient(58% 46% at 12% -6%, color-mix(in srgb, var(--c-iris) 16%, transparent), transparent 62%),
+    radial-gradient(48% 40% at 92% -4%, color-mix(in srgb, var(--c-teal) 13%, transparent), transparent 58%),
+    radial-gradient(52% 38% at 68% 8%, color-mix(in srgb, var(--c-rose) 8%, transparent), transparent 60%),
+    radial-gradient(60% 44% at 30% 104%, color-mix(in srgb, var(--c-moss) 7%, transparent), transparent 62%);
 }
 
 /* ---- Disclaimer bar ---- */
@@ -244,6 +254,24 @@ body {
 
 /* Overview / hero */
 .hero-sub { font-size: 0.95rem; max-width: 62ch; }
+
+/* ---- Overview hero: the one warm, human moment before the instrument takes over ---- */
+.hero {
+  position: relative; overflow: hidden;
+  margin: 2px 0 20px; padding: 26px 28px 24px;
+  border-radius: var(--radius-lg); border: 1px solid var(--line);
+  background:
+    radial-gradient(90% 130% at 0% 0%, color-mix(in srgb, var(--c-iris) 15%, transparent), transparent 58%),
+    radial-gradient(80% 120% at 100% 6%, color-mix(in srgb, var(--c-teal) 13%, transparent), transparent 56%),
+    radial-gradient(70% 120% at 62% 100%, color-mix(in srgb, var(--c-rose) 9%, transparent), transparent 60%),
+    var(--panel-2);
+  box-shadow: inset 0 1px 0 var(--hairline);
+}
+.hero h2 { margin: 0 0 10px; font-size: 1.95rem; letter-spacing: -0.03em; line-height: 1.1; }
+.hero .hero-sub { margin: 0; color: var(--text-dim); }
+.hero-strip { display: flex; gap: 7px; margin-bottom: 15px; }
+.hero-strip i { height: 4px; flex: 1; max-width: 46px; border-radius: 99px; opacity: .9; }
+@media (max-width: 560px) { .hero { padding: 20px 18px; } .hero h2 { font-size: 1.5rem; } }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 4px; }
 .chip {
   cursor: pointer; padding: 7px 13px; border-radius: 999px;
@@ -257,13 +285,32 @@ body {
   gap: 12px; margin-top: 6px;
 }
 .principle {
+  position: relative; overflow: hidden;
   background: var(--panel-2); border: 1px solid var(--line-soft);
-  border-radius: var(--radius-sm); padding: 14px 15px;
+  border-radius: var(--radius); padding: 15px 16px;
+  transition: border-color .16s var(--ease-out), transform .16s var(--ease-out), box-shadow .16s var(--ease-out);
 }
-.principle .p-ic { display: inline-flex; color: var(--accent); }
-.principle .p-ic .ic { width: 24px; height: 24px; }
-.principle h4 { margin: 6px 0 5px; font-size: 0.95rem; }
+/* each card carries its topic hue: a tinted icon tile + a hairline of colour on top */
+.principle::before {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 2px;
+  background: linear-gradient(90deg, var(--tone, var(--accent)), transparent 82%);
+  opacity: .65;
+}
+.principle:hover { border-color: color-mix(in srgb, var(--tone, var(--accent)) 55%, var(--line)); transform: translateY(-2px); box-shadow: var(--e1); }
+.principle .p-ic {
+  display: inline-grid; place-items: center; width: 38px; height: 38px;
+  border-radius: 10px; color: var(--tone, var(--accent));
+  background: color-mix(in srgb, var(--tone, var(--accent)) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tone, var(--accent)) 26%, transparent);
+}
+.principle .p-ic .ic { width: 21px; height: 21px; }
+.principle h4 { margin: 10px 0 5px; font-size: 0.95rem; }
 .principle p { margin: 0; font-size: 0.82rem; color: var(--text-dim); }
+/* topic hue assignments */
+.t-iris { --tone: var(--c-iris); } .t-teal { --tone: var(--c-teal); }
+.t-moss { --tone: var(--c-moss); } .t-sky  { --tone: var(--c-sky); }
+.t-clay { --tone: var(--c-clay); } .t-rose { --tone: var(--c-rose); }
+.t-sand { --tone: var(--c-sand); } .t-plum { --tone: var(--c-plum); }
 
 /* Severity pill */
 .sev-pill {
@@ -594,11 +641,19 @@ body {
   background: var(--panel-2); border: 1px solid var(--line-soft); color: var(--text);
   font: inherit; transition: 0.14s;
 }
-.start-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-.start-card .sc-ic { font-size: 1.2rem; }
+.start-card:hover { border-color: color-mix(in srgb, var(--tone, var(--accent)) 55%, var(--line)); transform: translateY(-2px); }
+.start-card .sc-ic {
+  display: inline-grid; place-items: center; width: 36px; height: 36px;
+  border-radius: 10px; margin-bottom: 4px; color: var(--tone, var(--accent));
+  background: color-mix(in srgb, var(--tone, var(--accent)) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tone, var(--accent)) 26%, transparent);
+}
+.start-card .sc-ic .ic { width: 20px; height: 20px; }
 .start-card b { font-size: 0.93rem; }
 .start-card span:last-child { font-size: 0.8rem; color: var(--text-dim); }
-.start-card.alarm { border-left: 3px solid var(--danger); }
+/* the one card whose colour IS semantic */
+.start-card.alarm { --tone: var(--danger); border-left: 3px solid var(--danger); }
+.start-card.alarm .sc-ic { color: var(--danger); }
 .start-card.alarm:hover { border-color: var(--danger); border-left-color: var(--danger); }
 
 /* ---- Countermeasures ---- */
@@ -1009,26 +1064,6 @@ input[type="file"] { font-size: 0.8rem; color: var(--text-dim); }
 }
 .content::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
 
-/* ---- Responsive ---- */
-@media (max-width: 860px) {
-  .layout { grid-template-columns: 1fr; }
-  .sidebar {
-    order: 2; max-height: none;
-  }
-  .lib-list { max-height: 300px; }
-  .content { order: 1; min-height: 46vh; }
-  .principle-grid { grid-template-columns: 1fr 1fr; }
-}
-@media (max-width: 560px) {
-  .disclaimer p { font-size: 0.74rem; }
-  .brand-text h1 { font-size: 1.25rem; }
-  .tagline { display: none; }
-  .principle-grid, .support-grid, .pick-grid, .stack-cards { grid-template-columns: 1fr; }
-  .content { padding: 18px 16px; }
-  .lab-row { flex-direction: column; gap: 4px; }
-  .lab-row .lab-name { min-width: 0; }
-}
-
 /* ---- Accessibility ---- */
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
@@ -1210,3 +1245,47 @@ canvas.ro-curve { width: 100%; height: 68px; display: block; }
 .chip, .tag, .for-tag, .stat-chip, .ms-badge, .lib-count { border-radius: 5px; }
 .sev-pill { border-radius: 5px; }
 /* keep the accent flat & luminous — no glow on the current node handled in canvas */
+
+/* ---- Responsive ---- */
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; }
+  /* dissolve the sidebar so nav can sit above the content and the library below it,
+     instead of burying a 17-item list under every page */
+  .sidebar { display: contents; }
+  .nav {
+    order: 0; display: flex; flex-direction: row; gap: 6px; overflow-x: auto; scrollbar-width: none;
+    padding: 6px 2px 8px; margin: 0 -2px;
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line-soft);
+    scroll-snap-type: x proximity;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-label { display: none; }
+  .nav-item {
+    flex: none; white-space: nowrap; scroll-snap-align: start;
+    padding: 8px 13px; border: 1px solid var(--line); background: var(--panel-2);
+  }
+  .nav-item.active { border-color: transparent; }
+  /* indicator reads as an underline in the horizontal strip */
+  .nav-item::after {
+    left: 12px; right: 12px; top: auto; bottom: 2px; width: auto; height: 2px;
+    border-radius: 2px 2px 0 0; transform: scaleX(.3);
+  }
+  .nav-item.active::after { transform: scaleX(1); }
+  .nav-count { margin-left: 7px; }
+  .content { order: 1; min-height: 46vh; }
+  .lib-wrap { order: 2; }
+  .lib-list { max-height: 300px; }
+  .principle-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 560px) {
+  .disclaimer p { font-size: 0.74rem; }
+  .brand-text h1 { font-size: 1.25rem; }
+  .tagline { display: none; }
+  .principle-grid, .support-grid, .pick-grid, .stack-cards { grid-template-columns: 1fr; }
+  .content { padding: 18px 16px; }
+  .lab-row { flex-direction: column; gap: 4px; }
+  .lab-row .lab-name { min-width: 0; }
+}
