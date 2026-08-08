@@ -166,6 +166,17 @@ const Chart = (() => {
   }
   const fmtNum = (v) => (Math.abs(v) >= 100 ? Math.round(v) : Math.round(v * 10) / 10).toString();
   const fmtDay = (ms) => new Date(ms).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  // round "nice" gridline values (1/2/5×10ⁿ) inside a range — instrument ticks, not fractional defaults
+  function niceTicks(min, max, n) {
+    const span = (max - min) || 1;
+    const raw = span / Math.max(1, n - 1);
+    const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const norm = raw / mag;
+    const step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+    const ticks = [];
+    for (let v = Math.ceil(min / step) * step; v <= max + step * 1e-6; v += step) ticks.push(v);
+    return ticks.length ? ticks : [min, max];
+  }
 
   // cfg: { height, series:[{points:[{t,v,ev}], dash, label, status(v)->level}], bands:[{lo,hi}], unit }
   function draw(canvas, cfg) {
@@ -193,7 +204,20 @@ const Chart = (() => {
     const xs = series.flatMap((s) => s.points.map((p) => p.t));
     let minX = Math.min(...xs), maxX = Math.max(...xs);
     const single = minX === maxX, singleDate = minX;
-    if (single) { minX -= 3 * 864e5; maxX += 3 * 864e5; }
+
+    // one reading only — a full chart with axes reads as auto-generated noise; show the value cleanly
+    if (single) {
+      const parts = series.map((s) => ({ s, p: s.points[s.points.length - 1] })).filter((x) => x.p);
+      const cx = W / 2;
+      ctx.textAlign = "center";
+      ctx.fillStyle = cssVar("--text"); ctx.font = "700 22px system-ui, sans-serif";
+      ctx.fillText(parts.map((x) => fmtNum(x.p.v)).join(" / "), cx, H / 2);
+      ctx.fillStyle = ink; ctx.font = "10px system-ui, sans-serif";
+      const lbls = parts.map((x) => x.s.label).filter(Boolean).join(" / ");
+      ctx.fillText([lbls, fmtDay(singleDate), "one reading"].filter(Boolean).join(" · "), cx, H / 2 + 17);
+      ctx.textAlign = "left";
+      return null;
+    }
     const ys = series.flatMap((s) => s.points.map((p) => p.v));
     let minY = Math.min(...ys), maxY = Math.max(...ys);
     (cfg.bands || []).forEach((b) => { if (b.lo != null) minY = Math.min(minY, b.lo); if (b.hi != null) maxY = Math.max(maxY, b.hi); });
@@ -212,13 +236,13 @@ const Chart = (() => {
 
     // grid + y labels
     ctx.font = "10px system-ui, sans-serif"; ctx.lineWidth = 1;
-    for (let i = 0; i <= 2; i++) {
-      const v = minY + ((maxY - minY) * i) / 2, y = Y(v);
+    niceTicks(minY, maxY, 3).forEach((v) => {
+      const y = Y(v);
       ctx.strokeStyle = line; ctx.globalAlpha = 0.55;
       ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
       ctx.globalAlpha = 1; ctx.fillStyle = ink; ctx.textAlign = "left";
       ctx.fillText(fmtNum(v), 4, y + 3);
-    }
+    });
     // x labels — one centered label for a single reading, else first / last
     ctx.fillStyle = ink;
     if (single) {
