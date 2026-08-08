@@ -26,6 +26,21 @@ const Brain = (() => {
     mast: "masteron", primo: "primobolan", sdrol: "superdrol", sema: "semaglutide",
     tirz: "tirzepatide", mt2: "melanotan2", mtii: "melanotan2", mk677: "mk677",
     ibutamoren: "mk677", bpc: "bpc157", ipam: "ipamorelin",
+    // second wave: SARMs, ancillaries, fat-loss agents
+    rad: "rad140", rad140: "rad140", testolone: "rad140",
+    lgd: "lgd4033", lgd4033: "lgd4033", ligandrol: "lgd4033",
+    ost: "ostarine", mk2866: "ostarine", enobosarm: "ostarine",
+    yk: "yk11", yk11: "yk11", gw: "cardarine", gw501516: "cardarine",
+    s23: "s23", s4: "andarine", andarine: "andarine",
+    clen: "clenbuterol", caber: "cabergoline", dnp: "dnp",
+    nolva: "tamoxifen", nolvadex: "tamoxifen", tamox: "tamoxifen",
+    clomid: "clomiphene", enclo: "enclomiphene",
+    adex: "anastrozole", arimidex: "anastrozole", aromasin: "exemestane",
+    fin: "finasteride", propecia: "finasteride", cialis: "tadalafil",
+    prov: "proviron", mesterolone: "proviron",
+    trest: "ment", halo: "halotestin", reta: "retatrutide",
+    cjc: "cjc1295", igf: "igf1lr3", ghrp: "ghrp2", tesa: "tesamorelin",
+    telmi: "telmisartan", yohimbe: "yohimbine",
   };
 
   /* --- fuzzy-ish compound resolver --------------------------------------- */
@@ -120,15 +135,18 @@ const Brain = (() => {
 
     // Flags that change the whole plan
     const flags = [];
-    const hasOral = chosen.some((c) => c.group === "Oral (17aa)");
-    const oralCount = chosen.filter((c) => c.group === "Oral (17aa)").length;
+    // YK-11 is sold as a SARM but is 17-alpha methylated, so it carries the same
+    // liver load as an oral steroid and belongs in the oral-stacking count.
+    const is17aa = (c) => c.group === "Oral (17aa)" || c.id === "yk11";
+    const hasOral = chosen.some(is17aa);
+    const oralCount = chosen.filter(is17aa).length;
     const hasSevere = chosen.some((c) => c.severity === "severe");
-    const raisesHct = chosen.some((c) =>
-      ["testosterone", "boldenone", "trenbolone"].includes(c.id)
-    );
-    const glucose = chosen.some((c) =>
-      ["hgh", "mk677", "ipamorelin", "insulin"].includes(c.id)
-    );
+    // read these off the countermeasure index rather than a hand-kept id list,
+    // so adding a compound to the library keeps the flags correct automatically
+    const brings = (kid) =>
+      chosen.some((c) => (PT.countersByCompound[c.id] || []).includes(kid));
+    const raisesHct = brings("hematocrit");
+    const glucose = brings("glucose");
     if (oralCount >= 2)
       flags.push({
         level: "severe",
@@ -153,6 +171,11 @@ const Brain = (() => {
       flags.push({
         level: "severe",
         text: "This stack contains a compound rated 'severe' risk. Reconsider whether the trade-off is worth it, and don't run it as a beginner.",
+      });
+    if (chosen.some((c) => c.id === "dnp"))
+      flags.push({
+        level: "severe",
+        text: "DNP is in this stack. It has no antidote, it accumulates over days, and the gap between an effective and a fatal dose is small — deaths happen at doses people believed were safe. Overheating, confusion or a racing heart is an ambulance call, and tell them it was DNP.",
       });
 
     return { chosen, supplements, labs, warnings, flags, counters };
@@ -354,7 +377,7 @@ const Brain = (() => {
         .map((s) => `• ${PT.supplements[s.id].name}`)
         .join("\n");
       return {
-        text: `**${c.name}** (${c.aka}) — _${c.klass}, ${c.severity} risk_\n\n${c.summary}\n\n**Main risks:**\n${risks}\n\n**Support stack:**\n${sup}\n\n**Labs:** ${c.labs
+        text: `**${c.name}**${c.aka ? ` (${c.aka})` : ""} — _${c.klass}, ${c.severity} risk_\n\n${c.summary}\n\n**Main risks:**\n${risks}\n\n**Support stack:**\n${sup}\n\n**Labs:** ${c.labs
           .map((id) => PT.labs[id].name)
           .join(", ")}\n\nOpen its card in the library for the full breakdown, warnings and doses.`,
         compound: c,
@@ -398,7 +421,7 @@ const Brain = (() => {
     const compendium = PT.compounds
       .map(
         (c) =>
-          `${c.name} (${c.aka}) [${c.klass}, ${c.severity}]: ${c.summary} Support: ${c.support
+          `${c.name}${c.aka ? ` (${c.aka})` : ""} [${c.klass}, ${c.severity}]: ${c.summary} Support: ${c.support
             .map((s) => PT.supplements[s.id].name)
             .join(", ")}. Labs: ${c.labs.map((id) => PT.labs[id].name).join(", ")}.`
       )
@@ -446,12 +469,15 @@ const Brain = (() => {
     { id: "verylong", label: "Very long — Deca, EQ, undecylenate", days: 40, hint: "~4–6 weeks to clear" },
   ];
   const esterDays = (id) => (ESTERS.find((e) => e.id === id) || { days: 18 }).days;
-  const isSuppressive = (c) => !!c && c.klass === "Anabolic steroid";
+  // SARMs suppress the same axis steroids do, so they get the same PCT planning
+  const isSuppressive = (c) => !!c && (c.klass === "Anabolic steroid" || /^SARM/.test(c.klass));
   function defaultEster(c) {
     if (!isSuppressive(c)) return null; // peptides / GH / GLP-1 don't need SERM PCT
+    // SARM half-lives (~24–60h) clear slower than a true oral steroid
+    if (/^SARM/.test(c.klass)) return "short";
     if (/oral/i.test(c.route)) return "oral";
     if (c.id === "nandrolone" || c.id === "boldenone") return "verylong";
-    if (c.id === "trenbolone") return "short";
+    if (c.id === "trenbolone" || c.id === "ment") return "short";
     return "long";
   }
 

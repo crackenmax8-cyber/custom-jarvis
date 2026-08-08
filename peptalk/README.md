@@ -72,9 +72,14 @@ what's drifting) — all offline, stored only in your browser.
 - ♀ **Women & virilization** — which effects are **permanent** (voice, clitoral
   enlargement, hirsutism, scalp hair) versus reversible, why the first sign means
   stop that day, and why counterfeits are themselves a virilization risk.
-- 📚 **Compound library** — 22 common compounds grouped by class (injectable &
-  oral steroids; growth-hormone, recovery, metabolic/GLP-1 and other peptides),
-  each with a severity rating shown as a **label, never color alone**.
+- 📚 **Compound library** — 53 compounds grouped by class: injectable and oral
+  steroids, **SARMs and research anabolics** (RAD-140, LGD-4033, Ostarine, YK-11,
+  Cardarine, S-23, Andarine), **ancillaries and PCT** (HCG, aromatase inhibitors,
+  SERMs, cabergoline, proviron, finasteride, telmisartan, tadalafil), **fat-loss
+  and thyroid** agents (clenbuterol, T3, DNP, yohimbine), the growth-hormone axis
+  (HGH, CJC-1295, tesamorelin, sermorelin, GHRP-2/6, IGF-1 LR3, MK-677), and
+  recovery, metabolic/GLP-1 and other peptides. Each carries a severity rating
+  shown as a **label, never color alone**.
 - 🛡️ **Side effects & what counters them** — 20 side effects, each answering
   *"this is happening, what do I actually do?"* in three honest tiers: what's
   **free** (lower the dose, cardio, hydrate — usually the real fix), what's

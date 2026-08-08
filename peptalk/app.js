@@ -99,7 +99,7 @@
         html += `<button class="lib-item ${state.compound === c.id && state.view === "compound" ? "active" : ""}" data-id="${c.id}" role="listitem">
           <span>
             <span class="li-name">${c.name}</span><br>
-            <span class="li-aka">${c.aka}</span>
+            <span class="li-aka">${c.aka || c.klass}</span>
           </span>
           <span class="sev-dot ${c.severity}" title="${c.severity} risk" aria-hidden="true"></span>
           <span class="sr-only">${c.severity} risk</span>
@@ -264,7 +264,7 @@
       <div class="detail-head">
         <div class="dh-main">
           <h2>${d.name}</h2>
-          <p class="aka">${d.aka}</p>
+          <p class="aka">${d.aka || d.klass}</p>
           <div class="meta-row">
             ${sevPill(d.severity)}
             <span class="tag">${d.klass}</span>
@@ -395,7 +395,7 @@
           html += `<button class="pick-card${on ? " on" : ""}" data-id="${co.id}" aria-pressed="${on}">
             <span class="pc-check" aria-hidden="true">${icon("check")}</span>
             <span class="pc-name">${co.name}</span>
-            <span class="pc-aka">${co.aka}</span>
+            <span class="pc-aka">${co.aka || co.klass}</span>
             <span class="pc-meta"><span class="sev-dot ${co.severity}" aria-hidden="true"></span>${co.severity} risk · ${co.klass}</span>
           </button>`;
         });
@@ -484,7 +484,7 @@
         <button class="stk-remove" data-rm="${co.id}" aria-label="Remove ${co.name} from your stack">×</button>
         <button class="stk-main" data-open="${co.id}" title="Open ${co.name}">
           <b>${co.name}</b>
-          <span class="stk-aka">${co.aka}</span>
+          <span class="stk-aka">${co.aka || co.klass}</span>
         </button>
         <div class="stk-sev">${sevPill(co.severity)}</div>
       </div>`).join("");

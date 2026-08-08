@@ -1091,7 +1091,7 @@ PT.counterIntro =
 PT.counters = [
   {
     id: "estrogen", name: "High estrogen / gyno", icon: "venus",
-    compounds: ["testosterone", "dianabol", "anadrol", "nandrolone"],
+    compounds: ["testosterone", "dianabol", "anadrol", "nandrolone", "ment", "hcg"],
     what: "Aromatizing compounds convert testosterone into estradiol. Too much brings bloat, high blood pressure, mood swings and breast tissue growth — and once gyno becomes established fibrous tissue, only surgery removes it.",
     first: [
       "Lower the dose — aromatization is dose-dependent, and this is the actual fix rather than a workaround.",
@@ -1114,7 +1114,7 @@ PT.counters = [
   },
   {
     id: "lowE2", name: "Estrogen crushed too low", icon: "down",
-    compounds: ["testosterone", "masteron", "winstrol", "anavar"],
+    compounds: ["testosterone", "masteron", "winstrol", "anavar", "anastrozole", "exemestane"],
     what: "Usually self-inflicted with an aromatase inhibitor. Estrogen is not the enemy — you need it for joints, mood, libido, bone and lipids. Low estrogen feels worse than slightly high estrogen, and does more long-term damage.",
     first: [
       "Stop or reduce the aromatase inhibitor. It reverses over days to a couple of weeks.",
@@ -1132,7 +1132,7 @@ PT.counters = [
   },
   {
     id: "prolactin", name: "High prolactin", icon: "flask",
-    compounds: ["nandrolone", "trenbolone"],
+    compounds: ["nandrolone", "trenbolone", "ment", "ghrp2"],
     what: "19-nor compounds raise prolactin, which brings sexual dysfunction, low mood, and occasionally nipple discharge.",
     first: [
       "Lower the dose or drop the 19-nor.",
@@ -1151,7 +1151,7 @@ PT.counters = [
   },
   {
     id: "hematocrit", name: "Thick blood (high hematocrit)", icon: "drop",
-    compounds: ["testosterone", "boldenone", "trenbolone"],
+    compounds: ["testosterone", "boldenone", "trenbolone", "ment", "rad140", "lgd4033", "proviron"],
     what: "More red cells means thicker blood, which raises the risk of clots, stroke and heart attack. It's silent — you find it on a blood test, not by feel.",
     first: [
       "Hydrate properly and consistently — dehydration concentrates it further.",
@@ -1173,7 +1173,7 @@ PT.counters = [
   },
   {
     id: "bp", name: "High blood pressure", icon: "gauge",
-    compounds: ["anadrol", "trenbolone", "dianabol", "testosterone", "boldenone"],
+    compounds: ["anadrol", "trenbolone", "dianabol", "testosterone", "boldenone", "ment", "halotestin", "rad140", "lgd4033", "clenbuterol", "t3", "yohimbine"],
     what: "The most consistently damaging and most ignored side effect. It's symptomless until it isn't, and it quietly damages heart, kidneys, eyes and brain.",
     first: [
       "Real cardio, several times a week — the single biggest lever you have.",
@@ -1198,7 +1198,7 @@ PT.counters = [
   },
   {
     id: "lipids", name: "Wrecked cholesterol", icon: "heart",
-    compounds: ["winstrol", "superdrol", "anadrol", "dianabol", "turinabol", "anavar", "masteron", "trenbolone"],
+    compounds: ["winstrol", "superdrol", "anadrol", "dianabol", "turinabol", "anavar", "masteron", "trenbolone", "ment", "halotestin", "rad140", "lgd4033", "ostarine", "yk11", "s23", "andarine", "proviron", "anastrozole"],
     what: "AAS flatten HDL and push LDL/ApoB up — orals worst of all. This is the mechanism behind the long-term heart risk, and it moves within weeks.",
     first: [
       "Drop or shorten the oral. Nothing else you can do comes close to this.",
@@ -1218,7 +1218,7 @@ PT.counters = [
   },
   {
     id: "liver", name: "Liver stress", icon: "liver",
-    compounds: ["dianabol", "anadrol", "winstrol", "anavar", "superdrol", "turinabol"],
+    compounds: ["dianabol", "anadrol", "winstrol", "anavar", "superdrol", "turinabol", "halotestin", "yk11", "rad140", "lgd4033", "s23"],
     what: "17-alpha-alkylated orals back up bile flow and stress liver cells. Superdrol and Anadrol are the worst offenders, with documented cases of real liver injury.",
     first: [
       "Shorten the run and lower the dose — most harm-reduction guidance caps orals around 4–6 weeks.",
@@ -1241,7 +1241,7 @@ PT.counters = [
   },
   {
     id: "hairloss", name: "Hair loss", icon: "scissors",
-    compounds: ["masteron", "winstrol", "anavar", "testosterone", "trenbolone", "primobolan"],
+    compounds: ["masteron", "winstrol", "anavar", "testosterone", "trenbolone", "primobolan", "ment", "halotestin", "proviron", "rad140"],
     what: "Androgens accelerate male-pattern baldness in people genetically prone to it. What's lost is generally gone — prevention massively beats rescue here.",
     first: [
       "If you're genetically prone, avoid or minimise the strongly DHT-derived compounds (Masteron, Winstrol, Anavar, Primobolan).",
@@ -1262,7 +1262,7 @@ PT.counters = [
   },
   {
     id: "acne", name: "Acne & oily skin", icon: "spots",
-    compounds: ["testosterone", "trenbolone", "dianabol", "anadrol"],
+    compounds: ["testosterone", "trenbolone", "dianabol", "anadrol", "ment", "halotestin", "rad140", "lgd4033"],
     what: "Androgens drive sebum production. Usually manageable — but cystic acne scars permanently, so acting early matters.",
     first: [
       "Shower straight after training, change pillowcases often, don't pick.",
@@ -1283,7 +1283,7 @@ PT.counters = [
   },
   {
     id: "cramps", name: "Muscle cramps", icon: "bolt",
-    compounds: ["trenbolone", "winstrol", "anadrol"],
+    compounds: ["trenbolone", "winstrol", "anadrol", "clenbuterol", "t3"],
     what: "Brutal, sudden cramping — classically on trenbolone and stanozolol, and worse if you're dieting or sweating heavily.",
     first: [
       "Hydrate seriously and don't strip electrolytes while dieting.",
@@ -1299,7 +1299,7 @@ PT.counters = [
   },
   {
     id: "joints", name: "Dry, painful joints", icon: "bone",
-    compounds: ["winstrol", "masteron", "anavar", "trenbolone"],
+    compounds: ["winstrol", "masteron", "anavar", "trenbolone", "anastrozole", "exemestane", "t3"],
     what: "Drying compounds and low estrogen leave joints and tendons feeling grating and unlubricated — and meaningfully raise tear risk while you feel strongest.",
     first: [
       "Don't crush estradiol. Low E2 is the most common cause of \"Winstrol joints\", and people blame the compound.",
@@ -1315,7 +1315,7 @@ PT.counters = [
   },
   {
     id: "sleep", name: "Insomnia & night sweats", icon: "moon",
-    compounds: ["trenbolone", "mk677", "boldenone"],
+    compounds: ["trenbolone", "mk677", "boldenone", "clenbuterol", "yohimbine", "t3"],
     what: "Trenbolone is notorious for wrecking sleep and soaking the sheets. Chronic sleep loss then makes blood pressure, mood, insulin sensitivity and recovery all worse — it compounds.",
     first: [
       "Lower the dose. Tren insomnia is dose-dependent, and no supplement out-competes this.",
@@ -1337,7 +1337,7 @@ PT.counters = [
   },
   {
     id: "libido", name: "Sexual dysfunction", icon: "heart-crack",
-    compounds: ["nandrolone", "trenbolone", "masteron", "testosterone"],
+    compounds: ["nandrolone", "trenbolone", "masteron", "testosterone", "anastrozole", "exemestane", "finasteride", "s23", "lgd4033", "rad140", "cabergoline"],
     what: "\"Deca dick\" and its relatives. Almost always one of four things: estradiol too low, estradiol too high, prolactin high, or not enough androgen/DHT alongside a 19-nor.",
     first: [
       "Get bloods before changing anything — estradiol (sensitive), prolactin, total and free testosterone. Guessing here usually makes it worse.",
@@ -1352,7 +1352,7 @@ PT.counters = [
   },
   {
     id: "glucose", name: "Blood sugar & insulin resistance", icon: "sugar",
-    compounds: ["hgh", "mk677", "insulin", "ipamorelin"],
+    compounds: ["hgh", "mk677", "insulin", "ipamorelin", "cjc1295", "tesamorelin", "igf1lr3", "ghrp2"],
     what: "Growth hormone and MK-677 push blood glucose up and insulin sensitivity down. Left unchecked over years this is a genuine diabetes risk.",
     first: [
       "Cardio — the strongest non-drug lever on insulin sensitivity.",
@@ -1370,7 +1370,7 @@ PT.counters = [
   },
   {
     id: "atrophy", name: "Testicular atrophy & shutdown", icon: "tri-down",
-    compounds: ["testosterone", "nandrolone", "trenbolone", "boldenone", "dianabol", "anadrol", "winstrol", "anavar", "masteron", "primobolan", "superdrol", "turinabol"],
+    compounds: ["testosterone", "nandrolone", "trenbolone", "boldenone", "dianabol", "anadrol", "winstrol", "anavar", "masteron", "primobolan", "superdrol", "turinabol", "rad140", "lgd4033", "ostarine", "s23", "yk11", "andarine", "ment", "halotestin"],
     what: "Expected on every AAS — external androgen switches off the signal to your testicles, so they shrink and sperm production falls, often to zero.",
     first: [
       "Shorter, lower cycles recover far more reliably than long heavy ones.",
@@ -1387,7 +1387,7 @@ PT.counters = [
   },
   {
     id: "appetite", name: "Appetite loss & nausea", icon: "ban",
-    compounds: ["anadrol", "superdrol", "semaglutide", "tirzepatide", "melanotan2", "trenbolone"],
+    compounds: ["anadrol", "superdrol", "semaglutide", "tirzepatide", "melanotan2", "trenbolone", "retatrutide", "cabergoline"],
     what: "Two very different causes: harsh orals that make food unappealing, and GLP-1s that are supposed to. Either way the risk is the same — losing muscle and falling short on micronutrients.",
     first: [
       "Smaller, more frequent meals; eat slowly; avoid large greasy meals on a GLP-1.",
@@ -1405,7 +1405,7 @@ PT.counters = [
   },
   {
     id: "pip", name: "Injection pain (PIP)", icon: "syringe",
-    compounds: ["testosterone", "nandrolone", "trenbolone", "masteron", "primobolan", "boldenone", "winstrol"],
+    compounds: ["testosterone", "nandrolone", "trenbolone", "masteron", "primobolan", "boldenone", "winstrol", "ment"],
     what: "Post-injection pain. Ordinary soreness for a day or two is normal; severe, repeated PIP usually points at the oil, the concentration or the technique rather than at you.",
     first: [
       "Warm the vial in your hands and inject slowly.",
@@ -1439,7 +1439,7 @@ PT.counters = [
   },
   {
     id: "mood", name: "Mood, aggression & anxiety", icon: "brain",
-    compounds: ["trenbolone", "boldenone", "anadrol", "nandrolone"],
+    compounds: ["trenbolone", "boldenone", "anadrol", "nandrolone", "halotestin", "ment", "clomiphene", "finasteride", "anastrozole", "t3", "yohimbine", "clenbuterol", "s23"],
     what: "Irritability, anxiety, low mood, rage. Trenbolone is the worst offender and boldenone is known for anxiety — and the crash coming off is its own high-risk window.",
     first: [
       "Lower the dose or drop the compound. This is the fix; everything else is management.",
@@ -1458,7 +1458,7 @@ PT.counters = [
   },
   {
     id: "water", name: "Water retention & bloat", icon: "waves",
-    compounds: ["dianabol", "anadrol", "testosterone", "hgh", "mk677"],
+    compounds: ["dianabol", "anadrol", "testosterone", "hgh", "mk677", "ment", "cjc1295", "hcg", "ghrp2"],
     what: "Mostly estrogen-driven on aromatizing compounds, and dose-related on GH and MK-677. Cosmetically annoying, but it also drives up blood pressure, which is the part that matters.",
     first: [
       "Get estradiol into a sane range — not zero.",
@@ -1701,6 +1701,761 @@ PT.women = {
   ],
 };
 
+/* ============================================================================
+   Second wave: the classes people actually ask about that the first pass missed
+   — SARMs, the ancillary/PCT drugs, fat-loss agents, and the wider GH-axis and
+   metabolic peptides. Same harm-reduction framing: what it does, what it costs,
+   what to support, what to test.
+   ========================================================================== */
+PT.compounds.push(
+  /* ---------- SARMs & research anabolics ---------- */
+  {
+    id: "rad140", name: "RAD-140", aka: "Testolone",
+    klass: "SARM", group: "SARMs & research anabolics", route: "Oral",
+    severity: "high",
+    summary: "The strongest of the common SARMs and the one most often sold as a 'safer alternative to steroids'. It is not: it suppresses your own testosterone hard, crushes HDL, and has real case reports of liver injury behind it.",
+    risks: [
+      "Strong HPTA suppression — comparable to a mild steroid cycle, and recovery can be slow.",
+      "Marked HDL suppression and rising LDL.",
+      "Documented cases of drug-induced liver injury, including in people using label doses.",
+      "No long-term human safety data — it has never completed a full trial programme.",
+      "Grey-market products are frequently underdosed, mislabelled, or contain actual steroids.",
+    ],
+    depletes: "Not a classic nutrient-depleter. The cost lands on lipids and the liver, so that support matters more than any vitamin.",
+    support: [
+      { id: "omega3", note: "Front-line for the lipid hit." },
+      { id: "bergamot", note: "Counter the HDL suppression." },
+      { id: "tudca", note: "Liver support given the hepatotoxicity signal." },
+      { id: "nac", note: "Liver antioxidant support." },
+      { id: "vitd3k2", note: "Hormonal and arterial support while suppressed." },
+    ],
+    labs: ["liver", "lipids", "hormones", "cbc", "bp"],
+    warnings: [
+      "The word 'SARM' does not mean mild. Plan for suppression and recovery exactly as you would for a steroid cycle.",
+      "Get a liver panel mid-cycle. Jaundice, dark urine or right-sided abdominal pain means stop and see a doctor.",
+      "Because it is sold as a research chemical, what is in the bottle is genuinely unknown without third-party testing.",
+    ],
+  },
+  {
+    id: "lgd4033", name: "LGD-4033", aka: "Ligandrol, Anabolicum",
+    klass: "SARM", group: "SARMs & research anabolics", route: "Oral",
+    severity: "high",
+    summary: "One of the best-studied SARMs — which mainly means we have good evidence of how reliably it shuts down natural testosterone, even at low doses.",
+    risks: [
+      "Profound suppression: measurable at 1 mg/day in trials, near-total at typical use.",
+      "Sharp HDL drop within weeks.",
+      "Liver enzyme elevations and case reports of hepatotoxicity.",
+      "Suppression can outlast the cycle by months.",
+    ],
+    depletes: "Lipids and liver are where the damage shows; no distinctive vitamin depletion.",
+    support: [
+      { id: "omega3", note: "Lipid protection." },
+      { id: "bergamot", note: "HDL support." },
+      { id: "tudca", note: "Liver support." },
+      { id: "nac", note: "Liver antioxidant support." },
+    ],
+    labs: ["hormones", "lipids", "liver", "cbc", "bp"],
+    warnings: [
+      "Suppression here is not theoretical — it is the most consistently reproduced finding about this compound.",
+      "Test LH, FSH and total testosterone before and after. Recovery by feel is guesswork.",
+    ],
+  },
+  {
+    id: "ostarine", name: "Ostarine", aka: "MK-2866, Enobosarm",
+    klass: "SARM", group: "SARMs & research anabolics", route: "Oral",
+    severity: "moderate",
+    summary: "The mildest and most-trialled SARM, originally developed for muscle wasting. Genuinely gentler than the others — but 'gentler' still means suppressive, and it is the most common cause of accidental doping positives.",
+    risks: [
+      "Dose-dependent suppression — mild at low doses, meaningful at the doses people actually use.",
+      "HDL reduction.",
+      "Occasional liver enzyme elevation.",
+      "Trials in older patients showed muscle gains but no functional benefit, and development was discontinued.",
+    ],
+    depletes: "Nothing distinctive — lipid support is the priority.",
+    support: [
+      { id: "omega3", note: "Lipid support." },
+      { id: "bergamot", note: "HDL support." },
+      { id: "nac", note: "General liver antioxidant support." },
+    ],
+    labs: ["hormones", "lipids", "liver"],
+    warnings: [
+      "If you are drug-tested for sport, this is the single most common source of a positive — including from contaminated supplements.",
+      "Mild is not none: check hormones after a run rather than assuming you bounced back.",
+    ],
+  },
+  {
+    id: "yk11", name: "YK-11", aka: "Myostine",
+    klass: "SARM-like (steroidal)", group: "SARMs & research anabolics", route: "Oral",
+    severity: "severe",
+    summary: "Sold as a myostatin inhibitor, but chemically it is a methylated steroid — which means it carries steroid liver toxicity while being marketed as something safer and newer.",
+    risks: [
+      "17-alpha methylated: genuinely hepatotoxic.",
+      "Essentially no human safety data at all — the myostatin claims come from cell-culture work.",
+      "Reports of tendon and joint pain, plausibly from muscle strength outpacing connective tissue.",
+      "Strong suppression.",
+    ],
+    depletes: "Liver first; lipids close behind.",
+    support: [
+      { id: "tudca", note: "Liver support for the whole run — treat this like an oral steroid." },
+      { id: "nac", note: "Liver antioxidant support." },
+      { id: "omega3", note: "Lipid support." },
+      { id: "bergamot", note: "HDL support." },
+    ],
+    labs: ["liver", "lipids", "hormones", "bp"],
+    warnings: [
+      "Calling this a SARM is a marketing decision, not a chemical one. Treat it as a harsh oral steroid.",
+      "There is no dose here that is supported by human data, because there is no human data.",
+    ],
+  },
+  {
+    id: "cardarine", name: "Cardarine", aka: "GW-501516, Endurobol",
+    klass: "PPAR-delta agonist", group: "SARMs & research anabolics", route: "Oral",
+    severity: "severe",
+    summary: "Not a SARM and not hormonal — a metabolic drug that genuinely improves endurance and fat oxidation. Development was abandoned because long-term rodent studies produced cancers across multiple organs.",
+    risks: [
+      "Rodent carcinogenicity across several organ systems, which ended its development.",
+      "No long-term human safety data exists, and none is coming.",
+      "Not suppressive and not liver-toxic — the risk profile is entirely about the cancer signal.",
+    ],
+    depletes: "No characteristic nutrient depletion.",
+    support: [
+      { id: "multivit", note: "General nutritional cover; there is no supplement that addresses the actual concern here." },
+    ],
+    labs: ["lipids", "liver", "glucose"],
+    warnings: [
+      "The rodent doses were high and long — but 'we stopped developing it because of tumours' is the whole reason this is not a prescription drug today.",
+      "Nothing you can take alongside it mitigates that risk. This is a decision, not a protocol.",
+    ],
+  },
+  {
+    id: "s23", name: "S-23", aka: "SARM S-23",
+    klass: "SARM", group: "SARMs & research anabolics", route: "Oral",
+    severity: "severe",
+    summary: "The most suppressive SARM by a wide margin — it was investigated as a male contraceptive precisely because it reliably stops sperm production.",
+    risks: [
+      "Near-complete suppression of testosterone and sperm production.",
+      "Marked lipid deterioration.",
+      "Aggression and mood changes commonly reported.",
+      "Essentially no human safety data outside the contraceptive research context.",
+    ],
+    depletes: "Lipids; no distinctive vitamin depletion.",
+    support: [
+      { id: "omega3", note: "Lipid support." },
+      { id: "bergamot", note: "HDL support." },
+      { id: "vitd3k2", note: "Support while heavily suppressed." },
+    ],
+    labs: ["hormones", "lipids", "liver", "cbc"],
+    warnings: [
+      "If you want children in the foreseeable future, this is the wrong compound — fertility suppression is the point of it.",
+      "Recovery is slower than most people expect. Plan the exit before the entry.",
+    ],
+  },
+  {
+    id: "andarine", name: "Andarine", aka: "S-4",
+    klass: "SARM", group: "SARMs & research anabolics", route: "Oral",
+    severity: "high",
+    summary: "An older SARM known for one unusual and unmistakable side effect: a yellow tint to vision and difficulty adapting to darkness.",
+    risks: [
+      "Visual disturbance — yellow-tinted vision and poor night adaptation, dose-dependent and usually reversible on stopping.",
+      "Suppression of natural testosterone.",
+      "Lipid deterioration.",
+    ],
+    depletes: "Nothing distinctive.",
+    support: [
+      { id: "omega3", note: "Lipid support." },
+      { id: "vitc", note: "General antioxidant support." },
+      { id: "bergamot", note: "HDL support." },
+    ],
+    labs: ["hormones", "lipids", "liver"],
+    warnings: [
+      "Do not drive at night if your dark adaptation is affected — this is a practical safety issue, not a cosmetic one.",
+      "Vision changes that do not resolve after stopping need an eye examination.",
+    ],
+  },
+
+  /* ---------- Ancillaries & PCT ---------- */
+  {
+    id: "hcg", name: "HCG", aka: "Human chorionic gonadotropin, Pregnyl, Ovidrel",
+    klass: "Hormone (LH analogue)", group: "Ancillaries & PCT", route: "Injection (subcutaneous)",
+    severity: "moderate",
+    summary: "Mimics LH, telling the testes to keep working while suppressive compounds are shutting the signal down. Used on-cycle to preserve testicular size and fertility, and before PCT to restart a shut-down system.",
+    risks: [
+      "Raises estradiol, sometimes sharply, because intratesticular testosterone rises and aromatizes.",
+      "High or prolonged doses desensitise the Leydig cells — the opposite of the intended effect.",
+      "Does not replace a proper PCT; it restarts the testes, not the brain's signalling.",
+    ],
+    depletes: "No characteristic depletion.",
+    support: [
+      { id: "omega3", note: "General cardiovascular support alongside the compounds it accompanies." },
+      { id: "vitd3k2", note: "Supports healthy hormonal function." },
+      { id: "zinc", note: "Supports androgen production." },
+    ],
+    labs: ["hormones", "lipids"],
+    warnings: [
+      "Low and steady beats high and heroic — desensitisation from big doses is a genuinely common own goal.",
+      "Watch estradiol; a rapid rise here is one of the more common causes of gyno on an otherwise sane cycle.",
+      "If fertility is the goal, involve a doctor. This is one area where proper monitoring changes outcomes a lot.",
+    ],
+  },
+  {
+    id: "anastrozole", name: "Anastrozole", aka: "Arimidex, adex, AI",
+    klass: "Ancillary (aromatase inhibitor)", group: "Ancillaries & PCT", route: "Oral",
+    severity: "moderate",
+    summary: "Blocks the conversion of testosterone to estradiol. Effective and widely misused — most of the harm from AIs comes not from the drug but from people taking it blind and crushing an oestrogen level they needed.",
+    risks: [
+      "Over-suppression of estradiol: joint pain, flat mood, no libido, poor sleep, dry joints.",
+      "Estrogen is protective for lipids and bone — crushing it worsens both.",
+      "Symptoms of high and low estradiol overlap heavily, so dosing by feel usually makes things worse.",
+    ],
+    depletes: "Low estradiol accelerates bone turnover — vitamin D, K2 and calcium intake matter more while on it.",
+    support: [
+      { id: "vitd3k2", note: "Bone support while estradiol is suppressed." },
+      { id: "magnesium", note: "Bone and sleep support." },
+      { id: "omega3", note: "Offset the lipid cost of low estradiol." },
+    ],
+    labs: ["hormones", "lipids"],
+    warnings: [
+      "Never run an AI 'just in case' from day one. Crushing estradiol is its own harm and a very common one.",
+      "Use a sensitive estradiol assay to dose this, not how you feel.",
+      "If gyno is the actual problem, a SERM is usually the better tool than flattening estradiol everywhere.",
+    ],
+  },
+  {
+    id: "exemestane", name: "Exemestane", aka: "Aromasin",
+    klass: "Ancillary (aromatase inhibitor)", group: "Ancillaries & PCT", route: "Oral",
+    severity: "moderate",
+    summary: "A steroidal aromatase inhibitor that binds the enzyme permanently rather than competitively — often preferred because it is harder to trigger a rebound and appears kinder to lipids than anastrozole.",
+    risks: [
+      "Same core hazard as any AI: driving estradiol too low.",
+      "Joint pain, low libido and mood effects when over-suppressed.",
+      "Mild androgenic activity of its own.",
+    ],
+    depletes: "As with any AI, low estradiol raises the importance of bone-supporting nutrients.",
+    support: [
+      { id: "vitd3k2", note: "Bone support." },
+      { id: "magnesium", note: "Bone and sleep support." },
+      { id: "omega3", note: "Lipid support." },
+    ],
+    labs: ["hormones", "lipids"],
+    warnings: [
+      "Kinder to lipids than anastrozole is not the same as harmless — it is still an oestrogen-lowering drug.",
+      "Dose against bloodwork, not symptoms.",
+    ],
+  },
+  {
+    id: "tamoxifen", name: "Tamoxifen", aka: "Nolvadex, nolva",
+    klass: "Ancillary (SERM)", group: "Ancillaries & PCT", route: "Oral",
+    severity: "moderate",
+    summary: "Blocks oestrogen at breast tissue while leaving it working elsewhere — which makes it the right tool for gyno and a mainstay of PCT, without the collateral damage of flattening estradiol everywhere.",
+    risks: [
+      "Increased risk of blood clots, particularly alongside high haematocrit.",
+      "Eye changes with long or high-dose use.",
+      "Mood effects and reduced libido during use.",
+      "Interacts with some antidepressants (notably strong CYP2D6 inhibitors), which blunt its effect.",
+    ],
+    depletes: "No characteristic depletion.",
+    support: [
+      { id: "omega3", note: "General cardiovascular support; also mildly helpful for blood viscosity." },
+      { id: "vitd3k2", note: "Bone and general hormonal support." },
+    ],
+    labs: ["hormones", "liver", "lipids", "cbc"],
+    warnings: [
+      "Early gyno is drug-treatable; established fibrous tissue is surgical. Do not wait months on a tender lump.",
+      "Clot risk is real — combining a SERM with a haematocrit of 54% is a bad combination.",
+      "Tell any prescriber you are taking it; the interaction list is longer than most people expect.",
+    ],
+  },
+  {
+    id: "clomiphene", name: "Clomiphene", aka: "Clomid, clomifene",
+    klass: "Ancillary (SERM)", group: "Ancillaries & PCT", route: "Oral",
+    severity: "moderate",
+    summary: "A SERM that pushes the brain to restart LH and FSH output — the classic PCT drug, and a fertility treatment in its own right. More prone to mood and visual side effects than tamoxifen.",
+    risks: [
+      "Mood disturbance, anxiety and low mood — common enough that many people switch to tamoxifen or enclomiphene.",
+      "Visual disturbance: floaters, blurring, light trails. This warrants stopping and a medical opinion.",
+      "Raises estradiol as testosterone recovers.",
+    ],
+    depletes: "No characteristic depletion.",
+    support: [
+      { id: "vitd3k2", note: "Supports recovering hormonal function." },
+      { id: "zinc", note: "Supports androgen production during recovery." },
+      { id: "omega3", note: "General support through a period of poor lipids." },
+    ],
+    labs: ["hormones", "lipids", "liver"],
+    warnings: [
+      "Visual side effects are a stop-and-see-a-doctor signal, not something to push through.",
+      "If your mood drops hard on it, that is a recognised effect of the drug — say so rather than assuming it is you.",
+    ],
+  },
+  {
+    id: "enclomiphene", name: "Enclomiphene", aka: "Androxal, enclomifene",
+    klass: "Ancillary (SERM)", group: "Ancillaries & PCT", route: "Oral",
+    severity: "moderate",
+    summary: "The isolated active isomer of clomiphene, separated out to keep the LH-raising effect while dropping much of the mood and visual baggage attributed to the other isomer.",
+    risks: [
+      "Still a SERM: mood effects and rising estradiol are possible, just reported less often.",
+      "Sold largely through grey-market and telehealth channels, so quality varies.",
+      "Long-term data is thinner than for clomiphene itself.",
+    ],
+    depletes: "No characteristic depletion.",
+    support: [
+      { id: "vitd3k2", note: "Supports recovering hormonal function." },
+      { id: "zinc", note: "Androgen support during recovery." },
+    ],
+    labs: ["hormones", "lipids"],
+    warnings: [
+      "Better tolerated is not the same as side-effect free — confirm recovery with bloods either way.",
+      "It restarts your own production; it does nothing for you if the testes themselves are the problem.",
+    ],
+  },
+  {
+    id: "cabergoline", name: "Cabergoline", aka: "Dostinex, caber",
+    klass: "Ancillary (dopamine agonist)", group: "Ancillaries & PCT", route: "Oral",
+    severity: "high",
+    summary: "Lowers prolactin, which is the fix for the sexual dysfunction and lactation that 19-nor compounds like nandrolone and trenbolone can cause. Powerful, and easy to overshoot.",
+    risks: [
+      "Heart valve changes at the high sustained doses used in Parkinson's disease — far above typical use here, but the reason to keep the dose low and confirm prolactin is actually high first.",
+      "Nausea, dizziness and low blood pressure, especially on the first doses.",
+      "Impulse-control effects — compulsive spending, gambling and sexual behaviour are documented dopamine-agonist effects.",
+      "Crushing prolactin too low causes its own sexual dysfunction, which people then misread as needing more.",
+    ],
+    depletes: "No characteristic depletion.",
+    support: [
+      { id: "vitd3k2", note: "General support; does not address prolactin." },
+      { id: "b12", note: "General neurological support." },
+    ],
+    labs: ["hormones", "bp"],
+    warnings: [
+      "Confirm high prolactin on a blood test before treating it. Low libido on cycle has several causes and this is only one of them.",
+      "Take it at night with food — most of the nausea and dizziness lands in the first few doses.",
+      "If you notice new compulsive behaviour, that is the drug. Stop and speak to a doctor.",
+    ],
+  },
+  {
+    id: "proviron", name: "Proviron", aka: "Mesterolone",
+    klass: "Anabolic steroid", group: "Ancillaries & PCT", route: "Oral",
+    severity: "moderate",
+    summary: "A weak oral androgen used less for growth than as an ancillary — it binds SHBG, freeing up more of your own testosterone, and takes some of the oestrogenic edge off a cycle. Not 17-alpha methylated, so not liver-toxic in the way orals usually are.",
+    risks: [
+      "Suppressive at higher doses despite the mild reputation.",
+      "Strongly DHT-derived: accelerates male pattern hair loss in those predisposed.",
+      "Negative lipid impact.",
+      "Provides no real protection against gyno on its own.",
+    ],
+    depletes: "Lipids are the main cost; no distinctive vitamin depletion.",
+    support: [
+      { id: "omega3", note: "Lipid support." },
+      { id: "bergamot", note: "HDL support." },
+      { id: "vitd3k2", note: "General hormonal and arterial support." },
+    ],
+    labs: ["hormones", "lipids", "psa"],
+    warnings: [
+      "Not liver-toxic is not the same as harmless — the lipid and hair costs are real.",
+      "It is not an aromatase inhibitor. If you have an actual estradiol problem, this is not the fix.",
+    ],
+  },
+  {
+    id: "finasteride", name: "Finasteride", aka: "Propecia, Proscar, fin",
+    klass: "Ancillary (5-alpha reductase inhibitor)", group: "Ancillaries & PCT", route: "Oral",
+    severity: "high",
+    summary: "Blocks conversion of testosterone to DHT, which slows androgenic hair loss. Effective for that one job, and carrying a side-effect debate serious enough that it deserves a real decision rather than a casual one.",
+    risks: [
+      "Sexual side effects — low libido, erectile difficulty, reduced ejaculate — in a minority of users.",
+      "Persistent symptoms after stopping in a small subset, described as post-finasteride syndrome. Contested in mechanism, but reported consistently enough to take seriously.",
+      "Mood effects including depression.",
+      "Useless against hair loss driven by compounds that are not DHT-derived, and it cannot block the strongly DHT-derived steroids at typical doses.",
+    ],
+    depletes: "No characteristic depletion.",
+    support: [
+      { id: "vitd3k2", note: "General support; does not modify the drug's effects." },
+      { id: "zinc", note: "General androgen and hair support." },
+    ],
+    labs: ["hormones", "psa"],
+    warnings: [
+      "It roughly halves PSA readings. Tell any doctor checking your prostate that you take it, or a real problem can be masked.",
+      "If mood or sexual function change meaningfully, stop and talk to a doctor rather than pushing on.",
+      "Topical formulations exist and expose you to less of the drug systemically — worth discussing if hair is the only goal.",
+    ],
+  },
+  {
+    id: "telmisartan", name: "Telmisartan", aka: "Micardis, ARB",
+    klass: "Ancillary (blood pressure)", group: "Ancillaries & PCT", route: "Oral",
+    severity: "moderate",
+    summary: "A blood-pressure medication (angiotensin receptor blocker) widely used in this space because high blood pressure is one of the most common and most fixable harms of a cycle. Genuinely one of the more protective things on this list.",
+    risks: [
+      "Blood pressure can drop too low, causing dizziness — especially standing up quickly or when dehydrated.",
+      "Raises potassium; relevant if you also use potassium supplements or certain other drugs.",
+      "Affects kidney function measures — worth monitoring rather than ignoring.",
+      "Genuinely unsafe in pregnancy.",
+    ],
+    depletes: "No characteristic depletion, but it raises potassium rather than lowering it — do not stack potassium supplements on top without advice.",
+    support: [
+      { id: "omega3", note: "Works with it on blood pressure and lipids." },
+      { id: "citrulline", note: "Supports vasodilation; watch for additive blood-pressure lowering." },
+      { id: "coq10", note: "Cardiovascular support." },
+    ],
+    labs: ["bp", "kidney", "lipids"],
+    warnings: [
+      "This is a prescription medicine with real interactions. Getting it through a doctor also gets you the monitoring that makes it safe.",
+      "Do not stack it with other blood-pressure drugs or high-dose citrulline without checking your readings.",
+      "Treating high blood pressure is good; using a drug so you can ignore a dose that is causing it is not.",
+    ],
+  },
+  {
+    id: "tadalafil", name: "Tadalafil", aka: "Cialis",
+    klass: "Ancillary (PDE5 inhibitor)", group: "Ancillaries & PCT", route: "Oral",
+    severity: "moderate",
+    summary: "Best known for erectile function, but used on cycle at low daily doses for blood pressure, blood flow and prostate symptoms — the long half-life makes daily dosing practical.",
+    risks: [
+      "Lowers blood pressure — additive with other blood-pressure drugs, and dangerous with nitrates.",
+      "Headache, flushing, nasal congestion, back pain.",
+      "Rare but serious: sudden hearing or vision loss, and prolonged erection, both of which are emergencies.",
+    ],
+    depletes: "No characteristic depletion.",
+    support: [
+      { id: "citrulline", note: "Similar pathway; the combination can drop blood pressure more than expected." },
+      { id: "omega3", note: "General cardiovascular support." },
+    ],
+    labs: ["bp", "hormones"],
+    warnings: [
+      "Never combine with nitrates or poppers. That combination causes dangerous, sometimes fatal, blood-pressure collapse.",
+      "An erection lasting over four hours is a medical emergency — permanent damage starts within hours.",
+      "If erectile function is failing on cycle, get bloods. The cause is usually estradiol, prolactin or blood pressure, and this only masks it.",
+    ],
+  },
+
+  /* ---------- Fat loss & thyroid ---------- */
+  {
+    id: "clenbuterol", name: "Clenbuterol", aka: "Clen",
+    klass: "Beta-2 agonist", group: "Fat loss & thyroid", route: "Oral",
+    severity: "high",
+    summary: "A bronchodilator used off-label as a fat burner. It raises metabolic rate a little and heart rate a lot, and the cardiac effects are the part people underestimate.",
+    risks: [
+      "Tachycardia, palpitations, tremor and anxiety.",
+      "Cardiac hypertrophy with prolonged use — shown in animal work and a real concern in humans.",
+      "Severe muscle cramps, driven partly by taurine and potassium depletion.",
+      "Insomnia and heat intolerance.",
+      "Very long half-life, so it accumulates and the effects stack across days.",
+    ],
+    depletes: "Taurine and potassium specifically — the cramps people get on clenbuterol are largely this. Magnesium goes too.",
+    support: [
+      { id: "taurine", note: "Directly addresses the cramps clenbuterol causes; the single most useful addition." },
+      { id: "electrolytes", note: "Potassium and sodium replacement for cramping." },
+      { id: "magnesium", note: "Cramps, sleep and heart rhythm support." },
+      { id: "coq10", note: "Cardiac support under sustained stimulation." },
+    ],
+    labs: ["bp", "glucose", "kidney"],
+    warnings: [
+      "Chest pain, fainting or a heart rate that will not settle means stop and get seen.",
+      "Cardiac hypertrophy is not something you feel happening. Long continuous use is the highest-risk pattern.",
+      "Never combine with other strong stimulants, and be careful with caffeine while on it.",
+    ],
+  },
+  {
+    id: "t3", name: "T3", aka: "Liothyronine, Cytomel",
+    klass: "Thyroid hormone", group: "Fat loss & thyroid", route: "Oral",
+    severity: "high",
+    summary: "Active thyroid hormone taken to raise metabolic rate. It works, and it burns muscle alongside fat while suppressing your own thyroid output.",
+    risks: [
+      "Muscle loss — T3 is catabolic, and this is the main reason it is usually run alongside anabolics.",
+      "Suppression of your own thyroid production, which needs a taper to recover.",
+      "Cardiac strain: raised heart rate, palpitations, arrhythmia risk.",
+      "Bone loss with prolonged over-replacement.",
+      "Heat intolerance, anxiety, tremor.",
+    ],
+    depletes: "Raises overall metabolic demand — protein, selenium, iron and B vitamins all matter more. Bone turnover rises too.",
+    support: [
+      { id: "protein", note: "Essential — the muscle loss is the defining cost of running T3." },
+      { id: "multivit", note: "Covers selenium and the micronutrients thyroid function depends on." },
+      { id: "vitd3k2", note: "Bone support against raised turnover." },
+      { id: "magnesium", note: "Heart rhythm and sleep support." },
+    ],
+    labs: ["thyroid", "bp", "lipids", "cbc"],
+    warnings: [
+      "Taper off rather than stopping abruptly, or you land in a hypothyroid hole for weeks.",
+      "Get a full thyroid panel before starting. Suppressing a thyroid that was already struggling is a bad trade.",
+      "Palpitations or an irregular heartbeat mean stop and get checked.",
+    ],
+  },
+  {
+    id: "dnp", name: "DNP", aka: "2,4-Dinitrophenol",
+    klass: "Metabolic uncoupler", group: "Fat loss & thyroid", route: "Oral",
+    severity: "severe",
+    summary: "The most dangerous compound in this entire reference. It forces cells to burn energy as heat, which does cause dramatic fat loss — and kills people at doses not far above the ones they intended to take. There is no antidote.",
+    risks: [
+      "Fatal hyperthermia: body temperature runs away, and once it does there is no treatment that reliably reverses it.",
+      "The gap between an effective dose and a lethal one is small, and it varies between people.",
+      "It accumulates over days, so a dose that was fine on day one can kill on day four.",
+      "Cataracts, peripheral neuropathy and severe skin reactions.",
+      "Deaths continue to be reported regularly, including in healthy young people using carefully.",
+    ],
+    depletes: "Massive fluid and electrolyte losses through sweating, and heavy oxidative stress.",
+    support: [
+      { id: "electrolytes", note: "Fluid and electrolyte losses are extreme. This mitigates dehydration, not the fundamental danger." },
+      { id: "vitc", note: "Antioxidant support against the oxidative stress. Does not make the compound safe." },
+      { id: "multivit", note: "Broad micronutrient cover under extreme metabolic demand." },
+    ],
+    labs: ["cbc", "kidney", "liver", "glucose"],
+    warnings: [
+      "There is no safe protocol for this compound, and nothing on this page should be read as one. The honest harm-reduction answer is do not use it.",
+      "Feeling excessively hot, a rising temperature, confusion, or a racing heart is a medical emergency. Call an ambulance and say you have taken DNP — treatment is aggressive cooling and it must start early.",
+      "Never redose because 'it does not feel like it is working'. Accumulation is exactly how the fatal cases happen.",
+      "Overheating risk multiplies with hot weather, exercise, alcohol and stimulants.",
+    ],
+  },
+  {
+    id: "yohimbine", name: "Yohimbine", aka: "Yohimbe, alpha-yohimbine",
+    klass: "Alpha-2 antagonist", group: "Fat loss & thyroid", route: "Oral",
+    severity: "moderate",
+    summary: "Blocks the receptors that hold back fat release from stubborn areas, usually taken fasted before training. Effective in that narrow role and unpleasantly stimulating for many people.",
+    risks: [
+      "Anxiety, panic and racing heart — common, and worse in people prone to anxiety.",
+      "Blood pressure spikes.",
+      "Dangerous interactions with MAOI antidepressants and with heavy stimulant use.",
+      "Supplement products are notoriously variable in actual content.",
+    ],
+    depletes: "No characteristic depletion.",
+    support: [
+      { id: "magnesium", note: "Takes some of the edge off the stimulation." },
+      { id: "taurine", note: "Calming counterweight to the adrenergic effect." },
+    ],
+    labs: ["bp"],
+    warnings: [
+      "Start at a fraction of the label dose. The anxiety response is very individual.",
+      "Skip it entirely if you have a heart condition, high blood pressure or an anxiety disorder.",
+      "Do not stack it with high-dose caffeine or other stimulants for the sake of a harder session.",
+    ],
+  },
+
+  /* ---------- Growth hormone axis ---------- */
+  {
+    id: "cjc1295", name: "CJC-1295", aka: "Mod GRF 1-29, with or without DAC",
+    klass: "Peptide (GH secretagogues)", group: "Growth hormone axis", route: "Injection (subcutaneous)",
+    severity: "moderate",
+    summary: "A growth-hormone-releasing hormone analogue that prompts your pituitary to release its own GH. The DAC version has a long half-life and keeps levels elevated continuously; without DAC it produces short pulses closer to natural rhythm.",
+    risks: [
+      "Water retention, numbness and carpal tunnel symptoms.",
+      "Insulin resistance and rising blood sugar, more so with the sustained DAC version.",
+      "Sustained elevation is less physiological than pulsing and is the version more associated with side effects.",
+      "Standard GH concerns apply: growth of tissue you may not want grown.",
+    ],
+    depletes: "No specific vitamin depletion; the metabolic load is on glucose control.",
+    support: [
+      { id: "magnesium", note: "Sleep and glucose support." },
+      { id: "omega3", note: "Supports insulin sensitivity." },
+      { id: "fiber", note: "Blunts the glucose impact." },
+      { id: "vitd3k2", note: "General support." },
+    ],
+    labs: ["igf1", "glucose", "lipids", "thyroid"],
+    warnings: [
+      "Track IGF-1, not how you feel — it is the only meaningful readout of whether it is doing anything.",
+      "Persistent numbness or tingling in the hands means the dose is too high.",
+      "Anyone with a cancer history should not use GH-raising compounds without an oncologist's input.",
+    ],
+  },
+  {
+    id: "tesamorelin", name: "Tesamorelin", aka: "Egrifta",
+    klass: "Peptide (GH secretagogues)", group: "Growth hormone axis", route: "Injection (subcutaneous)",
+    severity: "moderate",
+    summary: "The one GH-releasing peptide with a real approval behind it — licensed to reduce visceral abdominal fat in HIV lipodystrophy, with proper trial data on both effect and safety.",
+    risks: [
+      "Raises blood sugar and can worsen insulin resistance.",
+      "Joint pain, swelling and muscle aches.",
+      "Injection-site reactions are common.",
+      "Benefits reverse when you stop.",
+    ],
+    depletes: "No characteristic depletion; glucose control is the thing to watch.",
+    support: [
+      { id: "fiber", note: "Glucose support." },
+      { id: "omega3", note: "Insulin sensitivity and lipid support." },
+      { id: "magnesium", note: "Glucose and sleep support." },
+    ],
+    labs: ["igf1", "glucose", "lipids"],
+    warnings: [
+      "It targets visceral fat specifically — it is not a general weight-loss drug.",
+      "Check fasting glucose and HbA1c before and during; the glucose effect is the best-documented downside.",
+    ],
+  },
+  {
+    id: "sermorelin", name: "Sermorelin", aka: "GRF 1-29, Geref",
+    klass: "Peptide (GH secretagogues)", group: "Growth hormone axis", route: "Injection (subcutaneous)",
+    severity: "moderate",
+    summary: "The shortest-acting and mildest of the GH-releasing peptides, producing a brief natural-shaped pulse. Widely used in anti-ageing clinics, with effects proportionally modest.",
+    risks: [
+      "Mild versions of the usual GH effects: water retention, joint aches, altered glucose.",
+      "Injection-site redness and flushing.",
+      "Effects are genuinely subtle — expectations are usually the biggest problem.",
+    ],
+    depletes: "No characteristic depletion.",
+    support: [
+      { id: "magnesium", note: "Sleep support, where most of the benefit is reported." },
+      { id: "omega3", note: "General metabolic support." },
+    ],
+    labs: ["igf1", "glucose"],
+    warnings: [
+      "If IGF-1 does not move, it is not working — and paying for it anyway is the most common outcome here.",
+      "It relies on a working pituitary; it cannot do anything if that is the limiting factor.",
+    ],
+  },
+  {
+    id: "ghrp2", name: "GHRP-2 / GHRP-6", aka: "Pralmorelin, growth-hormone releasing peptides",
+    klass: "Peptide (GH secretagogues)", group: "Growth hormone axis", route: "Injection (subcutaneous)",
+    severity: "moderate",
+    summary: "Ghrelin mimetics that trigger a GH pulse through a different receptor than the GHRH peptides, which is why the two classes are often combined. GHRP-6 also causes ferocious hunger; GHRP-2 much less so.",
+    risks: [
+      "Raises prolactin and cortisol — GHRP-6 noticeably more than GHRP-2.",
+      "Intense hunger, useful when bulking and miserable when cutting.",
+      "Water retention and tingling hands.",
+      "Blood sugar effects as with any GH-raising compound.",
+    ],
+    depletes: "No characteristic depletion.",
+    support: [
+      { id: "magnesium", note: "Sleep and glucose support." },
+      { id: "fiber", note: "Helps manage both appetite and glucose." },
+      { id: "omega3", note: "Insulin sensitivity support." },
+    ],
+    labs: ["igf1", "glucose", "hormones"],
+    warnings: [
+      "If libido drops or you get nipple sensitivity, check prolactin — that is the mechanism here.",
+      "Cortisol elevation works against the point of the exercise; keep doses modest rather than maximal.",
+    ],
+  },
+  {
+    id: "igf1lr3", name: "IGF-1 LR3", aka: "Long R3 IGF-1",
+    klass: "Peptide (growth factor)", group: "Growth hormone axis", route: "Injection (subcutaneous)",
+    severity: "high",
+    summary: "A modified form of the growth factor that GH actually works through, engineered to resist binding proteins and last far longer than natural IGF-1 — which is exactly why it is riskier than the peptides that simply nudge your pituitary.",
+    risks: [
+      "Hypoglycaemia — it acts on insulin receptors, and low blood sugar can come on fast.",
+      "Suppresses your own GH output through feedback.",
+      "Theoretical but serious concern about promoting growth of existing tumours.",
+      "Organ and tissue growth you did not ask for.",
+      "Grey-market purity is a real problem for a compound this potent.",
+    ],
+    depletes: "No characteristic depletion; the acute risk is blood glucose, not micronutrients.",
+    support: [
+      { id: "protein", note: "Supports the intended anabolic effect and helps stabilise blood sugar." },
+      { id: "fiber", note: "Steadier glucose through the day." },
+      { id: "omega3", note: "Insulin sensitivity support." },
+    ],
+    labs: ["igf1", "glucose", "lipids", "kidney"],
+    warnings: [
+      "Keep fast carbohydrate within reach. Shakiness, sweating, confusion or blurred vision means take sugar now.",
+      "Anyone with a personal or family cancer history should not be experimenting with growth factors.",
+      "Never combine with insulin without genuinely understanding both — that combination causes the most severe hypoglycaemia seen in this space.",
+    ],
+  },
+
+  /* ---------- Metabolic peptides ---------- */
+  {
+    id: "retatrutide", name: "Retatrutide", aka: "LY3437943",
+    klass: "Peptide (GIP/GLP-1/glucagon agonist)", group: "Metabolic peptides", route: "Injection (subcutaneous)",
+    severity: "high",
+    summary: "A triple agonist producing the largest weight loss yet seen in obesity trials. It is also still investigational — no approved product exists, so everything currently circulating is grey-market with no quality guarantee.",
+    risks: [
+      "No approved product means no verified source. This is the dominant practical risk right now.",
+      "Heart rate increases were seen consistently in trials.",
+      "Severe nausea, vomiting and diarrhoea, particularly while titrating.",
+      "Rapid weight loss carries muscle loss and gallstone risk.",
+      "Long-term safety is genuinely unknown — the trials are not finished.",
+    ],
+    depletes: "Sharply reduced food intake means protein and micronutrients fall unless deliberately maintained.",
+    support: [
+      { id: "protein", note: "Essential — muscle loss during fast weight loss is the main avoidable harm." },
+      { id: "multivit", note: "Cover for a much smaller total food intake." },
+      { id: "electrolytes", note: "Replacement during vomiting or diarrhoea." },
+      { id: "fiber", note: "Helps with the constipation that follows." },
+    ],
+    labs: ["glucose", "lipids", "kidney", "liver", "thyroid"],
+    warnings: [
+      "Titrate slowly. Nearly all of the severe gastrointestinal effects come from going up too fast.",
+      "Severe, persistent abdominal pain radiating to the back can mean pancreatitis — that is an emergency.",
+      "Resistance training and high protein are not optional here; without them a large share of what you lose is muscle.",
+    ],
+  },
+
+  /* ---------- Injectable & oral steroid additions ---------- */
+  {
+    id: "ment", name: "MENT", aka: "Trestolone acetate, 7-alpha-methyl-19-nortestosterone",
+    klass: "Anabolic steroid", group: "Injectable", route: "Injection (intramuscular)",
+    severity: "severe",
+    summary: "Extraordinarily potent — several times the anabolic strength of testosterone — and it aromatises into a potent oestrogen at a high rate. It was researched as a male contraceptive because it shuts down natural production completely.",
+    risks: [
+      "Total and rapid suppression of natural testosterone and sperm production.",
+      "Very high aromatisation: gyno, water retention and blood pressure come on fast.",
+      "Severe lipid deterioration.",
+      "A 19-nor compound, so prolactin and the sexual side effects that come with it.",
+      "Blood pressure and haematocrit rise quickly.",
+    ],
+    depletes: "Cardiovascular strain is the main cost; the lipid and blood-pressure support stack is not optional.",
+    support: [
+      { id: "omega3", note: "Front-line for lipids and blood pressure." },
+      { id: "bergamot", note: "Counter the severe HDL suppression." },
+      { id: "citrulline", note: "Blood pressure support." },
+      { id: "coq10", note: "Cardiac support." },
+      { id: "vitd3k2", note: "Arterial and hormonal support." },
+    ],
+    labs: ["lipids", "cbc", "hormones", "bp", "liver", "kidney"],
+    warnings: [
+      "Aromatisation is fast enough that gyno can establish in weeks. Have a plan and bloodwork before you need them.",
+      "Recovery is slow and fertility suppression is profound — this was studied as a contraceptive for a reason.",
+      "This is not a beginner compound under any reading, and the potency is not proportional to the benefit.",
+    ],
+  },
+  {
+    id: "halotestin", name: "Halotestin", aka: "Fluoxymesterone, halo",
+    klass: "Anabolic steroid", group: "Oral (17aa)", route: "Oral",
+    severity: "severe",
+    summary: "One of the most hepatotoxic steroids ever produced, used briefly before competitions for strength and aggression rather than size. The liver cost is severe and the psychological effects are the part people report regretting.",
+    risks: [
+      "Extreme hepatotoxicity — among the worst of any commonly used oral.",
+      "Severe lipid deterioration, rapidly.",
+      "Marked aggression and mood disturbance.",
+      "Strong suppression.",
+      "No aromatisation, but strongly androgenic: hair loss and acne.",
+    ],
+    depletes: "Liver above everything, with lipids close behind.",
+    support: [
+      { id: "tudca", note: "Liver support for the entire duration — mandatory rather than optional here." },
+      { id: "nac", note: "Liver antioxidant support." },
+      { id: "omega3", note: "Lipid support against a severe hit." },
+      { id: "bergamot", note: "HDL support." },
+    ],
+    labs: ["liver", "lipids", "hormones", "bp", "cbc"],
+    warnings: [
+      "Runs of more than two to three weeks are where the serious liver injuries appear.",
+      "Jaundice, dark urine or abdominal pain means stop immediately and see a doctor.",
+      "The aggression is a documented pharmacological effect, not a character flaw. Tell someone close to you that you are taking it.",
+      "Never combine with alcohol or with another 17-alpha methylated oral.",
+    ],
+  },
+
+  /* ---------- Other peptides ---------- */
+  {
+    id: "ghkcu", name: "GHK-Cu", aka: "Copper peptide",
+    klass: "Peptide (healing)", group: "Other peptides", route: "Injection or topical",
+    severity: "moderate",
+    summary: "A copper-binding peptide with genuine evidence behind its skin and wound-healing effects, mostly from topical use. The injectable use popular in this space rests on much thinner ground.",
+    risks: [
+      "Copper accumulation with heavy or prolonged systemic use — copper and zinc compete, so zinc can fall.",
+      "Injection-site reactions and irritation are common.",
+      "Evidence for injected use is far weaker than for topical.",
+      "Grey-market purity concerns as with all research peptides.",
+    ],
+    depletes: "Extra copper suppresses zinc absorption over time, which matters because zinc supports androgen function.",
+    support: [
+      { id: "zinc", note: "Counterweight to copper loading — take it separated by a few hours." },
+      { id: "vitc", note: "Supports collagen synthesis, which is the point of using it." },
+      { id: "protein", note: "Collagen and repair need the raw material." },
+    ],
+    labs: ["cbc", "liver"],
+    warnings: [
+      "For skin and hair, topical has both the better evidence and the lower risk.",
+      "Do not run it continuously for months at high doses — copper is not something you want to accumulate.",
+    ],
+  }
+);
+
 /* Convenience lookups ------------------------------------------------------ */
 PT.byId = {};
 PT.compounds.forEach((c) => (PT.byId[c.id] = c));
@@ -1708,6 +2463,9 @@ PT.compounds.forEach((c) => (PT.byId[c.id] = c));
 PT.groups = [
   "Injectable",
   "Oral (17aa)",
+  "SARMs & research anabolics",
+  "Ancillaries & PCT",
+  "Fat loss & thyroid",
   "Growth hormone axis",
   "Recovery peptides",
   "Metabolic peptides",
