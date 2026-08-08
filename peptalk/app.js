@@ -1087,7 +1087,7 @@
 
     wireGo(c);
     $$("[data-log]", c).forEach((b) => b.addEventListener("click", () => { state.logType = b.dataset.log; setView("log"); }));
-    drawReadoutCurve(c);
+    drawReadoutCurve(c, true); // sweep the serum curve in on first paint
   }
 
   /* ---- LOG ---- */
@@ -1235,6 +1235,8 @@
 
     wireGo(c);
     drawAllCharts(c);
+    // one-shot wipe reveal on the initial trends paint (not on theme/resize repaints)
+    $$("[data-chart]", c).forEach((cv) => cv.classList.add("wipe"));
   }
   function drawAllCharts(c) {
     const sex = protocolSex();
@@ -1282,9 +1284,11 @@
   /* The Today hero's serum-level trace — a real one-compartment PK curve:
      level builds toward steady state while dosing, then clears after the last
      dose. Thin flat periwinkle line, faint fill, a settled "today" node. */
-  function drawReadoutCurve(c) {
+  let curveRAF = 0;
+  function drawReadoutCurve(c, animate) {
     const canvas = $("[data-curve]", c || $("#content"));
     if (!canvas) return;
+    cancelAnimationFrame(curveRAF); // never let two sweeps race (theme/resize mid-animation)
     const ctx = canvas.getContext("2d");
     const cssVar = (n) => (getComputedStyle(document.documentElement).getPropertyValue(n).trim() || "#888");
     const withAlpha = (hex, a) => {
@@ -1298,7 +1302,6 @@
     canvas.width = W * dpr; canvas.height = H * dpr;
     canvas.style.height = H + "px";
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, W, H);
 
     const dosingEnd = Math.max(1, +canvas.dataset.weeks || 84);  // last-dose day
     const clr = Math.max(1, +canvas.dataset.clear || 6);         // clearance tail
@@ -1314,22 +1317,15 @@
     const level = (d) => d <= 0 ? 0 : d <= dosingEnd ? 1 - Math.exp(-k * d) : Lpeak * Math.exp(-k * (d - dosingEnd));
     const X = (d) => pad.l + (d / domain) * plotW;
     const Y = (L) => pad.t + (1 - L / yMax) * plotH;
+    const dayAtX = (x) => ((x - pad.l) / plotW) * domain;
 
     const accent = cssVar("--accent"), lineC = cssVar("--line"), panel = cssVar("--panel-2");
     const y0 = Math.round(Y(0)) + 0.5;
-
-    // baseline
-    ctx.strokeStyle = lineC; ctx.globalAlpha = 0.8; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(pad.l, y0); ctx.lineTo(W - pad.r, y0); ctx.stroke();
-    ctx.globalAlpha = 1;
-
-    // last-dose graticule
     const xEnd = X(dosingEnd);
-    ctx.strokeStyle = lineC; ctx.setLineDash([2, 3]); ctx.globalAlpha = 0.9; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(Math.round(xEnd) + 0.5, pad.t - 5); ctx.lineTo(Math.round(xEnd) + 0.5, H - pad.b); ctx.stroke();
-    ctx.setLineDash([]); ctx.globalAlpha = 1;
+    const td = Math.max(0, Math.min(domain, todayDay));
+    const cx = X(td), cy = Y(level(td));
 
-    // sample the curve
+    // sample the curve once; paint() clips it to a moving cutoff for the draw-in
     const step = Math.max(0.5, domain / 240);
     const solid = [], decay = [];
     for (let d = 0; d <= dosingEnd + 1e-6; d += step) solid.push([X(d), Y(level(d))]);
@@ -1337,36 +1333,71 @@
     for (let d = dosingEnd; d <= domain + 1e-6; d += step) decay.push([X(d), Y(level(d))]);
     decay.push([X(domain), Y(level(domain))]);
 
-    // faint flat fill under the on-cycle build (no gradient — instruments don't glow)
-    ctx.beginPath();
-    ctx.moveTo(solid[0][0], y0);
-    solid.forEach(([x, y]) => ctx.lineTo(x, y));
-    ctx.lineTo(xEnd, y0); ctx.closePath();
-    ctx.fillStyle = withAlpha(accent, 0.08); ctx.fill();
+    // p in 0..1 = how far the trace has swept from left to right
+    function paint(p) {
+      ctx.clearRect(0, 0, W, H);
+      const cutoffX = pad.l + p * plotW;
 
-    // the trace
-    ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.strokeStyle = accent; ctx.lineWidth = 1.75;
-    ctx.beginPath(); solid.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke();
-    ctx.setLineDash([4, 3]); ctx.globalAlpha = 0.85;
-    ctx.beginPath(); decay.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke();
-    ctx.setLineDash([]); ctx.globalAlpha = 1;
+      // instrument frame appears immediately; only the signal sweeps in
+      ctx.strokeStyle = lineC; ctx.globalAlpha = 0.8; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(pad.l, y0); ctx.lineTo(W - pad.r, y0); ctx.stroke();
+      ctx.globalAlpha = 0.9; ctx.setLineDash([2, 3]);
+      ctx.beginPath(); ctx.moveTo(Math.round(xEnd) + 0.5, pad.t - 5); ctx.lineTo(Math.round(xEnd) + 0.5, H - pad.b); ctx.stroke();
+      ctx.setLineDash([]); ctx.globalAlpha = 1;
 
-    // the "you are here" node — settles once, no pulse
-    const td = Math.max(0, Math.min(domain, todayDay));
-    const cx = X(td), cy = Y(level(td));
-    ctx.strokeStyle = withAlpha(accent, 0.5); ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(Math.round(cx) + 0.5, cy); ctx.lineTo(Math.round(cx) + 0.5, H - pad.b); ctx.stroke();
-    ctx.beginPath(); ctx.arc(cx, cy, 3.4, 0, Math.PI * 2);
-    ctx.fillStyle = accent; ctx.fill();
-    ctx.lineWidth = 1.6; ctx.strokeStyle = panel; ctx.stroke();
+      // faint flat fill under the on-cycle build, clipped to the sweep
+      const fx = Math.min(cutoffX, xEnd);
+      ctx.beginPath(); ctx.moveTo(solid[0][0], y0);
+      solid.forEach(([x, y]) => { if (x <= fx) ctx.lineTo(x, y); });
+      if (fx < xEnd) ctx.lineTo(fx, Y(level(dayAtX(fx))));
+      ctx.lineTo(fx, y0); ctx.closePath();
+      ctx.fillStyle = withAlpha(accent, 0.08); ctx.fill();
 
-    // label the node so the signature reads on its own (clamped inside the canvas)
-    ctx.font = '600 8px ui-monospace, "SF Mono", Menlo, monospace';
-    ctx.fillStyle = accent;
-    const NOW = "NOW", lw = ctx.measureText(NOW).width;
-    const lx = Math.max(pad.l, Math.min(cx - lw / 2, W - pad.r - lw));
-    const ly = cy > pad.t + 12 ? cy - 7 : cy + 12;   // above the node, or below if it sits high
-    ctx.fillText(NOW, lx, ly);
+      // solid build trace
+      ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.strokeStyle = accent; ctx.lineWidth = 1.75;
+      ctx.beginPath(); let started = false;
+      solid.forEach(([x, y]) => { if (x <= fx) { started ? ctx.lineTo(x, y) : ctx.moveTo(x, y); started = true; } });
+      if (fx < xEnd && started) ctx.lineTo(fx, Y(level(dayAtX(fx))));
+      if (started) ctx.stroke();
+
+      // dashed clearance tail, once the sweep passes the last dose
+      if (cutoffX > xEnd) {
+        const dx = Math.min(cutoffX, X(domain));
+        ctx.setLineDash([4, 3]); ctx.globalAlpha = 0.85; ctx.beginPath(); let st2 = false;
+        decay.forEach(([x, y]) => { if (x <= dx) { st2 ? ctx.lineTo(x, y) : ctx.moveTo(x, y); st2 = true; } });
+        if (dx < X(domain) && st2) ctx.lineTo(dx, Y(level(dayAtX(dx))));
+        if (st2) ctx.stroke();
+        ctx.setLineDash([]); ctx.globalAlpha = 1;
+      }
+
+      // the "you are here" node — fades in as the sweep reaches it, settles once
+      const rev = Math.max(0, Math.min(1, (cutoffX - cx) / 16));
+      if (rev > 0) {
+        ctx.strokeStyle = withAlpha(accent, 0.5 * rev); ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(Math.round(cx) + 0.5, cy); ctx.lineTo(Math.round(cx) + 0.5, H - pad.b); ctx.stroke();
+        ctx.globalAlpha = rev;
+        ctx.beginPath(); ctx.arc(cx, cy, 3.4 * (0.55 + 0.45 * rev), 0, Math.PI * 2);
+        ctx.fillStyle = accent; ctx.fill();
+        ctx.lineWidth = 1.6; ctx.strokeStyle = panel; ctx.stroke();
+        ctx.font = '600 8px ui-monospace, "SF Mono", Menlo, monospace';
+        ctx.fillStyle = withAlpha(accent, rev);
+        const NOW = "NOW", lw = ctx.measureText(NOW).width;
+        const lx = Math.max(pad.l, Math.min(cx - lw / 2, W - pad.r - lw));
+        const ly = cy > pad.t + 12 ? cy - 7 : cy + 12;   // above the node, or below if it sits high
+        ctx.fillText(NOW, lx, ly);
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!animate || reduce) { paint(1); return; }
+    const t0 = performance.now(), DUR = 760, ease = (t) => 1 - Math.pow(1 - t, 3);
+    const tick = (now) => {
+      const p = Math.min(1, (now - t0) / DUR);
+      paint(ease(p));
+      if (p < 1) curveRAF = requestAnimationFrame(tick);
+    };
+    curveRAF = requestAnimationFrame(tick);
   }
 
   /* ---- INJECTION SITES ---- */
