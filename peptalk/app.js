@@ -18,6 +18,7 @@
   })();
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const icon = (n) => `<svg class="ic"><use href="#ic-${n}"/></svg>`; // monochrome line-icon (sprite in index.html)
   const KEY = { api: "peptalk.apiKey", model: "peptalk.model", theme: "peptalk.theme", stack: "peptalk.stack", protocol: "peptalk.protocol.v1" };
 
   function loadProtocol() {
@@ -153,47 +154,47 @@
       <h3>Three things that matter more than any pill</h3>
       <div class="principle-grid">
         ${PT.principles.slice(0, 3).map(hero => `
-          <div class="principle"><div class="p-ic">${hero.icon}</div><h4>${hero.title}</h4><p>${hero.body}</p></div>`).join("")}
+          <div class="principle"><div class="p-ic">${icon(hero.icon)}</div><h4>${hero.title}</h4><p>${hero.body}</p></div>`).join("")}
       </div>
 
       <h3>All harm-reduction principles</h3>
       <div class="principle-grid">
         ${PT.principles.slice(3).map(p => `
-          <div class="principle"><div class="p-ic">${p.icon}</div><h4>${p.title}</h4><p>${p.body}</p></div>`).join("")}
+          <div class="principle"><div class="p-ic">${icon(p.icon)}</div><h4>${p.title}</h4><p>${p.body}</p></div>`).join("")}
       </div>
 
       <h3>Get started</h3>
       <div class="start-grid">
         ${state.protocol ? "" : `<button class="start-card feature" data-go="protocol">
-          <span class="sc-ic">📋</span><b>Build my protocol</b>
+          <span class="sc-ic">${icon("protocol")}</span><b>Build my protocol</b>
           <span>Save what you're running with dates — get your personal timeline, labs and watch-list.</span>
         </button>`}
         <button class="start-card alarm" data-go="emergency">
-          <span class="sc-ic">🚨</span><b>Emergency signs</b>
+          <span class="sc-ic">${icon("alert")}</span><b>Emergency signs</b>
           <span>The symptoms that mean stop and get help now. Read this one before you need it.</span>
         </button>
         <button class="start-card" data-go="counters">
-          <span class="sc-ic">🛡️</span><b>Side effects &amp; counters</b>
+          <span class="sc-ic">${icon("shield")}</span><b>Side effects &amp; counters</b>
           <span>Something's going wrong — here's what actually counters it, free, OTC or prescription.</span>
         </button>
         <button class="start-card" data-go="stack">
-          <span class="sc-ic">🧬</span><b>Stack planner</b>
+          <span class="sc-ic">${icon("stack")}</span><b>Stack planner</b>
           <span>Tick what you're running for one consolidated supplement &amp; bloodwork plan.</span>
         </button>
         <button class="start-card" data-go="labs">
-          <span class="sc-ic">🩸</span><b>Bloodwork</b>
+          <span class="sc-ic">${icon("drop")}</span><b>Bloodwork</b>
           <span>What to test and when — and a request sheet you can print for a doctor.</span>
         </button>
         <button class="start-card" data-go="injection">
-          <span class="sc-ic">💉</span><b>Injection safety</b>
+          <span class="sc-ic">${icon("syringe")}</span><b>Injection safety</b>
           <span>Sterile technique, sites and volumes — where most avoidable harm actually happens.</span>
         </button>
         <button class="start-card" data-go="pct">
-          <span class="sc-ic">🔁</span><b>Coming off &amp; PCT</b>
+          <span class="sc-ic">${icon("cycle")}</span><b>Coming off &amp; PCT</b>
           <span>Suppression, recovery, fertility, and the decision to make before you start.</span>
         </button>
         <button class="start-card" data-go="women">
-          <span class="sc-ic">♀</span><b>Women &amp; virilization</b>
+          <span class="sc-ic">${icon("venus")}</span><b>Women &amp; virilization</b>
           <span>A different risk profile — and which effects don't reverse.</span>
         </button>
       </div>
@@ -743,23 +744,23 @@
   function eventSummary(e) {
     if (e.type === "injection") {
       const c = PT.byId[e.compound], s = SITE_BY_ID[e.site];
-      return { icon: "💉", title: `Injection${c ? ` — ${c.name}` : ""}`, detail: [s ? s.name : e.site, e.dose].filter(Boolean).join(" · ") };
+      return { icon: icon("syringe"), title: `Injection${c ? ` — ${c.name}` : ""}`, detail: [s ? s.name : e.site, e.dose].filter(Boolean).join(" · ") };
     }
     if (e.type === "metric" && e.metric === "bp") {
       const sys = Brain.markers.evaluate("bp_systolic", e.systolic, protocolSex());
       const dia = Brain.markers.evaluate("bp_diastolic", e.diastolic, protocolSex());
       const worst = [sys, dia].filter(Boolean).sort((a, b) => ({ ok: 0, watch: 1, high: 2, critical: 3 }[b.status] - { ok: 0, watch: 1, high: 2, critical: 3 }[a.status]))[0];
-      return { icon: "💓", title: `Blood pressure — ${e.systolic}/${e.diastolic}${e.hr ? ` · ${e.hr} bpm` : ""}`, detail: "", tone: worst && worst.status !== "ok" ? (worst.status === "watch" ? "watch" : "bad") : "" };
+      return { icon: icon("heart"), title: `Blood pressure — ${e.systolic}/${e.diastolic}${e.hr ? ` · ${e.hr} bpm` : ""}`, detail: "", tone: worst && worst.status !== "ok" ? (worst.status === "watch" ? "watch" : "bad") : "" };
     }
-    if (e.type === "metric" && e.metric === "weight") return { icon: "⚖️", title: `Weight — ${e.value} ${e.unit || ""}`.trim() };
-    if (e.type === "metric" && e.metric === "hr") return { icon: "❤️", title: `Resting HR — ${e.value} bpm` };
+    if (e.type === "metric" && e.metric === "weight") return { icon: icon("weight"), title: `Weight — ${e.value} ${e.unit || ""}`.trim() };
+    if (e.type === "metric" && e.metric === "hr") return { icon: icon("pulse"), title: `Resting HR — ${e.value} bpm` };
     if (e.type === "labs") {
       const vals = e.values || {}, n = Object.keys(vals).length;
       const flagged = Brain.markers.evaluatePanel(vals, protocolSex()).filter((x) => x.status !== "ok").length;
-      return { icon: "🧪", title: `Bloodwork — ${n} marker${n === 1 ? "" : "s"}`, detail: flagged ? `${flagged} out of range` : "all in range", tone: flagged ? "bad" : "good" };
+      return { icon: icon("flask"), title: `Bloodwork — ${n} marker${n === 1 ? "" : "s"}`, detail: flagged ? `${flagged} out of range` : "all in range", tone: flagged ? "bad" : "good" };
     }
-    if (e.type === "side") { const k = PT.counterById[e.counter]; return { icon: "⚠️", title: `Side effect — ${k ? k.name : e.counter}`, detail: SEV_WORD[e.severity] || "" }; }
-    return { icon: "📝", title: "Note", detail: e.text || "" };
+    if (e.type === "side") { const k = PT.counterById[e.counter]; return { icon: icon("alert"), title: `Side effect — ${k ? k.name : e.counter}`, detail: SEV_WORD[e.severity] || "" }; }
+    return { icon: icon("note"), title: "Note", detail: e.text || "" };
   }
 
   function eventRow(e, opts = {}) {
@@ -843,8 +844,8 @@
         <h2>Today</h2>
         <p class="hero-sub">Your daily view lives here once you've saved a protocol — suggested injection site, supplements, upcoming bloodwork, and one-tap logging.</p>
         <div class="start-grid" style="margin-top:8px">
-          <button class="start-card feature" data-go="protocol"><span class="sc-ic">📋</span><b>Build my protocol</b><span>Two minutes, and Today comes to life.</span></button>
-          <button class="start-card" data-log="bp"><span class="sc-ic">🩸</span><b>Log blood pressure</b><span>You can track BP and weight even without a cycle set up.</span></button>
+          <button class="start-card feature" data-go="protocol"><span class="sc-ic">${icon("protocol")}</span><b>Build my protocol</b><span>Two minutes, and Today comes to life.</span></button>
+          <button class="start-card" data-log="bp"><span class="sc-ic">${icon("heart")}</span><b>Log blood pressure</b><span>You can track BP and weight even without a cycle set up.</span></button>
         </div>`;
       wireGo(c);
       $$("[data-log]", c).forEach((b) => b.addEventListener("click", () => { state.logType = b.dataset.log; setView("log"); }));
@@ -860,7 +861,7 @@
 
     const dueItems = [];
     dueItems.push(`<div class="due-card">
-      <div class="due-ic">💉</div>
+      <div class="due-ic">${icon("syringe")}</div>
       <div class="due-body">
         <div class="due-title">Injection</div>
         <div class="due-sub">${lastInj ? `Last: ${relDays(lastInj.ts)}${lastInj.site && SITE_BY_ID[lastInj.site] ? ` at ${SITE_BY_ID[lastInj.site].short}` : ""}` : "No injections logged yet"} · suggested next: <b>${suggestion ? suggestion.site.name : "—"}</b>${suggestion && suggestion.days == null ? " (unused)" : suggestion && suggestion.days != null ? ` (${suggestion.days}d rested)` : ""}</div>
@@ -871,7 +872,7 @@
       const overdue = tl.next.inDays <= 0;
       const isBlood = ["baseline", "mid", "recovery", "post"].includes(tl.next.key);
       dueItems.push(`<div class="due-card${overdue ? " warn" : ""}">
-        <div class="due-ic">${isBlood ? "🩸" : "📅"}</div>
+        <div class="due-ic">${isBlood ? icon("drop") : icon("today")}</div>
         <div class="due-body">
           <div class="due-title">${tl.next.label}</div>
           <div class="due-sub">${fmtDate(tl.next.iso)} · ${overdue ? "due now" : `in ${tl.next.inDays} day${tl.next.inDays === 1 ? "" : "s"}`}</div>
@@ -880,7 +881,7 @@
       </div>`);
     }
     dueItems.push(`<div class="due-card${bpStale ? " warn" : ""}">
-      <div class="due-ic">💓</div>
+      <div class="due-ic">${icon("heart")}</div>
       <div class="due-body">
         <div class="due-title">Blood pressure</div>
         <div class="due-sub">${lastBP ? `Last: ${lastBP.systolic}/${lastBP.diastolic} · ${relDays(lastBP.ts)}` : "Not logged yet"}${bpStale ? " — worth a fresh reading" : ""}</div>
@@ -901,12 +902,12 @@
 
       <h3>Quick log</h3>
       <div class="quicklog">
-        <button class="ql-btn" data-log="injection">💉 Injection</button>
-        <button class="ql-btn" data-log="bp">💓 Blood pressure</button>
-        <button class="ql-btn" data-log="weight">⚖️ Weight</button>
-        <button class="ql-btn" data-log="labs">🧪 Bloodwork</button>
-        <button class="ql-btn" data-log="side">⚠️ Side effect</button>
-        <button class="ql-btn" data-log="note">📝 Note</button>
+        <button class="ql-btn" data-log="injection">${icon("syringe")} Injection</button>
+        <button class="ql-btn" data-log="bp">${icon("heart")} Blood pressure</button>
+        <button class="ql-btn" data-log="weight">${icon("weight")} Weight</button>
+        <button class="ql-btn" data-log="labs">${icon("flask")} Bloodwork</button>
+        <button class="ql-btn" data-log="side">${icon("alert")} Side effect</button>
+        <button class="ql-btn" data-log="note">${icon("note")} Note</button>
       </div>
 
       <h3>Today's supplements</h3>
@@ -924,12 +925,12 @@
 
   /* ---- LOG ---- */
   const LOG_TYPES = [
-    { id: "injection", label: "💉 Injection" },
-    { id: "bp", label: "💓 BP" },
-    { id: "weight", label: "⚖️ Weight" },
-    { id: "labs", label: "🧪 Bloodwork" },
-    { id: "side", label: "⚠️ Side" },
-    { id: "note", label: "📝 Note" },
+    { id: "injection", ic: "syringe", label: "Injection" },
+    { id: "bp", ic: "heart", label: "BP" },
+    { id: "weight", ic: "weight", label: "Weight" },
+    { id: "labs", ic: "flask", label: "Bloodwork" },
+    { id: "side", ic: "alert", label: "Side" },
+    { id: "note", ic: "note", label: "Note" },
   ];
   function logForm(type) {
     const dateField = `<label class="fld">Date<input type="date" data-f="date" value="${todayISO()}" /></label>`;
@@ -992,7 +993,7 @@
       <h2>Log</h2>
       <p class="hero-sub">A private record of what you've done and how your body's responding. Everything stays in this browser.</p>
       <div class="seg log-seg" role="group" aria-label="What to log">
-        ${LOG_TYPES.map((t) => `<button class="seg-btn ${t.id === type ? "on" : ""}" data-type="${t.id}" aria-pressed="${t.id === type}">${t.label}</button>`).join("")}
+        ${LOG_TYPES.map((t) => `<button class="seg-btn ${t.id === type ? "on" : ""}" data-type="${t.id}" aria-pressed="${t.id === type}">${icon(t.ic)} ${t.label}</button>`).join("")}
       </div>
       <form class="log-form" id="logForm" autocomplete="off">${logForm(type)}
         <div class="setup-actions"><button type="submit" class="btn-solid">Save entry</button></div>
@@ -1694,7 +1695,7 @@
     // If we have a key AND the local answer was weak/unresolved, ask Claude.
     if (apiKey && local.unresolved) {
       try {
-        answer = await Brain.answerClaude(q, apiKey, localStorage.getItem(KEY.model) || "claude-opus-4-8");
+        answer = await Brain.answerClaude(q, apiKey, localStorage.getItem(KEY.model) || "claude-sonnet-5");
       } catch (e) {
         answer = local.text + `\n\n_(Claude unavailable: ${mdEscape(String(e.message || e))})_`;
       }
@@ -1744,7 +1745,7 @@
   const CHART_VIEWS = new Set(["trends", "today"]);
   function applyTheme(light) {
     document.documentElement.classList.toggle("light", light);
-    $("#themeBtn").textContent = light ? "☀️" : "🌙";
+    $("#themeBtn").innerHTML = icon(light ? "sun" : "moon");
     localStorage.setItem(KEY.theme, light ? "light" : "dark");
     if (CHART_VIEWS.has(state.view)) drawAllCharts($("#content")); // repaint canvases in-place for the new theme
   }
@@ -1753,7 +1754,7 @@
     const backdrop = $("#modalBackdrop");
     const open = () => {
       $("#apiKey").value = localStorage.getItem(KEY.api) || "";
-      $("#model").value = localStorage.getItem(KEY.model) || "claude-opus-4-8";
+      $("#model").value = localStorage.getItem(KEY.model) || "claude-sonnet-5";
       backdrop.classList.remove("hidden");
     };
     const close = () => backdrop.classList.add("hidden");
@@ -1761,7 +1762,7 @@
     backdrop.addEventListener("click", (e) => { if (e.target === backdrop) close(); });
     $("#saveKey").addEventListener("click", () => {
       const k = $("#apiKey").value.trim();
-      const m = $("#model").value.trim() || "claude-opus-4-8";
+      const m = $("#model").value.trim() || "claude-sonnet-5";
       if (k) localStorage.setItem(KEY.api, k); else localStorage.removeItem(KEY.api);
       localStorage.setItem(KEY.model, m);
       close();

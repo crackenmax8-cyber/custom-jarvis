@@ -90,7 +90,31 @@ body {
   border-bottom: 1px solid var(--amber);
   background: var(--amber-bg);
 }
-.disc-icon { font-size: 1.05rem; }
+/* ---- Monochrome line-icon system ---- */
+.ic-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.ic {
+  width: 18px; height: 18px; flex: none; display: inline-block; vertical-align: -0.18em;
+  fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+}
+.ic .d { fill: currentColor; stroke: none; }
+.disc-icon { display: inline-flex; color: var(--amber); }
+.disc-icon .ic { width: 19px; height: 19px; }
+/* component sizing + semantic tone */
+.nav-item .ic { width: 17px; height: 17px; }
+.emergency-btn .ic { width: 16px; height: 16px; }
+.sc-ic { display: inline-flex; color: var(--accent); }
+.sc-ic .ic { width: 22px; height: 22px; }
+.start-card.alarm .sc-ic { color: var(--danger); }
+.due-ic { display: inline-flex; color: var(--accent); }
+.due-ic .ic { width: 22px; height: 22px; }
+.due-card.warn .due-ic { color: var(--amber); }
+.ev-ic { display: inline-flex; color: var(--text-dim); }
+.ev-ic .ic { width: 19px; height: 19px; }
+.ev-row.good .ev-ic { color: var(--sev-moderate); }
+.ev-row.watch .ev-ic { color: var(--amber); }
+.ev-row.bad .ev-ic { color: var(--danger); }
+.ql-btn .ic { width: 16px; height: 16px; color: var(--accent); }
+.seg-btn .ic { width: 15px; height: 15px; }
 .disclaimer p { margin: 0; font-size: 0.82rem; color: var(--text); }
 .disclaimer strong { color: var(--amber); }
 .disc-more {
@@ -235,7 +259,8 @@ body {
   background: var(--panel-2); border: 1px solid var(--line-soft);
   border-radius: var(--radius-sm); padding: 14px 15px;
 }
-.principle .p-ic { font-size: 1.2rem; }
+.principle .p-ic { display: inline-flex; color: var(--accent); }
+.principle .p-ic .ic { width: 24px; height: 24px; }
 .principle h4 { margin: 6px 0 5px; font-size: 0.95rem; }
 .principle p { margin: 0; font-size: 0.82rem; color: var(--text-dim); }
 

@@ -511,23 +511,23 @@ PT.markers = [
    UNIVERSAL HARM-REDUCTION PRINCIPLES
    ========================================================================== */
 PT.principles = [
-  { icon: "🩸", title: "Bloodwork is non-negotiable",
+  { icon: "drop", title: "Bloodwork is non-negotiable",
     body: "Baseline before, monitor during, re-check after. Without labs you're flying blind — labs turn damage you can't feel (lipids, hematocrit, liver) into something you can manage or stop." },
-  { icon: "🩺", title: "Work with a doctor",
+  { icon: "stethoscope", title: "Work with a doctor",
     body: "A supportive physician (or a TRT/men's-health clinic) beats forum guesses. Be honest with them — they can only keep you safe if they know what you're actually taking." },
-  { icon: "🧪", title: "Source & dose quality",
+  { icon: "flask", title: "Source & dose quality",
     body: "Underground product is often mis-dosed, under-dosed or contaminated. If you can test it, test it. Wrong dose is a top cause of avoidable harm." },
-  { icon: "💉", title: "Injection hygiene",
+  { icon: "syringe", title: "Injection hygiene",
     body: "Sterile, single-use needles; clean the vial top and the site; rotate injection sites; never share equipment. Infections and abscesses put people in hospital." },
-  { icon: "🐢", title: "One variable, start low",
+  { icon: "gauge", title: "One variable, start low",
     body: "Change one compound at a time and start at the low end. You can always add; you can't un-take a dose. Stacking several harsh compounds multiplies risk, it doesn't add it." },
-  { icon: "❤️", title: "Cardio & blood pressure",
+  { icon: "heart", title: "Cardio & blood pressure",
     body: "The heart takes the biggest long-term hit. Keep doing real cardio, own a blood-pressure cuff, and treat high BP — don't wait for symptoms." },
-  { icon: "🔁", title: "Have an exit plan (PCT / TRT)",
+  { icon: "cycle", title: "Have an exit plan (PCT / TRT)",
     body: "AAS shut down your own testosterone. Know before you start whether you'll restart production with a proper PCT or accept lifelong TRT — decide it deliberately, not by accident." },
-  { icon: "🧠", title: "Mind & mood count",
+  { icon: "brain", title: "Mind & mood count",
     body: "Some compounds (trenbolone especially) wreck sleep, mood and mental health. If you feel unwell mentally, that's a real side effect — lower or stop, and get support." },
-  { icon: "🚫", title: "Some people just shouldn't",
+  { icon: "ban", title: "Some people just shouldn't",
     body: "Under ~25 (brain and growth-plate development), pregnant, or with heart/liver/kidney/mental-health conditions — the risk/reward is far worse. Women face virilization, some of it permanent." },
 ];
 

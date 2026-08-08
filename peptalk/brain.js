@@ -420,7 +420,7 @@ const Brain = (() => {
         "anthropic-dangerous-direct-browser-access": "true",
       },
       body: JSON.stringify({
-        model: model || "claude-opus-4-8",
+        model: model || "claude-sonnet-5",
         max_tokens: 900,
         system: sys,
         messages: [{ role: "user", content: input }],

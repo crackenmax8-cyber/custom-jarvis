@@ -9,11 +9,42 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M8 84h84' stroke='%238d97ff' stroke-opacity='0.35' stroke-width='6' stroke-linecap='round'/><path d='M10 82C28 82 30 32 52 30 64 29 66 30 74 30 82 30 84 52 90 66' fill='none' stroke='%238d97ff' stroke-width='9' stroke-linecap='round' stroke-linejoin='round'/></svg>" />
 </head>
 <body>
+  <!-- Monochrome line-icon sprite (instrument set) — referenced via <svg class="ic"><use href="#ic-…"/></svg> -->
+  <svg class="ic-sprite" aria-hidden="true" focusable="false"><defs>
+    <symbol id="ic-home" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M6 10v9.5h12V10"/><path d="M10 19.5v-4.5h4v4.5"/></symbol>
+    <symbol id="ic-today" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9.5h16"/><path d="M8.5 3v3.5M15.5 3v3.5"/></symbol>
+    <symbol id="ic-protocol" viewBox="0 0 24 24"><rect x="5" y="4.5" width="14" height="16" rx="2"/><path d="M9.5 3.5h5a1 1 0 0 1 1 1V6a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z"/><path d="M9 11.5h6M9 15h4"/></symbol>
+    <symbol id="ic-alert" viewBox="0 0 24 24"><path d="M12 4.2 20.5 19a1 1 0 0 1-.9 1.4H4.4A1 1 0 0 1 3.5 19z"/><path d="M12 10v4"/><circle class="d" cx="12" cy="17" r="1"/></symbol>
+    <symbol id="ic-log" viewBox="0 0 24 24"><rect x="5.5" y="4" width="13" height="16" rx="1.5"/><path d="M8.5 4v16"/><path d="M11 8.5h5M11 12h5M11 15.5h3"/></symbol>
+    <symbol id="ic-trends" viewBox="0 0 24 24"><path d="M4 4v16h16"/><path d="M7.5 14.5l3-3.5 3 2 4.5-6"/></symbol>
+    <symbol id="ic-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle class="d" cx="12" cy="12" r="1.4"/></symbol>
+    <symbol id="ic-stack" viewBox="0 0 24 24"><path d="M12 3.5 20.5 8 12 12.5 3.5 8z"/><path d="M4 12l8 4.5 8-4.5"/></symbol>
+    <symbol id="ic-shield" viewBox="0 0 24 24"><path d="M12 3.2l7 2.8v5.2c0 4.4-3 7.4-7 8.8-4-1.4-7-4.4-7-8.8V6z"/><path d="M9 11.8l2 2 4-4.2"/></symbol>
+    <symbol id="ic-drop" viewBox="0 0 24 24"><path d="M12 3.6c3.4 4.2 5.4 7 5.4 9.7a5.4 5.4 0 0 1-10.8 0c0-2.7 2-5.5 5.4-9.7z"/></symbol>
+    <symbol id="ic-pill" viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="6" rx="3"/><path d="M12 9v6"/></symbol>
+    <symbol id="ic-syringe" viewBox="0 0 24 24"><path d="M20 4l-2 2"/><path d="M15 5l4 4"/><path d="M17.5 7.5l-9 9"/><path d="M8.5 16.5l-4 4"/><path d="M12.5 11.5l2.5 2.5"/></symbol>
+    <symbol id="ic-cycle" viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-2-4.9"/><path d="M19 4v3.5h-3.5"/></symbol>
+    <symbol id="ic-venus" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="5"/><path d="M12 13.5V21M9 18h6"/></symbol>
+    <symbol id="ic-chat" viewBox="0 0 24 24"><path d="M4.5 6.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H10l-4 3.2V14.5H6.5a2 2 0 0 1-2-2z"/><path d="M8.5 9h7M8.5 12h4.5"/></symbol>
+    <symbol id="ic-data" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="2.5"/><path d="M5 6v12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6"/><path d="M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5"/></symbol>
+    <symbol id="ic-heart" viewBox="0 0 24 24"><path d="M12 20.5C7 16.5 3.5 13 3.5 9.2 3.5 6.9 5.3 5 7.6 5c1.6 0 3 .9 4.4 2.6C13.4 5.9 14.8 5 16.4 5c2.3 0 4.1 1.9 4.1 4.2 0 3.8-3.5 7.3-8.5 11.3z"/></symbol>
+    <symbol id="ic-weight" viewBox="0 0 24 24"><circle class="d" cx="12" cy="4.5" r="1.1"/><path d="M12 5.5v13M9 19.5h6"/><path d="M5.5 7.5h13"/><path d="M5.5 7.5 3 13.5a3 3 0 0 0 5 0z"/><path d="M18.5 7.5 16 13.5a3 3 0 0 0 5 0z"/></symbol>
+    <symbol id="ic-flask" viewBox="0 0 24 24"><path d="M10 3.5v5.2l-4.4 8.6A1.4 1.4 0 0 0 6.9 19.5h10.2a1.4 1.4 0 0 0 1.3-2.2L14 8.7V3.5"/><path d="M8.5 3.5h7"/><path d="M8 14.5h8"/></symbol>
+    <symbol id="ic-note" viewBox="0 0 24 24"><path d="M4 20l3.8-1L18 8.8a1.5 1.5 0 0 0 0-2.1l-.7-.7a1.5 1.5 0 0 0-2.1 0L5 16.2 4 20z"/><path d="M14 7l3 3"/></symbol>
+    <symbol id="ic-pulse" viewBox="0 0 24 24"><path d="M3.5 12h4l2-4.5 3 9 2-4.5h6"/></symbol>
+    <symbol id="ic-stethoscope" viewBox="0 0 24 24"><path d="M5.5 4v4.5a4.5 4.5 0 0 0 9 0V4"/><path d="M4.3 4h2.4M13.3 4h2.4"/><path d="M10 12.9v2.6a4 4 0 0 0 8 0v-1.2"/><circle cx="18" cy="12.6" r="2.1"/></symbol>
+    <symbol id="ic-gauge" viewBox="0 0 24 24"><path d="M4 16.5a8 8 0 0 1 16 0"/><path d="M12 16.5 8 12.8"/><circle class="d" cx="12" cy="16.5" r="1.3"/><path d="M4 16.5H6M18 16.5h2M6.2 9.7l1.4 1.4"/></symbol>
+    <symbol id="ic-brain" viewBox="0 0 24 24"><path d="M9.3 5.4A2.7 2.7 0 0 0 5.7 8 2.6 2.6 0 0 0 4.6 13 2.6 2.6 0 0 0 7.4 17a2.4 2.4 0 0 0 4.6-.8V6.8A2.4 2.4 0 0 0 9.3 5.4z"/><path d="M14.7 5.4A2.7 2.7 0 0 1 18.3 8 2.6 2.6 0 0 1 19.4 13 2.6 2.6 0 0 1 16.6 17a2.4 2.4 0 0 1-4.6-.8"/><path d="M12 9.5h-2M12 13h2"/></symbol>
+    <symbol id="ic-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M6.4 6.4 17.6 17.6"/></symbol>
+    <symbol id="ic-moon" viewBox="0 0 24 24"><path d="M20 14.2A7.5 7.5 0 1 1 10.3 4 6 6 0 0 0 20 14.2z"/></symbol>
+    <symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6 16.8 7.2M7.2 16.8 5.6 18.4"/></symbol>
+  </defs></svg>
+
   <div class="bg-glow" aria-hidden="true"></div>
 
   <!-- ===== Persistent disclaimer ===== -->
   <div class="disclaimer" id="disclaimer" role="note">
-    <span class="disc-icon" aria-hidden="true">⚠️</span>
+    <span class="disc-icon" aria-hidden="true"><svg class="ic"><use href="#ic-alert"/></svg></span>
     <p><strong>Harm reduction, not medical advice.</strong> These substances carry real, sometimes permanent risks and nothing here endorses using them. Get baseline bloodwork, monitor on-cycle, and work with a doctor. Not using is always the safest option.</p>
     <button class="disc-more" id="discMore" aria-expanded="false">Details</button>
   </div>
@@ -31,8 +62,8 @@
         </div>
       </div>
       <div class="header-actions">
-        <button class="emergency-btn" id="emergencyBtn" title="Emergency warning signs">🚨 <span>Emergency signs</span></button>
-        <button class="icon-btn" id="themeBtn" title="Switch theme" aria-label="Switch between light and dark theme">🌙</button>
+        <button class="emergency-btn" id="emergencyBtn" title="Emergency warning signs"><svg class="ic"><use href="#ic-alert"/></svg> <span>Emergency signs</span></button>
+        <button class="icon-btn" id="themeBtn" title="Switch theme" aria-label="Switch between light and dark theme"><svg class="ic"><use href="#ic-moon"/></svg></button>
         <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Open settings">⚙</button>
       </div>
     </header>
@@ -41,26 +72,26 @@
       <!-- ===== Sidebar: nav + library ===== -->
       <aside class="sidebar">
         <nav class="nav" id="nav">
-          <button class="nav-item active" data-view="home">🏠 <span>Overview</span></button>
-          <button class="nav-item feature" data-view="today">📅 <span>Today</span></button>
-          <button class="nav-item feature" data-view="protocol">📋 <span>My protocol</span></button>
-          <button class="nav-item alarm" data-view="emergency">🚨 <span>Emergency signs</span></button>
+          <button class="nav-item active" data-view="home"><svg class="ic"><use href="#ic-home"/></svg> <span>Overview</span></button>
+          <button class="nav-item feature" data-view="today"><svg class="ic"><use href="#ic-today"/></svg> <span>Today</span></button>
+          <button class="nav-item feature" data-view="protocol"><svg class="ic"><use href="#ic-protocol"/></svg> <span>My protocol</span></button>
+          <button class="nav-item alarm" data-view="emergency"><svg class="ic"><use href="#ic-alert"/></svg> <span>Emergency signs</span></button>
           <div class="nav-label">Track</div>
-          <button class="nav-item" data-view="log">📓 <span>Log</span></button>
-          <button class="nav-item" data-view="trends">📈 <span>Trends</span></button>
-          <button class="nav-item" data-view="sites">🎯 <span>Injection sites</span></button>
+          <button class="nav-item" data-view="log"><svg class="ic"><use href="#ic-log"/></svg> <span>Log</span></button>
+          <button class="nav-item" data-view="trends"><svg class="ic"><use href="#ic-trends"/></svg> <span>Trends</span></button>
+          <button class="nav-item" data-view="sites"><svg class="ic"><use href="#ic-target"/></svg> <span>Injection sites</span></button>
           <div class="nav-label">Plan</div>
-          <button class="nav-item" data-view="stack">🧬 <span>Stack planner</span></button>
-          <button class="nav-item" data-view="counters">🛡️ <span>Side effects &amp; counters</span></button>
-          <button class="nav-item" data-view="labs">🩸 <span>Bloodwork</span></button>
-          <button class="nav-item" data-view="supplements">💊 <span>Supplements</span></button>
+          <button class="nav-item" data-view="stack"><svg class="ic"><use href="#ic-stack"/></svg> <span>Stack planner</span></button>
+          <button class="nav-item" data-view="counters"><svg class="ic"><use href="#ic-shield"/></svg> <span>Side effects &amp; counters</span></button>
+          <button class="nav-item" data-view="labs"><svg class="ic"><use href="#ic-drop"/></svg> <span>Bloodwork</span></button>
+          <button class="nav-item" data-view="supplements"><svg class="ic"><use href="#ic-pill"/></svg> <span>Supplements</span></button>
           <div class="nav-label">Practice</div>
-          <button class="nav-item" data-view="injection">💉 <span>Injection safety</span></button>
-          <button class="nav-item" data-view="pct">🔁 <span>Coming off &amp; PCT</span></button>
-          <button class="nav-item" data-view="women">♀ <span>Women &amp; virilization</span></button>
+          <button class="nav-item" data-view="injection"><svg class="ic"><use href="#ic-syringe"/></svg> <span>Injection safety</span></button>
+          <button class="nav-item" data-view="pct"><svg class="ic"><use href="#ic-cycle"/></svg> <span>Coming off &amp; PCT</span></button>
+          <button class="nav-item" data-view="women"><svg class="ic"><use href="#ic-venus"/></svg> <span>Women &amp; virilization</span></button>
           <div class="nav-label">More</div>
-          <button class="nav-item" data-view="chat">💬 <span>Ask PepTalk</span></button>
-          <button class="nav-item" data-view="data">🗄️ <span>Data &amp; backup</span></button>
+          <button class="nav-item" data-view="chat"><svg class="ic"><use href="#ic-chat"/></svg> <span>Ask PepTalk</span></button>
+          <button class="nav-item" data-view="data"><svg class="ic"><use href="#ic-data"/></svg> <span>Data &amp; backup</span></button>
         </nav>
 
         <div class="lib-head">
@@ -95,7 +126,7 @@
       <label for="apiKey">Anthropic API key <span class="opt">(optional)</span></label>
       <input type="password" id="apiKey" placeholder="sk-ant-…" autocomplete="off" spellcheck="false" />
       <label for="model">Model</label>
-      <input type="text" id="model" value="claude-opus-4-8" spellcheck="false" />
+      <input type="text" id="model" value="claude-sonnet-5" spellcheck="false" />
       <div class="modal-actions">
         <button id="clearKey" class="btn-ghost" type="button">Clear</button>
         <button id="saveKey" class="btn-solid" type="button">Save</button>
