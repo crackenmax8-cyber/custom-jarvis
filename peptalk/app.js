@@ -181,6 +181,197 @@
     renderLibrary($("#libSearch").value);
   }
 
+  /* ======================= SEARCH PALETTE ============================== */
+  // One box over the whole app — 53 compounds across 9 groups plus side effects,
+  // supplements, labs and guides is more than a sidebar list can surface.
+  let palIndex = null, palResults = [], palCursor = 0, palPrevFocus = null;
+
+  function buildPalIndex() {
+    if (palIndex) return palIndex;
+    const out = [];
+    PT.compounds.forEach((c) => out.push({
+      kind: "Compound", tone: "t-iris", ic: "stack",
+      label: c.name, sub: [c.aka, c.klass].filter(Boolean).join(" · "),
+      hay: [c.name, c.aka, c.klass, c.group, c.id].join(" "),
+      go: () => openCompound(c.id),
+    }));
+    PT.counters.forEach((k) => out.push({
+      kind: "Side effect", tone: "t-clay", ic: k.icon,
+      label: k.name, sub: k.first[0],
+      hay: [k.name, k.what, k.id].join(" "),
+      go: () => goAnchor("counters", "ctr-" + k.id),
+    }));
+    Object.entries(PT.supplements).forEach(([sid, S]) => out.push({
+      kind: "Supplement", tone: "t-moss", ic: "pill",
+      label: S.name, sub: S.what || S.why,
+      hay: [S.name, S.why, (S.tags || []).join(" "), sid].join(" "),
+      go: () => goAnchor("supplements", "sup-" + sid),
+    }));
+    Object.values(PT.labs).forEach((L) => out.push({
+      kind: "Bloodwork", kindTone: 1, tone: "t-rose", ic: "drop",
+      label: L.name, sub: L.markers,
+      hay: [L.name, L.markers, L.why].join(" "),
+      go: () => setView("labs"),
+    }));
+    [
+      ["today", "Today", "today", "Your daily view — what's due"],
+      ["protocol", "My protocol", "protocol", "Cycle dates, phase and timeline"],
+      ["builder", "Create your stack", "stack-add", "Pick compounds, support builds itself"],
+      ["stack", "Your stack", "stack", "Saved stack and its support plan"],
+      ["trends", "Trends", "trends", "Charts of your readings over time"],
+      ["log", "Log", "log", "Record injections, BP, weight, labs"],
+      ["sites", "Injection sites", "target", "Rotation map"],
+      ["emergency", "Emergency signs", "alert", "Symptoms that mean get help now"],
+      ["injection", "Injection safety", "syringe", "Sterile technique, sites, volumes"],
+      ["pct", "Coming off & PCT", "cycle", "Suppression and recovery"],
+      ["women", "Women & virilization", "venus", "A different risk profile"],
+      ["chat", "Ask PepTalk", "chat", "Offline question answering"],
+      ["data", "Data & backup", "data", "Export, import, clear"],
+    ].forEach(([v, label, ic, sub]) => out.push({
+      kind: "Page", tone: "t-sky", ic, label, sub, hay: label + " " + sub, go: () => setView(v),
+    }));
+    palIndex = out.map((e) => ({ ...e, hayLc: e.hay.toLowerCase(), labelLc: e.label.toLowerCase() }));
+    return palIndex;
+  }
+
+  function goAnchor(view, anchorId) {
+    setView(view);
+    const el = $("#" + anchorId);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function palSearch(q) {
+    const t = q.toLowerCase().trim();
+    const idx = buildPalIndex();
+    if (!t) return idx.filter((e) => e.kind === "Page").slice(0, 8);
+    const words = t.split(/\s+/).filter(Boolean);
+    const ranked = idx
+      .map((e) => {
+        let score = 0;
+        for (const w of words) {
+          if (e.labelLc.startsWith(w)) score += 100;
+          else if (new RegExp("\\b" + w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).test(e.labelLc)) score += 60;
+          else if (e.labelLc.includes(w)) score += 35;
+          else if (e.hayLc.includes(w)) score += 12;
+          else return null; // every word must appear somewhere
+        }
+        if (e.kind === "Compound") score += 4; // the library is the main thing people look for
+        return { e, score };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.score - a.score || a.e.label.length - b.e.label.length)
+      .slice(0, 40)
+      .map((x) => x.e);
+    // keep each kind contiguous — ordered by its best hit — so headers appear once
+    const order = [], byKind = new Map();
+    for (const e of ranked) {
+      if (!byKind.has(e.kind)) { byKind.set(e.kind, []); order.push(e.kind); }
+      byKind.get(e.kind).push(e);
+    }
+    return order.flatMap((k) => byKind.get(k));
+  }
+
+  function palHighlight(label, q) {
+    const t = q.trim();
+    if (!t) return mdEscape(label);
+    const words = [...new Set(t.toLowerCase().split(/\s+/).filter(Boolean))]
+      .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+      .sort((a, b) => b.length - a.length);
+    if (!words.length) return mdEscape(label);
+    return mdEscape(label).replace(new RegExp("(" + words.join("|") + ")", "ig"), "<mark>$1</mark>");
+  }
+
+  function palRender(q) {
+    palResults = palSearch(q);
+    palCursor = 0;
+    const list = $("#palList");
+    if (!palResults.length) {
+      list.innerHTML = `<p class="pal-empty">Nothing matches “${mdEscape(q)}”.</p>`;
+      $("#palCount").textContent = "No results";
+      $("#palInput").removeAttribute("aria-activedescendant");
+      return;
+    }
+    let html = "", lastKind = null;
+    palResults.forEach((e, i) => {
+      if (e.kind !== lastKind) { html += `<div class="pal-group">${e.kind}</div>`; lastKind = e.kind; }
+      html += `<button class="pal-item ${e.tone}" role="option" id="pal-opt-${i}" data-i="${i}" aria-selected="${i === 0}">
+        <span class="pal-ic" aria-hidden="true">${icon(e.ic)}</span>
+        <span class="pal-body">
+          <span class="pal-name">${palHighlight(e.label, q)}</span>
+          ${e.sub ? `<span class="pal-sub">${mdEscape(String(e.sub))}</span>` : ""}
+        </span>
+      </button>`;
+    });
+    list.innerHTML = html;
+    $("#palCount").textContent = `${palResults.length} result${palResults.length === 1 ? "" : "s"}`;
+    $("#palInput").setAttribute("aria-activedescendant", "pal-opt-0");
+    $$(".pal-item", list).forEach((b) => {
+      b.addEventListener("click", () => palChoose(+b.dataset.i));
+      b.addEventListener("mousemove", () => palMove(+b.dataset.i - palCursor));
+    });
+  }
+
+  function palMove(delta) {
+    if (!palResults.length) return;
+    const n = palResults.length;
+    palCursor = (palCursor + delta + n) % n;
+    $$(".pal-item").forEach((b, i) => b.setAttribute("aria-selected", String(i === palCursor)));
+    const cur = $(`#pal-opt-${palCursor}`);
+    if (cur) cur.scrollIntoView({ block: "nearest" });
+    $("#palInput").setAttribute("aria-activedescendant", "pal-opt-" + palCursor);
+  }
+
+  function palChoose(i) {
+    const e = palResults[i];
+    if (!e) return;
+    closePalette();
+    e.go();
+  }
+
+  function openPalette(seed) {
+    const bd = $("#palBackdrop");
+    if (!bd.classList.contains("hidden")) return;
+    palPrevFocus = document.activeElement;
+    bd.classList.remove("hidden");
+    const inp = $("#palInput");
+    inp.value = seed || "";
+    palRender(inp.value);
+    inp.focus();
+    inp.select();
+  }
+  function closePalette() {
+    const bd = $("#palBackdrop");
+    if (bd.classList.contains("hidden")) return;
+    bd.classList.add("hidden");
+    // put focus back where it came from, unless we are navigating away
+    if (palPrevFocus && document.contains(palPrevFocus)) palPrevFocus.focus();
+    palPrevFocus = null;
+  }
+
+  function initPalette() {
+    const bd = $("#palBackdrop"), inp = $("#palInput");
+    $("#searchBtn").addEventListener("click", () => openPalette());
+    inp.addEventListener("input", () => palRender(inp.value));
+    bd.addEventListener("mousedown", (e) => { if (e.target === bd) closePalette(); });
+    bd.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") { e.preventDefault(); closePalette(); }
+      else if (e.key === "ArrowDown") { e.preventDefault(); palMove(1); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); palMove(-1); }
+      else if (e.key === "Home" && palResults.length) { e.preventDefault(); palMove(-palCursor); }
+      else if (e.key === "End" && palResults.length) { e.preventDefault(); palMove(palResults.length - 1 - palCursor); }
+      else if (e.key === "Enter") { e.preventDefault(); palChoose(palCursor); }
+      else if (e.key === "Tab") {
+        e.preventDefault(); // keep focus inside; the input is the only stop
+        inp.focus();
+      }
+    });
+    document.addEventListener("keydown", (e) => {
+      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName || "")) || e.target.isContentEditable;
+      if ((e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey)) { e.preventDefault(); openPalette(); }
+      else if (e.key === "/" && !typing && $("#palBackdrop").classList.contains("hidden")) { e.preventDefault(); openPalette(); }
+    });
+  }
+
   /* ======================= HOME ========================================= */
   function renderHome(c) {
     const chips = [
@@ -1605,8 +1796,8 @@
       <h2>Supplement reference</h2>
       <p class="hero-sub">The supportive supplements and nutrients that come up most — what each does, why it earns a place on cycle, a typical range, and the catch.</p>
       <div class="support-grid" style="margin-top:14px">
-        ${Object.values(PT.supplements).map((S) => `
-          <div class="support-card">
+        ${Object.entries(PT.supplements).map(([sid, S]) => `
+          <div class="support-card" id="sup-${sid}" style="scroll-margin-top:12px">
             <div class="sc-name">${S.name}</div>
             <div class="sc-note">${S.why}</div>
             <span class="sc-dose">${S.dose}</span>
@@ -2067,6 +2258,7 @@
 
     // browser back/forward walks the view history instead of leaving the app
     window.addEventListener("hashchange", applyRoute);
+    initPalette();
 
     renderLibrary();
     // drop stack ids that no longer exist in the library (stale localStorage)

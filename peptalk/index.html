@@ -21,6 +21,8 @@
     <symbol id="ic-stack" viewBox="0 0 24 24"><path d="M12 3.5 20.5 8 12 12.5 3.5 8z"/><path d="M4 12l8 4.5 8-4.5"/></symbol>
     <symbol id="ic-stack-add" viewBox="0 0 24 24"><path d="M10 3.8 17 7.5 10 11.2 3 7.5z"/><path d="M3.5 11.3 10 14.8l3.2-1.7"/><path d="M18.5 12.5v7M15 16h7"/></symbol>
     <symbol id="ic-check" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5L19.5 7"/></symbol>
+    <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.3"/><path d="M15.4 15.4 20 20"/></symbol>
+    <symbol id="ic-enter" viewBox="0 0 24 24"><path d="M19 5v7.5a2 2 0 0 1-2 2H6"/><path d="M9 11.5 5.5 14.5 9 17.5"/></symbol>
     <symbol id="ic-shield" viewBox="0 0 24 24"><path d="M12 3.2l7 2.8v5.2c0 4.4-3 7.4-7 8.8-4-1.4-7-4.4-7-8.8V6z"/><path d="M9 11.8l2 2 4-4.2"/></symbol>
     <symbol id="ic-drop" viewBox="0 0 24 24"><path d="M12 3.6c3.4 4.2 5.4 7 5.4 9.7a5.4 5.4 0 0 1-10.8 0c0-2.7 2-5.5 5.4-9.7z"/></symbol>
     <symbol id="ic-pill" viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="6" rx="3"/><path d="M12 9v6"/></symbol>
@@ -75,6 +77,9 @@
         </div>
       </div>
       <div class="header-actions">
+        <button class="search-btn" id="searchBtn" title="Search everything (Ctrl/⌘ K)" aria-label="Search everything">
+          <svg class="ic"><use href="#ic-search"/></svg> <span>Search</span><kbd class="kbd-hint">⌘K</kbd>
+        </button>
         <button class="emergency-btn" id="emergencyBtn" title="Emergency warning signs"><svg class="ic"><use href="#ic-alert"/></svg> <span>Emergency signs</span></button>
         <button class="icon-btn" id="themeBtn" title="Switch theme" aria-label="Switch between light and dark theme"><svg class="ic"><use href="#ic-moon"/></svg></button>
         <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Open settings">⚙</button>
@@ -128,6 +133,26 @@
       <button type="submit" class="send-btn">Ask ➤</button>
     </form>
   </main>
+
+  <!-- ===== Search palette ===== -->
+  <div class="pal-backdrop hidden" id="palBackdrop">
+    <div class="palette" role="dialog" aria-modal="true" aria-labelledby="palLabel">
+      <h2 id="palLabel" class="sr-only">Search PepTalk</h2>
+      <div class="pal-head">
+        <svg class="ic" aria-hidden="true"><use href="#ic-search"/></svg>
+        <input type="text" id="palInput" class="pal-input" autocomplete="off" spellcheck="false"
+               placeholder="Search compounds, side effects, supplements, labs…"
+               role="combobox" aria-expanded="true" aria-controls="palList" aria-autocomplete="list" aria-label="Search PepTalk" />
+        <kbd class="kbd-hint">esc</kbd>
+      </div>
+      <div class="pal-list" id="palList" role="listbox" aria-label="Search results"></div>
+      <div class="pal-foot">
+        <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+        <span><kbd><svg class="ic" aria-hidden="true"><use href="#ic-enter"/></svg></kbd> open</span>
+        <span class="pal-count" id="palCount" role="status"></span>
+      </div>
+    </div>
+  </div>
 
   <!-- ===== Settings modal ===== -->
   <div class="modal-backdrop hidden" id="modalBackdrop">
