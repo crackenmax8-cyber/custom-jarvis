@@ -1,0 +1,57 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# never let two deploys race; let a run in progress finish
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the PepTalk sources parse
+        run: |
+          for f in peptalk/data.js peptalk/brain.js peptalk/tracker.js peptalk/app.js peptalk/sw.js; do
+            node --check "$f"
+          done
+          node -e "JSON.parse(require('fs').readFileSync('peptalk/manifest.webmanifest','utf8'))"
+
+      - name: Assemble the site
+        run: |
+          mkdir -p _site
+          cp -r peptalk _site/peptalk
+          cp -r dj _site/dj 2>/dev/null || true
+          cp index.html app.js data.js jarvis.js styles.css preview.png _site/ 2>/dev/null || true
+          # land visitors on PepTalk rather than a directory listing
+          cat > _site/robots.txt <<'ROBOTS'
+          User-agent: *
+          Allow: /
+          ROBOTS
+          # the iOS wrapper and its screenshots are not part of the website
+          rm -rf _site/peptalk-ios
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -348,6 +348,19 @@
     palPrevFocus = null;
   }
 
+  // Offline support on the hosted site. Deliberately best-effort: file:// and the
+  // single-file inlined build have no sw.js to fetch, and a failed registration
+  // must never surface to the user or break the app.
+  function registerSW() {
+    if (!("serviceWorker" in navigator)) return;
+    if (!/^https?:$/.test(location.protocol)) return; // file:// has no SW
+    try {
+      const url = new URL("sw.js", location.href);
+      if (url.origin !== location.origin) return;
+      navigator.serviceWorker.register(url).catch(() => {}); // 404 in inlined builds — fine
+    } catch (e) { /* nothing to do; the app works without it */ }
+  }
+
   function initPalette() {
     const bd = $("#palBackdrop"), inp = $("#palInput");
     $("#searchBtn").addEventListener("click", () => openPalette());
@@ -2258,6 +2271,7 @@
     // browser back/forward walks the view history instead of leaving the app
     window.addEventListener("hashchange", applyRoute);
     initPalette();
+    registerSW();
 
     renderLibrary();
     // drop stack ids that no longer exist in the library (stale localStorage)

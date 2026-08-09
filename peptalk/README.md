@@ -114,6 +114,45 @@ what's drifting) — all offline, stored only in your browser.
 
 ![stack planner](preview-stack.png)
 
+## Run it as a website
+
+The app is a static site — no build step, no server code. It is deployed to
+GitHub Pages by `.github/workflows/pages.yml` on every push to `main`:
+
+```
+https://<owner>.github.io/<repo>/peptalk/
+```
+
+To run it locally, any static server will do:
+
+```bash
+python3 -m http.server 8000     # then open http://localhost:8000/peptalk/
+```
+
+Opening `index.html` straight off disk works too, minus the offline install
+(service workers need http/https).
+
+### Installable and offline
+
+`manifest.webmanifest` and `sw.js` make it a PWA: "Add to Home Screen" on iOS
+or "Install" on desktop/Android gives it its own icon and window, and the
+service worker precaches the whole shell so it runs with **no network at all**
+after the first visit — verified by loading it with the network disabled.
+
+Registration is deliberately best-effort (`registerSW()` in `app.js`): it is
+skipped on `file://` and a failed registration is swallowed, so the single-file
+build and the iOS wrapper are unaffected.
+
+When you change a shell file, bump `CACHE` in `sw.js` so returning visitors get
+the new version instead of the cached one.
+
+### Also on the site
+
+- `privacy.html` — the privacy policy as a real page (this doubles as the
+  public Privacy Policy URL that App Store Connect requires).
+- `og-card.png` — the 1200×630 link-preview image, wired up via Open Graph and
+  Twitter card tags.
+
 ## The harm-reduction stance
 
 The tool is built on a few non-negotiables, surfaced everywhere:
