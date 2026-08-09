@@ -1,0 +1,68 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# never let two deploys race; let a run in progress finish
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the PepTalk sources parse
+        run: |
+          for f in peptalk/data.js peptalk/brain.js peptalk/tracker.js peptalk/app.js peptalk/sw.js; do
+            node --check "$f"
+          done
+          node -e "JSON.parse(require('fs').readFileSync('peptalk/manifest.webmanifest','utf8'))"
+
+      - name: Assemble the site
+        run: |
+          mkdir -p _site
+          # Copy every tracked file except the things that aren't part of the
+          # website. Driving this off git rather than a hand-written list means
+          # adding an asset can't silently leave it out of the deploy.
+          git ls-files -z \
+            ':(exclude)peptalk-ios/*' \
+            ':(exclude).github/*' \
+            ':(exclude)*.md' \
+            | xargs -0 -I{} sh -c 'mkdir -p "_site/$(dirname "{}")" && cp "{}" "_site/{}"'
+
+          cat > _site/robots.txt <<'ROBOTS'
+          User-agent: *
+          Allow: /
+          ROBOTS
+
+          # Fail loudly rather than deploying a site with a hole in it.
+          for f in index.html peptalk/index.html peptalk/app.js peptalk/styles.css \
+                   peptalk/sw.js peptalk/manifest.webmanifest peptalk/privacy.html; do
+            test -f "_site/$f" || { echo "::error::missing from _site: $f"; exit 1; }
+          done
+          test ! -e _site/peptalk-ios || { echo "::error::iOS wrapper leaked into the site"; exit 1; }
+          echo "assembled $(find _site -type f | wc -l) files"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

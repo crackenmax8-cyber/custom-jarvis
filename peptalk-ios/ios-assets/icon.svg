@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#1e2740"/><stop offset="0.55" stop-color="#141b2b"/><stop offset="1" stop-color="#0d1117"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#8d97ff" stop-opacity="0.42"/><stop offset="1" stop-color="#8d97ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#45c4c0" stop-opacity="0.26"/><stop offset="1" stop-color="#45c4c0" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="trace" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#7d88ff"/><stop offset="0.5" stop-color="#aab2ff"/><stop offset="1" stop-color="#d2d7ff"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <ellipse cx="260" cy="220" rx="650" ry="590" fill="url(#glowA)"/>
+  <ellipse cx="880" cy="170" rx="540" ry="480" fill="url(#glowB)"/>
+
+  <g transform="translate(0,46)">
+  <!-- one calm reference line -->
+  <path d="M158 742H866" stroke="#ffffff" stroke-opacity="0.20" stroke-width="9" stroke-linecap="round"/>
+
+  <!-- the signature: serum level builds, plateaus, then clears -->
+  <path d="M158 742C158 742 240 730 314 600C388 470 424 352 512 340C580 331 630 335 676 335"
+        fill="none" stroke="url(#trace)" stroke-width="62" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M676 335C748 335 770 448 806 546C832 618 848 664 866 700"
+        fill="none" stroke="url(#trace)" stroke-width="62" stroke-linecap="butt"
+        stroke-dasharray="92 58" opacity="0.88"/>
+
+  <!-- "you are here" -->
+  <circle cx="512" cy="340" r="70" fill="#0f1520"/>
+  <circle cx="512" cy="340" r="42" fill="#e3e6ff"/>
+  </g>
+</svg>

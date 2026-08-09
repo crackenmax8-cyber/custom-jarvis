@@ -1,0 +1,20 @@
+{
+  "name": "peptalk-ios",
+  "version": "1.0.0",
+  "private": true,
+  "description": "iOS wrapper for PepTalk — offline harm-reduction reference and cycle tracker.",
+  "scripts": {
+    "sync:web": "node scripts/sync-web.js",
+    "icons": "node scripts/make-icons.js",
+    "shots": "node scripts/make-screenshots.js",
+    "prepare:ios": "npm run sync:web && npx cap sync ios",
+    "open:ios": "npx cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.2.0",
+    "@capacitor/ios": "^6.2.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.0"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "appId": "com.peptalk.app",
+  "appName": "PepTalk",
+  "webDir": "www",
+  "server": { "androidScheme": "https" },
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#0d1117",
+    "limitsNavigationsToAppBoundDomains": true
+  }
+}
